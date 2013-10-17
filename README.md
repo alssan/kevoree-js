@@ -21,7 +21,6 @@ git clone git@github.com:maxleiko/kev-web-editor
 cd kev-web-editor
 sh install.sh
 cd org.kevoree.tools.editor.web
-npm install
 npm start
 ```
 
