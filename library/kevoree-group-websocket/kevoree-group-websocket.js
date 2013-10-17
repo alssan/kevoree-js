@@ -191,6 +191,8 @@ var WebSocketGroup = AbstractGroup.extend({
       });
     });
 
+    //server.on('close');
+
     return server;
   },
 
@@ -353,6 +355,13 @@ var WebSocketGroup = AbstractGroup.extend({
   onMasterServerRegister: function (clientSocket, nodeName) {
     this.connectedNodes[nodeName] = clientSocket;
     this.log.info("New registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+")");
+
+    var self = this;
+    clientSocket.on('close', function () {
+      // on client disconnection : remove connected node entry from map
+      delete self.connectedNodes.nodeName;
+      self.log.info("Registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+") left server.");
+    });
   }
 });
 
