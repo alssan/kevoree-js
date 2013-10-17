@@ -7,6 +7,11 @@ body {
     padding-bottom: 20px;
 }
 
+#console-container {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
 .navbar-header .navbar-brand {
     padding: 0px;
 }

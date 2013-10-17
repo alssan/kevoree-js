@@ -26,7 +26,7 @@ module.exports = function (req, res) {
     // let's be really cautious about
     var nodename = req.query.nodename || 'node'+parseInt(Math.random()*1e10); // name from request or random generated
     var nodeInst = serverModel.findNodesByID(nodename);
-    if (nodeInst) nodename = 'node'+parseInt(Math.random()*1e10); // this name was already taken: roll the dices again
+    if (nodeInst) nodename = 'node'+parseInt(Math.random()*1e10); // this name was already taken server-side: roll the dices again to find a new name
 
     // create a node instance for the new client
     var nodeInstance = factory.createContainerNode();

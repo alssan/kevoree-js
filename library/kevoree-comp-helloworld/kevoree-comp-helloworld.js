@@ -33,7 +33,9 @@ var HelloWorldComponent = AbstractComponent.extend({
   },
 
   // define an output port called "sendText" (this will be bind later with a function to send your messages through it)
-  out_sendText: null,
+  // to prevent platform from exploding if there is no channel bind to output port, you should give an empty function
+  // that does nothing, just keep away from troubles =)
+  out_sendText: function () {},
 
   // print messages to std output when received from input port 'fake'
   in_fake: function (msg) {
