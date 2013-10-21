@@ -175,7 +175,105 @@ Good question! If you take a closer look to `package.json` you should notice tha
 So, each time you run `npm install` or `npm publish`, this **prepublish** script should be run.  
 (/!\ Seems like there is a bug in current npm version => `npm publish` do NOT trigger **prepublish** script :/)
 
-##### TODO finish tutorial!
+#### Step 5
+Ok now that we have an input and an output port for our component, we can add some code to their function in order for them to really do stuff for us.  
+> Just so you know, updating your `kevlib.json` model wasn't necessary for the moment. This file is only used by **Kevoree Web Editor** and **Kevoree Runtimes** to know what your library is made of and how to download and install it, so during the 'condig phase' there is no need to re-generate your Kevoree model. But don't worry I'll explain that in depth later.
+
+##### Print incoming messages with `KevoreeUI` or `console.log()` if no UI available:
+With __Kevoree JS__ there are 2 ways for you to run your components:
+
+ * with `kevoree-nodejs-runtime`, which is a shell-based runtime platform
+ * or with `kevoree-browser-runtime`, which is a browser-based runtime platform
+ 
+When your components are hosted in a `kevoree-nodejs-runtime` they don't have access to KevoreeUI's DOM view. If they want to display something to users, they can do it traditionally with the native `console.log()` method or with the `KevoreeLogger` class which is a wrapper of the native Javascript `console` object.
+
+Because we are very manly, we are going to handle both platforms in this tutorial. Here we go!  
+Lets go back to our `in_inMsg` function we previously added to FakeConsole
+
+```javascript
+var FakeConsole = AbstractComponent.extend({
+  // ...
+
+  in_inMsg: function (msg) {
+    // TODO do something with incoming message
+  }
+});
+```
+
+What we would like to do here, is to add the incoming message to a list of messages, regenerate some HTML, and give it to our `KevoreeUI` OR fall back to the `console` if we are on `kevoree-nodejs-runtime`.
+And this is how :  
+
+```javascript
+var FakeConsole = AbstractComponent.extend({
+  toString: 'FakeConsole',
+
+  construct: function () {
+    this.log = new KevoreeLogger(this.toString());
+    this.messages = [];
+  },
+
+  // ...
+
+  in_inMsg: function (msg) {
+    var self = this;
+    this.messages.push(msg);
+
+    var msgListHTML = generateHTML(this.messages);
+
+    this.setUIContent(msgListHTML, function (err) {
+      if (err) {
+        // Something went wrong while setting view content - which means that we are certainly running on the
+        // console-based platform: fall back to KevoreeLogger then
+        self.log.info('========== FakeConsole ==========');
+        for (var i in self.messages) {
+          self.log.info(self.messages[i]);
+        }
+      }
+    });
+  },
+
+  out_sendMsg: function () {}
+});
+
+var generateHTML = function (messages) {
+  var html = '';
+
+  // yeah kevoree-browser-runtime uses bootstrap 3.0 so we can use 'list-unstyled' too :)
+  html += '<ul class="list-unstyled">';
+  for (var i in messages) {
+    html += '<li>'+messages[i]+'</li>';
+  }
+  html += '</ul>'
+
+  return html;
+}
+
+module.exports = FakeConsole;
+```
+Well, this is pretty straightforward:  
+
+ * add message to list
+ * generate HTML with message list with some `<ul>` and `<li>`
+ 
+And then we use AbstractComponent's API by calling `this.setUIContent(...)`. This method takes 2 parameters, the first one is some HTML in a string and the second is a callback `function (err) {...}`.  
+If `err` is defined, then KevoreeUI did not managed to create a UI for your component, resulting in our case, to fall back to the use of `KevoreeLogger` because it must certainly mean that we are running on `kevoree-nodejs-runtime`. (yeah I'll improve this API asap to provide a better way to handle KevoreeUI's failures)  
+And that's it for incoming messages. Good job folks!
+
+
+##### Send messages through ouput 'sendMsg' port:
+So, our output port definition should look like this currently:
+```javascript
+var FakeConsole = AbstractComponent.extend({
+  // ...
+
+  out_sendMsg: function () {}
+});
+```
+
+Well that's not much, but __it is fine__. You are not supposed to write more there because this function will be bound later (at runtime) to a real useful function by the Kevoree framework.
+
+However, we should use this function (even though it hasn't been bound yet) in our component to send messages to Kevoree channels when the user type something in an input field (for KevoreeUI) or never in shell-based platform because we are lazy and we don't want to deal with prompt for now.
+
 
 
 ## Folder content
