@@ -13,7 +13,6 @@ var NPMResolver = Resolver.extend({
   construct: function (modulesPath) {
     this.modulesPath = modulesPath;
     this.log = new KevoreeLogger(this.toString());
-    this.tabCount = 0;
   },
 
   resolve: function (deployUnit, callback) {
@@ -45,6 +44,7 @@ var NPMResolver = Resolver.extend({
             resolver.log.info("Zip '"+deployUnit.unitName+"' installed and module loaded successfully");
 
             var ModuleEntry = require(deployUnit.unitName);
+
             callback(null, ModuleEntry);
           });
         });
@@ -173,7 +173,12 @@ var processFileEntry = function processFileEntry(entry, zipDir, callback) {
 
         entry.getData(new zip.TextWriter(), function(text) {
           // Create a new Blob and write it to log.txt.
-          var blob = new Blob([text], {type: 'text/plain'});
+          var blob = new Blob([
+            // this is a hack to prevent dynamically loaded component to have access to globals
+            'var require = require || function () {};\n;(function (global, window, document, $, jQuery) {\n',
+            text,
+            '\n})({WebSocket: WebSocket});'
+          ], {type: 'text/plain'});
           fileWriter.write(blob);
         });
 
@@ -191,8 +196,7 @@ var processFileEntry = function processFileEntry(entry, zipDir, callback) {
  */
 var getDir = function getDir(path, dir, callback, errorCallback) {
   if (!dir || dir == null) {
-    errorCallback(new Error('getDir(path, dir, callback, errorCallback) error: "dir" is null'));
-    return;
+    return errorCallback(new Error('getDir(path, dir, callback, errorCallback) error: "dir" is null'));
   }
 
   var splittedPath = path.split('/');
@@ -201,7 +205,7 @@ var getDir = function getDir(path, dir, callback, errorCallback) {
 
   } else {
     dir.getDirectory(splittedPath[0], {create: true, exclusive: false}, function (newDir) {
-      getDir(splittedPath.slice(1, splittedPath.length).join('/'), newDir, callback);
+      getDir(splittedPath.slice(1, splittedPath.length).join('/'), newDir, callback, errorCallback);
     }, errorHandler);
   }
 }
@@ -225,7 +229,7 @@ var errorHandler = function errorHandler(e) {
       msg = 'INVALID_STATE_ERR';
       break;
     default:
-      console.error(e);
+      msg = e.message;
       return;
   };
 

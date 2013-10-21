@@ -85,8 +85,7 @@ var WebSocketGroup = AbstractGroup.extend({
 
   onServerPush: function (model, addresses) {
     var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
-
-    var onOpen = function onOpen() {
+    ws.onopen = function onOpen() {
       var serializer = new kevoree.serializer.JSONModelSerializer();
       var modelStr = serializer.serialize(model);
       var binMsg = new Uint8Array(1+modelStr.length);
@@ -96,10 +95,7 @@ var WebSocketGroup = AbstractGroup.extend({
       }
       ws.send(binMsg);
       ws.close();
-    }
-
-    if (ws.on) ws.on('open', onOpen);
-    else ws.onopen = onOpen;
+    };
   },
 
   onClientPush: function (model, targetNodeName) {
@@ -109,13 +105,12 @@ var WebSocketGroup = AbstractGroup.extend({
   onServerPull: function (addresses, callback) {
     var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
-    var onOpen = function onOpen() {
+    ws.onopen = function onOpen() {
       var binMsg = new Uint8Array(1);
       binMsg[0] = PULL_JSON;
       ws.send(binMsg);
-    }
-
-    var onMessage = function onMessage(e) {
+    };
+    ws.onmessage = function onMessage(e) {
       var data = '';
       if (typeof(e) === 'string') data = e;
       else data = e.data;
@@ -127,15 +122,7 @@ var WebSocketGroup = AbstractGroup.extend({
       var jsonLoader = new kevoree.loader.JSONModelLoader();
       var model = jsonLoader.loadModelFromString(data).get(0);
       callback(null, model);
-    }
-
-    if (ws.on) {
-      ws.on('open', onOpen);
-      ws.on('message', onMessage);
-    } else {
-      ws.onopen = onOpen;
-      ws.onmessage = onMessage;
-    }
+    };
   },
 
   onClientPull: function (targetNodeName, callback) {
@@ -191,8 +178,6 @@ var WebSocketGroup = AbstractGroup.extend({
       });
     });
 
-    //server.on('close');
-
     return server;
   },
 
@@ -203,37 +188,25 @@ var WebSocketGroup = AbstractGroup.extend({
 
       var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
-      var onOpen = function onOpen() {
+      ws.onopen = function onOpen() {
         var binMsg = new Uint8Array(group.getNodeName().length+1);
         binMsg[0] = REGISTER;
         for (var i=0; i<group.getNodeName().length; i++) {
           binMsg[i+1] = group.getNodeName().charCodeAt(i);
         }
         ws.send(binMsg);
-      }
-
-      var onMessage = function onMessage(e) {
+      };
+      ws.onmessage = function onMessage(e) {
         var data = '';
         if (typeof(e) === 'string') data = e;
         else data = e.data;
         var jsonLoader = new kevoree.loader.JSONModelLoader();
         var model = jsonLoader.loadModelFromString(data).get(0);
         group.kCore.deploy(model);
-      }
-
-      var onClose = function onClose() {
-        group.log.debug("WebSocketGroup client: connection closed with ws://"+addresses.get(0));
-      }
-
-      if (ws.on) {
-        ws.on('open', onOpen);
-        ws.on('message', onMessage);
-        ws.on('close', onClose);
-      } else {
-        ws.onopen = onOpen;
-        ws.onmessage = onMessage;
-        ws.onclose = onClose;
-      }
+      };
+      ws.onclose = function onClose() {
+        group.log.debug("WebSocketGroup info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
+      };
 
     } else {
       throw new Error("There is no master server in your model. You must specify a master server by giving a value to one port attribute.");

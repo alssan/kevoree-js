@@ -1,5 +1,5 @@
-var AbstractComponent   = require('kevoree-entities').AbstractComponent,
-  KevoreeLogger       = require('kevoree-commons').KevoreeLogger;
+var AbstractComponent = require('kevoree-entities').AbstractComponent,
+    KevoreeLogger     = require('kevoree-commons').KevoreeLogger;
 
 /**
  * Kevoree component
@@ -25,6 +25,14 @@ var HelloWorldComponent = AbstractComponent.extend({
       // send a message through output port 'sendText' every 2 seconds
       self.out_sendText('hello world '+(new Date));
     }, 2000);
+
+    this.setUIContent('<p>Hello world</p>', function (err) {
+      if (err) {
+        console.log("Something went wrong while setting view content", 'Reason: '+err.message);
+      } else {
+        console.log("View content set successfully");
+      }
+    });
   },
 
   stop: function () {

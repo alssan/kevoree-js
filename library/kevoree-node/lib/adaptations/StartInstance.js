@@ -14,16 +14,14 @@ module.exports = AdaptationPrimitive.extend({
 
       if (instance != undefined && instance != null) {
         instance.start();
-        callback.call(this, null);
-        return;
+        return callback();
 
       } else {
-        callback(new Error("StartInstance error: unable to start instance "+kInstance.name));
-        return;
+        return callback(new Error("StartInstance error: unable to start instance "+kInstance.name));
       }
     }
 
-    callback(null);
+    return callback();
   },
 
   undo: function (_super, callback) {

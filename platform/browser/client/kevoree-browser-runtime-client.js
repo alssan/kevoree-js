@@ -52,8 +52,24 @@ kevoreeCore.on('error', function (err) {
   }
 });
 
-//set Kevoree bootstrapper
+// set Kevoree bootstrapper
 kevoreeCore.setBootstrapper(bootstrapper);
+// set KevoreeUI bootstrap command
+kevoreeCore.setUICommand(function (compUIManager, callback) {
+  try {
+    var tabName = 'tab'+(parseInt(Math.random()*1000));
+    $('#tabs-li').append('<li><a href="#'+tabName+'" data-toggle="tab">'+compUIManager.getName()+'</a></li>');
+    $('#tabs-content').append('<div class="tab-pane" id="'+tabName+'"><div id="'+tabName+'_root" class="well"></div></div>');
+    var rootDiv = document.querySelector('#'+tabName+'_root');
+    rootDiv.createShadowRoot = rootDiv.createShadowRoot || rootDiv.webkitCreateShadowRoot;
+    compUIManager.setRoot(rootDiv.createShadowRoot());
+    return callback();
+
+  } catch (err) {
+    console.error(err);
+    return callback(err);
+  }
+});
 
 // start Kevoree Core button clicked
 startBtn.on('click', function () {
@@ -116,9 +132,9 @@ deployBtn.on('click', function () {
 
 var deployPopoverContent = function deployPopoverContent() {
   return  '<small>Please wait while deploying...</small>' +
-          '<div class="progress progress-striped active" style="margin-bottom: 0px">'+
-            '<div class="progress-bar progress-bar-info"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>' +
-          '</div>';
+    '<div class="progress progress-striped active" style="margin-bottom: 0px">'+
+    '<div class="progress-bar progress-bar-info"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>' +
+    '</div>';
 }
 
 var cleanString = function cleanString(str) {

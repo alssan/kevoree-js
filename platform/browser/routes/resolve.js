@@ -10,7 +10,7 @@ var http       = require('http'),
 
 
 var BROWSER_MODULES = 'browser_modules',
-  BROWSER_TAG     = '-kbrowser';
+    BROWSER_TAG     = '-kbrowser';
 
 /**
  * GET /resolve
@@ -60,7 +60,7 @@ module.exports = function(req, res) {
             b.external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-library'), {expose: 'kevoree-library'})
              .external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-kotlin'), {expose: 'kevoree-kotlin'})
              .require(modulePath, { expose: req.query.name })
-             .bundle()
+             .bundle({detectGlobals: false})
              .pipe(bundleFile)
              .on('finish', function () {
                 // zip browser-bundled folder
