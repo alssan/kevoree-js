@@ -30,14 +30,12 @@ module.exports = AdaptationPrimitive.extend({
 
                 // bootstrap success: add deployUnit path & packageName into mapper
                 that.mapper.addEntry(deployUnit.path(), deployUnit.unitName);
-                callback(null);
-                return;
+                return callback();
             });
 
         } else {
             // this deploy unit is already installed, move on
-            callback.call(that, null);
-            return;
+            return callback();
         }
     },
 

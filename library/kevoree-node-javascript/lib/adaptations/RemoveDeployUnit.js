@@ -12,19 +12,15 @@ module.exports = AdaptationPrimitive.extend({
     execute: function (_super, callback) {
         _super.call(this, callback);
 
-        var deployUnit  = this.adaptModel.findByPath(this.trace.previousPath),
+        var deployUnit  = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.objPath),
             that        = this;
 
         var bootstrapper = this.node.getKevoreeCore().getBootstrapper();
         bootstrapper.uninstall(deployUnit, function (err) {
-            if (err) {
-                callback(err);
-                return;
-            }
+            if (err) return callback(err);
 
             that.mapper.removeEntry(deployUnit.path());
-            callback(null);
-            return;
+            return callback();
         });
     },
 

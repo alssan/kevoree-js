@@ -41,5 +41,13 @@ module.exports = KevoreeEntity.extend({
 
   addInternalInputPort: function (port) {
     this.inputs[port.getName()] = port;
+  },
+
+  removeInternalRemoteNodes: function (portPath) {
+    delete this.remoteNodes[portPath];
+  },
+
+  removeInternalInputPort: function (port) {
+    delete this.inputs[port.getName()];
   }
 });

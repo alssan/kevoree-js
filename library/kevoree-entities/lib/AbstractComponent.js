@@ -28,6 +28,14 @@ var AbstractComponent = KevoreeEntity.extend({
     };
   },
 
+  removeInternalInputPort: function (port) {
+    delete this.inputs[port.getName()];
+  },
+
+  removeInternalOutputPort: function (port) {
+    this[AbstractComponent.OUT_PORT+port.getName()] = function () {}; // reset function binding to an empty one
+  },
+
   setUIContent: function (content, callback) {
     callback = callback || function () {};
     var self = this;

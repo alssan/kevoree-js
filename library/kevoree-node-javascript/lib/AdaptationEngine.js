@@ -12,25 +12,23 @@ var Class               = require('pseudoclass'),
 var AddInstance         = require('./adaptations/AddInstance'),
   AddBinding          = require('./adaptations/AddBinding'),
   AddDeployUnit       = require('./adaptations/AddDeployUnit'),
-  AddTypeDef          = require('./adaptations/AddTypeDef'),
   Noop                = require('./adaptations/Noop'),
   RemoveBinding       = require('./adaptations/RemoveBinding'),
   RemoveDeployUnit    = require('./adaptations/RemoveDeployUnit'),
   RemoveInstance      = require('./adaptations/RemoveInstance'),
-  RemoveTypeDef       = require('./adaptations/RemoveTypeDef'),
   StartInstance       = require('./adaptations/StartInstance'),
   StopInstance        = require('./adaptations/StopInstance'),
   UpdateDictionary    = require('./adaptations/UpdateDictionary');
 
 
 // CONSTANTS
-var ADD_INSTANCE_TRACE  = [
+var INSTANCE_TRACE  = [
     'org.kevoree.Group',
     'org.kevoree.Node',
     'org.kevoree.ComponentInstance',
     'org.kevoree.Channel'
   ],
-  ADD_DEPLOY_UNIT     = [
+  DEPLOY_UNIT     = [
     'org.kevoree.DeployUnit'
   ],
   COMMAND_RANK = {
@@ -84,23 +82,23 @@ var AdaptationEngine = Class({
   /**
    *
    * @param trace
-   * @returns {AddInstance, AddDeployUnit, AddBinding, AdaptationPrimitive, Noop, UpdateDictionary}
+   * @returns {AddInstance, RemoveInstance, AddDeployUnit, RemoveDeployUnit, AddBinding, RemoveBinding,
+   *  AdaptationPrimitive, Noop, UpdateDictionary}
    */
   processTrace: function (trace, model) {
     // ADD - TRACES HANDLING
     if (Kotlin.isType(trace, ModelAddTrace)) {
-      if (ADD_INSTANCE_TRACE.indexOf(trace.typeName) != -1) {
+      if (INSTANCE_TRACE.indexOf(trace.typeName) != -1) {
         // Add instance
         return new AddInstance(this.node, this.modelObjMapper, model, trace);
 
-      } else if (ADD_DEPLOY_UNIT.indexOf(trace.typeName) != -1) {
+      } else if (DEPLOY_UNIT.indexOf(trace.typeName) != -1) {
         // Add deploy unit
         return new AddDeployUnit(this.node, this.modelObjMapper, model, trace);
 
       } else if (trace.refName == 'mBindings') {
         // Add binding
         return new AddBinding(this.node, this.modelObjMapper, model, trace);
-
       }
 
       // SET - TRACES HANDLING
@@ -113,8 +111,21 @@ var AdaptationEngine = Class({
         return new UpdateDictionary(this.node, this.modelObjMapper, model, trace);
       }
 
+      // REMOVE - TRACES HANDLING
     } else if (Kotlin.isType(trace, ModelRemoveTrace)) {
-      // TODO
+      if (INSTANCE_TRACE.indexOf(trace.typeName) != -1) {
+        // Remove instance
+        return new RemoveInstance(this.node, this.modelObjMapper, model, trace);
+
+      } else if (DEPLOY_UNIT.indexOf(trace.typeName) != -1) {
+        // Remove deploy unit
+        return new RemoveDeployUnit(this.node, this.modelObjMapper, model, trace);
+
+      } else if (trace.refName == 'mBindings') {
+        // Remove binding
+        return new RemoveBinding(this.node, this.modelObjMapper, model, trace);
+      }
+
     } else if (Kotlin.isType(trace, ModelAddAllTrace)) {
       // TODO
     } else if (Kotlin.isType(trace, ModelRemoveAllTrace)) {
