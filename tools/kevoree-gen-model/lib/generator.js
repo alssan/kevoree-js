@@ -44,17 +44,17 @@ var generator = function generator(dirPath, quiet_, callback) {
             // walk succeed - create a new ContainerRoot
             var model = factory.createContainerRoot();
 
-            if (projectPackageJson.name != 'kevoree-node') {
-                // retrieve 'kevoree-node' from npm registry
+            if (projectPackageJson.name != 'kevoree-node-javascript') {
+                // retrieve 'kevoree-node-javascript' from npm registry
                 npm.load({}, function (err) {
                     if (err) return callback(err);
 
-                    // load success - install kevoree-node locally in order to retrieve kevlib.json
-                    npm.commands.install(['kevoree-node'], function installCallback(err) {
+                    // load success - install kevoree-node-javascript locally in order to retrieve kevlib.json
+                    npm.commands.install(['kevoree-node-javascript'], function installCallback(err) {
                         if (err) return callback(err);
 
                         // installation succeeded
-                        var kevlib       = require(path.resolve('node_modules', 'kevoree-node', 'kevlib.json')),
+                        var kevlib       = require(path.resolve('node_modules', 'kevoree-node-javascript', 'kevlib.json')),
                             jsonLoader   = new kevoree.loader.JSONModelLoader(),
                             kevNodeModel = jsonLoader.loadModelFromString(JSON.stringify(kevlib)).get(0),
                             jsNodeTD     = kevNodeModel.findTypeDefinitionsByID('JavascriptNode'),

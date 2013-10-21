@@ -1,7 +1,7 @@
 {
-    "name": "kevoree-node",
-    "version": "0.0.6",
-    "main": "./kevoree-node.js",
+    "name": "kevoree-node-javascript",
+    "version": "0.0.1",
+    "main": "./kevoree-node-javascript.js",
     "description": "A Kevoree platform to run Javascript code",
     "keywords": [
         "kevoree",
