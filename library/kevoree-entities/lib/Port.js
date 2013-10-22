@@ -5,37 +5,45 @@ var Class = require('pseudoclass');
  * @type {*}
  */
 module.exports = Class({
-    toString: 'Port',
+  toString: 'Port',
 
-    construct: function (name, path) {
-        this.name       = name;
-        this.path       = path;
-        this.component  = null;
-        this.channel    = null;
-        this.callback   = null;
-    },
+  construct: function (name, path) {
+    this.name                = name;
+    this.path                = path;
+    this.component           = null;
+    this.channel             = null;
+    this.inputPortMethodName = null;
+  },
 
-    process: function (msg) {
-        this.channel.internalSend(this.path, msg);
-    },
+  processSend: function (msg) {
+    this.channel.internalSend(this.path, msg);
+  },
 
-    setCallback: function (callback) {
-        this.callback = callback;
-    },
+  setInputPortMethodName: function (name) {
+    this.inputPortMethodName = name;
+  },
 
-    getCallback: function () {
-        return this.callback;
-    },
+  getInputPortMethodName: function () {
+    return this.inputPortMethodName;
+  },
 
-    getName: function () {
-        return this.name;
-    },
+  getName: function () {
+    return this.name;
+  },
 
-    setComponent: function (comp) {
-        this.component = comp;
-    },
+  getPath: function () {
+    return this.path;
+  },
 
-    setChannel: function (chan) {
-        this.channel = chan;
-    }
+  setComponent: function (comp) {
+    this.component = comp;
+  },
+
+  getComponent: function () {
+    return this.component;
+  },
+
+  setChannel: function (chan) {
+    this.channel = chan;
+  }
 });

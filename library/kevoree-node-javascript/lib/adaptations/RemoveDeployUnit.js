@@ -12,7 +12,7 @@ module.exports = AdaptationPrimitive.extend({
     execute: function (_super, callback) {
         _super.call(this, callback);
 
-        var deployUnit  = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.objPath),
+        var deployUnit  = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.previousPath || this.trace.objPath),
             that        = this;
 
         var bootstrapper = this.node.getKevoreeCore().getBootstrapper();

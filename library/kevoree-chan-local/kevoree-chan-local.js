@@ -12,9 +12,11 @@ var LocalChannel = AbstractChannel.extend({
         this.log.info('Local channel started');
     },
 
-    onSend: function (remoteNodeName, msg) {
-        // directly dispatching message locally
-        this.remoteCallback(msg);
+    onSend: function (fromPortPath, destPortPath, msg) {
+      // directly dispatching message locally
+      // without using client/server architecture because it is the purpose
+      // of this channel : only works locally (on the same node)
+      this.localDispatch(destPortPath, msg);
     }
 });
 

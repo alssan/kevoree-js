@@ -7,28 +7,21 @@ module.exports = AdaptationPrimitive.extend({
   execute: function (_super, callback) {
     _super.call(this, callback);
 
-    var mBinding = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.objPath);
+    var mBinding = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.previousPath || this.trace.objPath);
 
     if (mBinding.port.eContainer().eContainer().name == this.node.getName()) {
       // this binding is related to the current node platform
       var chanInstance = this.mapper.getObject(mBinding.hub.path()),
-          compInstance = this.mapper.getObject(mBinding.port.eContainer().path());
+          compInstance = this.mapper.getObject(mBinding.port.eContainer().path()),
+          portInstance = this.mapper.getObject(mBinding.port.path());
 
       if (chanInstance && compInstance) {
         try {
-          var provided = mBinding.port.eContainer().provided;
-          for (var i=0; i < provided.size(); i++) {
-            var portInstance = this.mapper.getObject(provided.get(i).path());
+          if (this.isInputPortType(mBinding.port)) {
             compInstance.removeInternalInputPort(portInstance);
             chanInstance.removeInternalInputPort(portInstance);
-            chanInstance.removeInternalRemoteNodes(provided.get(i).path());
-          }
-
-          var required = mBinding.port.eContainer().required;
-          for (var i=0; i < required.size(); i++) {
-            var portInstance = this.mapper.getObject(required.get(i).path());
+          } else {
             compInstance.removeInternalOutputPort(portInstance);
-            chanInstance.removeInternalRemoteNodes(required.get(i).path());
           }
 
           return callback();
@@ -52,5 +45,26 @@ module.exports = AdaptationPrimitive.extend({
     cmd.execute(callback);
 
     return;
+  },
+
+  isInputPortType: function (kPort) {
+    var kCompTD = kPort.eContainer().typeDefinition;
+    var inputs = kCompTD.provided ? kCompTD.provided.iterator() : null;
+    if (inputs) {
+      while (inputs.hasNext()) {
+        var input = inputs.next();
+        if (input.name == kPort.name) return true;
+      }
+    }
+
+    var outputs = kCompTD.required ? kCompTD.required.iterator() : null;
+    if (outputs) {
+      while (outputs.hasNext()) {
+        var output = outputs.next();
+        if (output.name == kPort.name) return false;
+      }
+    }
+
+    return false;
   }
 });

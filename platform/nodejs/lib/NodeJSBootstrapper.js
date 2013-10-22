@@ -61,7 +61,7 @@ module.exports = Bootstrapper.extend({
     },
 
     resolver: function (action, deployUnit, callback) {
-        var url = deployUnit.url || '';
+        var url = deployUnit ? (deployUnit.url || '') : '';
 
         if (url.startsWith(FILE)) {
 //            this.resolvers[FILE][action](deployUnit, callback);

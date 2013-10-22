@@ -215,47 +215,45 @@ var FakeConsole = AbstractComponent.extend({
   // ...
 
   in_inMsg: function (msg) {
-    var self = this;
-    this.messages.push(msg);
+    this.messages.push('> '+msg);
 
-    var msgListHTML = generateHTML(this.messages);
-
-    this.setUIContent(msgListHTML, function (err) {
+	// callback function of setUIContent is bound to 'this' so you can refer to 'this' in it and get access to your component
+    this.setUIContent(this.generateHTML(), function (err) {
       if (err) {
         // Something went wrong while setting view content - which means that we are certainly running on the
         // console-based platform: fall back to KevoreeLogger then
-        self.log.info('========== FakeConsole ==========');
-        for (var i in self.messages) {
-          self.log.info(self.messages[i]);
+        this.log.info('========== FakeConsole ==========');
+        for (var i in this.messages) {
+          this.log.info(this.messages[i]);
         }
       }
     });
+  },
+  
+  generateHTML: function () {
+	html = '<ul>';
+	for (var i in this.messages) {
+		html += '<li>'+this.messages[i]+'</li>';
+	}
+	html += '</ul>';
+
+    return html;
   },
 
   out_sendMsg: function () {}
 });
 
-var generateHTML = function (messages) {
-  var html = '';
-
-  // yeah kevoree-browser-runtime uses bootstrap 3.0 so we can use 'list-unstyled' too :)
-  html += '<ul class="list-unstyled">';
-  for (var i in messages) {
-    html += '<li>'+messages[i]+'</li>';
-  }
-  html += '</ul>'
-
-  return html;
-}
-
 module.exports = FakeConsole;
 ```
 Well, this is pretty straightforward:  
 
- * add message to list
+ * create a message list in `construct()`
+ * add message to list in our input port function
  * generate HTML with message list with some `<ul>` and `<li>`
  
 And then we use AbstractComponent's API by calling `this.setUIContent(...)`. This method takes 2 parameters, the first one is some HTML in a string and the second is a callback `function (err) {...}`.  
+> Note that `setUIContent(html, callback)` will bound the callback function to 'this'. Using the native Javascript `.bind()` method that allows one to change a function context. So, you can use `this` inside of your callback and it will refer to your component instance :)
+
 If `err` is defined, then KevoreeUI did not managed to create a UI for your component, resulting in our case, to fall back to the use of `KevoreeLogger` because it must certainly mean that we are running on `kevoree-nodejs-runtime`. (yeah I'll improve this API asap to provide a better way to handle KevoreeUI's failures)  
 And that's it for incoming messages. Good job folks!
 
@@ -270,10 +268,87 @@ var FakeConsole = AbstractComponent.extend({
 });
 ```
 
-Well that's not much, but __it is fine__. You are not supposed to write more there because this function will be bound later (at runtime) to a real useful function by the Kevoree framework.
+Well that's not much, but __it is fine__. You are not supposed to write more there because this function will be bound later (at runtime) to another function by the Kevoree framework.  
 
 However, we should use this function (even though it hasn't been bound yet) in our component to send messages to Kevoree channels when the user type something in an input field (for KevoreeUI) or never in shell-based platform because we are lazy and we don't want to deal with prompt for now.
 
+To do such thing, we will add some code in the `start()` method of our component. This method is called when our component is started by the Kevoree runtime. Initiate UI on start-up seems legit :)
+
+```javascript
+var BTN_ID   = 'send-msg-btn',
+    INPUT_ID = 'send-msg-input';
+
+var FakeConsole = AbstractComponent.extend({
+  // ...
+
+  /**
+   * this method will be called by the Kevoree runtime when your component has to start
+   */
+  start: function () {
+    this.log.debug('start method');
+
+    this.setUIContent(this.generateHTML(), function (err) {
+      if (!err) this.registerDOMListeners();
+    });
+  },
+
+  // ...
+  
+  generateHTML: function () {
+    var html = '<div>' +
+      '<input id="'+INPUT_ID+'" type="text" placeholder="Say something :)"/>' +
+      '<button id="'+BTN_ID+'">Send</button>' +
+      '</div>';
+
+    if (this.messages.length > 0) {
+      html += '<ul>';
+      for (var i in this.messages) {
+        html += '<li>'+this.messages[i]+'</li>';
+      }
+      html += '</ul>';
+    }
+
+    return html;
+  },
+
+  registerDOMListeners: function () {
+    var sendBtn    = this.getUIRoot().querySelector('#'+BTN_ID),
+        inputField = this.getUIRoot().querySelector('#'+INPUT_ID);
+
+    var sendMsg = function() {
+      if (inputField.value.length > 0) {
+        // add message to our message list
+        this.messages.push('< '+inputField.value);
+        // update message list
+        this.updateMessageList();
+        // send it through output port 'sendMsg'
+        this.out_sendMsg(inputField.value);
+      }
+    }.bind(this);
+
+    // send message on click event if value.length > 0
+    sendBtn.onclick = sendMsg;
+
+    // send message on 'enter' key keyup event if value.length > 0
+    inputField.onkeyup = function (e) {
+      if (e && e.keyCode && e.keyCode == 13) {
+        // 'enter' key pressed
+        sendMsg();
+      }
+    };
+  }
+});
+```
+
+We call `setUIContent(...)` with the returned string of `generateHTML()` (that we have improved a bit). On our `<input>` and `<button>` we have set IDs in order to find them later and bind to them listeners to trigger message sending.  
+For the listeners we have used `getUIRoot()` from __AbstractComponent__'s API. This method returns your component's DOM root element. (which is, btw, a ShadowDOM element)  
+
+The _magic_ happens in our inner function `sendMsg()`. To send a message through our output port, we only have to call its method like this:  
+```javascript
+self.out_sendMsg(inputField.value);
+```
+
+#### TODO FINISH TURORIAL
 
 
 ## Folder content

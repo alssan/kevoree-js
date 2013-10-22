@@ -12,45 +12,19 @@ module.exports = AdaptationPrimitive.extend({
     if (mBinding.port.eContainer().eContainer().name == this.node.getName()) {
       // this binding is related to the current node platform
       var chanInstance = this.mapper.getObject(mBinding.hub.path()),
-        compInstance = this.mapper.getObject(mBinding.port.eContainer().path());
+          compInstance = this.mapper.getObject(mBinding.port.eContainer().path()),
+          portInstance = this.mapper.getObject(mBinding.port.path());
 
       if (chanInstance && compInstance) {
         try {
-          var provided = mBinding.port.eContainer().provided;
-          for (var i=0; i < provided.size(); i++) {
-            var portInstance = this.mapper.getObject(provided.get(i).path());
-            portInstance.setComponent(compInstance);
-            portInstance.setChannel(chanInstance);
+          portInstance.setComponent(compInstance);
+          portInstance.setChannel(chanInstance);
 
+          if (this.isInputPortType(mBinding.port)) {
             compInstance.addInternalInputPort(portInstance);
             chanInstance.addInternalInputPort(portInstance);
-
-            var remoteNodeNames = [];
-            var relatedHubBindings = mBinding.hub.bindings;
-            for (var j=0; j < relatedHubBindings.size(); j++) {
-              if (relatedHubBindings.get(j).port != provided.get(i)) {
-                remoteNodeNames.push(relatedHubBindings.get(j).port.eContainer().eContainer().name);
-              }
-            }
-            chanInstance.addInternalRemoteNodes(provided.get(i).path(), remoteNodeNames);
-          }
-
-          var required = mBinding.port.eContainer().required;
-          for (var i=0; i < required.size(); i++) {
-            var portInstance = this.mapper.getObject(required.get(i).path());
-            portInstance.setComponent(compInstance);
-            portInstance.setChannel(chanInstance);
-
+          } else {
             compInstance.addInternalOutputPort(portInstance);
-
-            var remoteNodeNames = [];
-            var relatedHubBindings = mBinding.hub.bindings;
-            for (var j=0; j < relatedHubBindings.size(); j++) {
-              if (relatedHubBindings.get(j).port != required.get(i)) {
-                remoteNodeNames.push(relatedHubBindings.get(j).port.eContainer().eContainer().name);
-              }
-            }
-            chanInstance.addInternalRemoteNodes(required.get(i).path(), remoteNodeNames);
           }
 
           return callback();
@@ -74,5 +48,26 @@ module.exports = AdaptationPrimitive.extend({
     cmd.execute(callback);
 
     return;
+  },
+
+  isInputPortType: function (kPort) {
+    var kCompTD = kPort.eContainer().typeDefinition;
+    var inputs = kCompTD.provided ? kCompTD.provided.iterator() : null;
+    if (inputs) {
+      while (inputs.hasNext()) {
+        var input = inputs.next();
+        if (input.name == kPort.portTypeRef.name) return true;
+      }
+    }
+
+    var outputs = kCompTD.required ? kCompTD.required.iterator() : null;
+    if (outputs) {
+      while (outputs.hasNext()) {
+        var output = outputs.next();
+        if (output.name == kPort.portTypeRef.name) return false;
+      }
+    }
+
+    return false;
   }
 });

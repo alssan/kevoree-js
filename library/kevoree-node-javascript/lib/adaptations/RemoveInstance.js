@@ -18,7 +18,7 @@ module.exports = AdaptationPrimitive.extend({
   execute: function (_super, callback) {
     _super.call(this, callback);
 
-    var kInstance = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.objPath);
+    var kInstance = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.previousPath || this.trace.objPath);
 
     var instance = this.mapper.getObject(kInstance.path());
     if (instance != undefined && instance != null) {

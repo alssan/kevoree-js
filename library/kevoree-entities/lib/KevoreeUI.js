@@ -1,5 +1,5 @@
 var Class = require('pseudoclass'),
-    KevoreeLogger = require('./KevoreeLogger');
+    KevoreeLogger = require('kevoree-commons').KevoreeLogger;
 
 var KevoreeUI = Class({
   toString: 'KevoreeUI',
@@ -16,6 +16,10 @@ var KevoreeUI = Class({
 
   setRoot: function (root) {
     this.root = root;
+  },
+
+  getRoot: function () {
+    return this.root;
   },
 
   initialize: function (comp, initCmd, callback) {

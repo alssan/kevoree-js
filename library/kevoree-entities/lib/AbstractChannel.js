@@ -9,45 +9,40 @@ module.exports = KevoreeEntity.extend({
   toString: 'AbstractChannel',
 
   construct: function () {
-    this.remoteNodes = {};
     this.inputs = {};
   },
 
-  internalSend: function (portPath, msg) {
-    var remoteNodeNames = this.remoteNodes[portPath];
-    for (var remoteNodeName in remoteNodeNames) {
-      this.onSend(remoteNodeName, msg);
+  internalSend: function (outputPath, msg) {
+    for (var inputPath in this.inputs) {
+      this.onSend(outputPath, inputPath, msg);
     }
   },
 
   /**
    *
-   * @param remoteNodeName
+   * @param fromPortPath
+   * @param destPortPath
    * @param msg
    */
-  onSend: function (remoteNodeName, msg) {
+  onSend: function (fromPortPath, destPortPath, msg) {},
 
-  },
-
-  remoteCallback: function (msg) {
-    for (var name in this.inputs) {
-      this.inputs[name].getCallback().call(this, msg);
-    }
-  },
-
-  addInternalRemoteNodes: function (portPath, remoteNodes) {
-    this.remoteNodes[portPath] = remoteNodes;
+  /**
+   *
+   * @param destPortPath
+   * @param msg
+   */
+  localDispatch: function (destPortPath, msg) {
+    var port = this.inputs[destPortPath];
+    var comp = port.getComponent();
+    // call component's input port function with 'msg' parameter
+    comp[port.getInputPortMethodName()](msg);
   },
 
   addInternalInputPort: function (port) {
-    this.inputs[port.getName()] = port;
-  },
-
-  removeInternalRemoteNodes: function (portPath) {
-    delete this.remoteNodes[portPath];
+    this.inputs[port.getPath()] = port;
   },
 
   removeInternalInputPort: function (port) {
-    delete this.inputs[port.getName()];
+    delete this.inputs[port.getPath()];
   }
 });
