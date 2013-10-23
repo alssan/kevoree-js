@@ -32,11 +32,12 @@ var <%= entityName %> = <%= entityType %>.extend({
   },
 
   /**
-   *
-   * @param remoteNodeName
+   * this method will be called each time a message will be received by this channel
+   * @param fromPortPath
+   * @param destPortPath
    * @param msg
    */
-  onSend: function (remoteNodeName, msg) {
+  onSend: function (fromPortPath, destPortPath, msg) {
     // TODO
   }
 });
