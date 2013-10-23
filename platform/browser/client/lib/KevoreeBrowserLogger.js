@@ -92,20 +92,36 @@ var logger = (function () {
 var KevoreeBrowserLogger = KevoreeLogger.extend({
     toString: 'KevoreeBrowserLogger',
 
-    info: function (msg) {
-        logger(INFO, this.tag, msg);
+    info: function (tag, msg) {
+      if (typeof(msg) == 'undefined') {
+        msg = tag;
+        tag = this.tag;
+      }
+        logger(INFO, tag, msg);
     },
 
-    warn: function (msg) {
-        logger(WARN, this.tag, msg);
+    warn: function (tag, msg) {
+      if (typeof(msg) == 'undefined') {
+        msg = tag;
+        tag = this.tag;
+      }
+        logger(WARN, tag, msg);
     },
 
-    debug: function (msg) {
-        logger(DEBUG, this.tag, msg);
+    debug: function (tag, msg) {
+      if (typeof(msg) == 'undefined') {
+        msg = tag;
+        tag = this.tag;
+      }
+        logger(DEBUG, tag, msg);
     },
 
-    error: function (msg) {
-        logger(ERROR, this.tag, msg);
+    error: function (tag, msg) {
+      if (typeof(msg) == 'undefined') {
+        msg = tag;
+        tag = this.tag;
+      }
+        logger(ERROR, tag, msg);
     }
 });
 

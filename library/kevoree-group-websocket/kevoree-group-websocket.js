@@ -38,7 +38,7 @@ var WebSocketGroup = AbstractGroup.extend({
     if (this.dictionary.getValue('port') != undefined) {
       this.server = this.startWSServer(this.dictionary.getValue('port'));
     } else {
-      this.log.debug("There is no 'port' attribute defined: starting a WebSocket client on this node");
+      this.log.debug(this.toString(), "There is no 'port' attribute defined: starting a WebSocket client on this node");
       this.client = this.startWSClient();
     }
   },
@@ -159,7 +159,7 @@ var WebSocketGroup = AbstractGroup.extend({
     // create a WebSocket server on specified port
     var self = this;
     var server = new WSServer({port: port});
-    this.log.info("WebSocket server started: "+ server.options.host+":"+port);
+    this.log.info(this.toString(), "WebSocket server started: "+ server.options.host+":"+port);
 
     server.on('connection', function(ws) {
       ws.on('message', function(data, flag) {
@@ -202,7 +202,7 @@ var WebSocketGroup = AbstractGroup.extend({
         group.kCore.deploy(model);
       };
       ws.onclose = function onClose() {
-        group.log.debug("WebSocketGroup info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
+        group.log.debug(this.toString(), "WebSocketGroup info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
       };
 
     } else {
@@ -287,13 +287,13 @@ var WebSocketGroup = AbstractGroup.extend({
         break;
 
       default:
-        this.log.error("Received control byte '"+controlByte+"': WebSocketGroup is unable to process this control byte");
+        this.log.error(this.toString(), "Received control byte '"+controlByte+"': WebSocketGroup is unable to process this control byte");
         break;
     }
   },
 
   onMasterServerPush: function (clientSocket, strData) {
-    this.log.info(clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PUSH");
+    this.log.info(this.toString(), clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PUSH");
 
     var jsonLoader = new kevoree.loader.JSONModelLoader();
     var model = jsonLoader.loadModelFromString(strData).get(0);
@@ -307,7 +307,7 @@ var WebSocketGroup = AbstractGroup.extend({
   },
 
   onMasterServerPull: function (clientSocket, strData) {
-    this.log.info(clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PULL (xmi)");
+    this.log.info(this.toString(), clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PULL (xmi)");
 
     var serializer = new kevoree.serializer.XMIModelSerializer();
     var strModel = serializer.serialize(this.kCore.getCurrentModel());
@@ -315,7 +315,7 @@ var WebSocketGroup = AbstractGroup.extend({
   },
 
   onMasterServerPullJSON: function (clientSocket, strData) {
-    this.log.info(clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PULL (json)");
+    this.log.info(this.toString(), clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PULL (json)");
 
     var serializer = new kevoree.serializer.JSONModelSerializer();
     var strModel = serializer.serialize(this.kCore.getCurrentModel());
@@ -324,13 +324,13 @@ var WebSocketGroup = AbstractGroup.extend({
 
   onMasterServerRegister: function (clientSocket, nodeName) {
     this.connectedNodes[nodeName] = clientSocket;
-    this.log.info("New registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+")");
+    this.log.info(this.toString(), "New registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+")");
 
     var self = this;
     clientSocket.on('close', function () {
       // on client disconnection : remove connected node entry from map
       delete self.connectedNodes.nodeName;
-      self.log.info("Registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+") left server.");
+      self.log.info(this.toString(), "Registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+") left server.");
     });
   }
 });

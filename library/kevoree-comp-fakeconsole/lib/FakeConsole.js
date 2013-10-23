@@ -23,7 +23,6 @@ var FakeConsole = AbstractComponent.extend({
    */
   start: function (_super) {
     _super.call(this);
-    this.log.debug('start method');
 
     this.setUIContent(this.generateHTML(), function (err) {
       if (!err) this.registerDOMListeners();
@@ -49,9 +48,9 @@ var FakeConsole = AbstractComponent.extend({
       if (err) {
         // Something went wrong while setting view content - which means that we are certainly running on the
         // console-based platform: fall back to KevoreeLogger then
-        this.log.info('========== FakeConsole ==========');
+        this.log.info(this.toString(), '========== FakeConsole ==========');
         for (var i in this.messages) {
-          this.log.info(this.messages[i]);
+          this.log.info(this.toString(), this.messages[i]);
         }
 
       } else {

@@ -18,7 +18,7 @@ var HelloWorldComponent = AbstractComponent.extend({
     _super.call(this);
     var self = this;
 
-    this.log.info('Hello world!');
+    this.log.info(this.toString(), 'Hello world!');
 
     this.id = setInterval(function () {
       // send a message through output port 'sendText' every 2 seconds
@@ -46,7 +46,7 @@ var HelloWorldComponent = AbstractComponent.extend({
 
   // print messages to std output when received from input port 'fake'
   in_fake: function (msg) {
-    this.log.info("Message received: "+ msg);
+    this.log.info(this.toString(), "Message received: "+ msg);
   }
 });
 

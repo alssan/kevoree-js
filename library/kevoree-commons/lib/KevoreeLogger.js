@@ -37,10 +37,6 @@ var KevoreeLogger = Class({
       tag = this.tag;
     }
     console.log('[DEBUG] '+tag+': '+msg);
-  },
-
-  setTag: function (tag) {
-    this.tag = tag;
   }
 });
 

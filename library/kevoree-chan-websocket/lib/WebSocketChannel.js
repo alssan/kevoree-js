@@ -21,7 +21,7 @@ var WebSocketChannel = AbstractChannel.extend({
     var port = this.dictionary.getValue('port');
     if (port == undefined) {
       port = 8088;
-      this.log.info('No port attribute specified for '+this.getName()+', using '+port+' as default.');
+      this.log.info(this.toString(), 'No port attribute specified for '+this.getName()+', using '+port+' as default.');
     }
     this.startWSServer(port);
   },
@@ -66,7 +66,7 @@ var WebSocketChannel = AbstractChannel.extend({
     } catch (err) {
       // if we end-up here it most certainly means that we are running on the browser
       // platform, and yeah, we can't create a server on browser platform, so...
-      this.log.warn('Are you trying to run a WebSocket server in kevoree-browser-runtime ? Sorry, I cannot do that :/');
+      this.log.warn(this.toString(), 'Are you trying to run a WebSocket server in kevoree-browser-runtime ? Sorry, I cannot do that :/');
     }
   },
 
