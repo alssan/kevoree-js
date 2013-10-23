@@ -32,7 +32,9 @@ var <%= entityName %> = <%= entityType %>.extend({
   },
 
   /**
-   * this method will be called each time a message will be received by this channel
+   * When a channel is bound with an output port this method will be called 'n' times
+   * when this output port will send a message ('n' corresponding to the number of input port
+   * connected to this channel)
    * @param fromPortPath
    * @param destPortPath
    * @param msg
