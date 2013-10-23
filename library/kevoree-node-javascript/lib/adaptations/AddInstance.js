@@ -72,20 +72,16 @@ module.exports = AdaptationPrimitive.extend({
 
   doSpecificTypeProcess: function (kInstance) {
     if (Kotlin.isType(kInstance.typeDefinition, kevoree.impl.ComponentTypeImpl)) {
-      var inputs = kInstance.provided ? kInstance.provided.iterator() : null;
-      if (inputs) {
-        while (inputs.hasNext()) {
-          var input = inputs.next();
-          this.mapper.addEntry(input.path(), new Port(input.portTypeRef.name, input.path()));
-        }
+      var provided = kInstance.provided;
+      for (var i=0; i < provided.size(); i++) {
+        var input = provided.get(i);
+        this.mapper.addEntry(input.path(), new Port(input.portTypeRef.name, input.path()));
       }
 
-      var outputs = kInstance.required ? kInstance.required.iterator() : null;
-      if (outputs) {
-        while (outputs.hasNext()) {
-          var output = outputs.next();
-          this.mapper.addEntry(output.path(), new Port(output.portTypeRef.name, output.path()));
-        }
+      var required = kInstance.required;
+      for (var i=0; i < required.size(); i++) {
+        var output = required.get(i);
+        this.mapper.addEntry(output.path(), new Port(output.portTypeRef.name, output.path()));
       }
     }
   }

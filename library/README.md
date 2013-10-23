@@ -348,7 +348,66 @@ The _magic_ happens in our inner function `sendMsg()`. To send a message through
 self.out_sendMsg(inputField.value);
 ```
 
-#### TODO FINISH TURORIAL
+#### Step 6
+Ok, so we have a new Kevoree component that should work now. Lets test it!  
+The easiest way to test your component is to __publish__ them on `npm` registry. By doing so, and if you followed the naming convention (_kevoree-TYPE-NAME_) you will get access to it through the Kevoree Web Editor.
+
+> Because `kevoree-comp-fakeconsole` already exist in npm registry, you won't be able to publish it.
+
+But the procedure to publish a module on npm registry is really simple. And with the pre-configured `package.json` that `yo kevoree` made for you, you will only need to type 2 commands to get your module published:  
+
+```sh
+npm install
+npm publish
+```
+
+`npm install` will update your `kevlib.json` file using __kevoree-gen-model__, and  
+`npm publish` will publish your module on npm registry (you will need to create an account on npm in order to do so)  
+
+##### Test FakeConsole with KevoreeWebEditor & kevoree-browser-runtime
+> Follow the installation steps described [here](https://github.com/dukeboard/kevoree-js/blob/master/README.md) to set up Kevoree's tools.  
+
+Once you have started your own __kevoree-browser-runtime__ server, you will be able to __start__ and __deploy__ a new node in your browser (http://localhost:42042), then open the web editor (http://localhost:3042):  
+
+```
+Kevoree Web Editor actions:
+> File
+> Open from node
+> ws://localhost:8000  (this is the default port of the WebSocketGroup hosted by your kevoree-browser-runtime server platform)
+```
+
+Now you should see something like this in the Web editor:
+![open from node browser runtime](https://github-camo.global.ssl.fastly.net/4a43f99d8596152b76ffa1b953289e007e6a9a0d/687474703a2f2f6934322e74696e797069632e636f6d2f333063796b6a6f2e706e67)
+
+What you want to do, to test out __FakeConsole__, is loading the library in the Web editor and add it to `node0` (which is, by default, the node you just started in your browser at localhost:42042)  
+
+```
+Kevoree Web Editor actions:
+> Model
+> Load Core Libraries
+> Click on 'Javascript' tab
+> Select kevoree-comp-fakeconsole and kevoree-chan-local
+> Click on 'Load'
+```
+
+Now you should see `FakeConsole` and `LocalChannel` in the Web editor Javascript libraries:
+![KWE loaded fakeconsole](http://i43.tinypic.com/sy8mls.png)
+
+So you can drag'n'drop FakeConsole component, and LocalChannel channel in the editor model zone to get something like this:  
+![KWE model fakeconsoles](http://i43.tinypic.com/9j25uv.png)
+
+And then, you double-click on `server-node` and click __PUSH__ in order for the Web editor to push this new model to __kevoree-browser-runtime__.  
+
+![KWE push fakeconsoles model](http://i43.tinypic.com/2a8j9ki.png)
+
+Voilà!  
+If you switch back to your opened browser tab on localhost:42042 (the browser runtime one), you should have two new tabs opened next to the _Console_.  
+Those two tabs are your components UIs.  
+
+![browser runtime fakeconsoles](http://i42.tinypic.com/1syskg.png)
+![playing with consoles](http://i40.tinypic.com/21awkxu.png)
+
+You should now be ready to start messing with __kevoree-js__ :)
 
 
 ## Folder content

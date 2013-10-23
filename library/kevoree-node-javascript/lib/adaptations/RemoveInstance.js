@@ -20,17 +20,20 @@ module.exports = AdaptationPrimitive.extend({
 
     var kInstance = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.previousPath || this.trace.objPath);
 
-    var instance = this.mapper.getObject(kInstance.path());
-    if (instance != undefined && instance != null) {
-      this.mapper.removeEntry(kInstance.path());
-      this.doSpecificTypeProcess(kInstance);
-      callback(null);
-      return;
+    if (kInstance) {
+      var instance = this.mapper.getObject(kInstance.path());
+      if (instance != undefined && instance != null) {
+        this.mapper.removeEntry(kInstance.path());
+        this.doSpecificTypeProcess(kInstance);
+        return callback();
 
-    } else {
-      callback(new Error("RemoveInstance error: unable to remove instance "+kInstance.path()));
-      return;
+      } else {
+        callback(new Error("RemoveInstance error: unable to remove instance "+kInstance.path()));
+        return;
+      }
     }
+
+    return callback();
   },
 
   undo: function (_super, callback) {
