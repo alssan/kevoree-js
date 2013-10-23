@@ -9,7 +9,7 @@ module.exports = AdaptationPrimitive.extend({
 
     var mBinding = this.node.getKevoreeCore().getCurrentModel().findByPath(this.trace.previousPath || this.trace.objPath);
 
-    if (mBinding.port.eContainer().eContainer().name == this.node.getName()) {
+    if (mBinding && mBinding.port.eContainer().eContainer().name == this.node.getName()) {
       // this binding is related to the current node platform
       var chanInstance = this.mapper.getObject(mBinding.hub.path()),
           compInstance = this.mapper.getObject(mBinding.port.eContainer().path()),
