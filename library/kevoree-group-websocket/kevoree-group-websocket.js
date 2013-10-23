@@ -1,13 +1,12 @@
 var AbstractGroup   = require('kevoree-entities').AbstractGroup,
-  KevoreeLogger   = require('kevoree-commons').KevoreeLogger,
-  kevoree         = require('kevoree-library').org.kevoree,
-  WebSocket       = require('ws'),
-  WSServer        = require('ws').Server,
+    kevoree         = require('kevoree-library').org.kevoree,
+    WebSocket       = require('ws'),
+    WSServer        = require('ws').Server,
 
-  PULL        = 0,
-  PUSH        = 1,
-  REGISTER    = 3,
-  PULL_JSON   = 42;
+    PULL        = 0,
+    PUSH        = 1,
+    REGISTER    = 3,
+    PULL_JSON   = 42;
 
 /**
  * WebSocketGroup: Kevoree group that handles model transfers through WebSocket protocol
@@ -25,8 +24,6 @@ var WebSocketGroup = AbstractGroup.extend({
   // END Dictionary attributes =====
 
   construct: function () {
-    this.log = new KevoreeLogger(this.toString());
-
     this.server = null;
     this.client = null;
     this.connectedNodes = {};

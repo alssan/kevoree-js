@@ -26,7 +26,10 @@ var KevoreeEntity = Class({
         this.nodeName = null;
     },
 
-    start: function () {},
+    start: function () {
+      this.log = this.kCore.getLogger();
+      this.log.setTag(this.toString());
+    },
 
     stop: function () {},
 

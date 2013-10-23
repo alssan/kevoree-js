@@ -2,8 +2,7 @@
 // you can replace AbstractComponent here and use your own
 // ex: var MyComp = require('./path/to/MyComp')
 // the only thing needed is that the top level component extends AbstractComponent :)
-var AbstractComponent = require('kevoree-entities').AbstractComponent,
-    KevoreeLogger     = require('kevoree-commons').KevoreeLogger;
+var AbstractComponent = require('kevoree-entities').AbstractComponent;
 
 /**
  * Kevoree component
@@ -20,7 +19,8 @@ var <%= entityName %> = <%= entityType %>.extend({
   /**
    * this method will be called by the Kevoree platform when your component has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     // TODO
   },
 

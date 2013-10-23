@@ -1,5 +1,4 @@
 var AbstractChannel = require('kevoree-entities').AbstractChannel,
-    KevoreeLogger   = require('kevoree-commons').KevoreeLogger,
     WebSocket       = require('ws'),
     WebSocketServer = require('ws').Server;
 
@@ -11,14 +10,14 @@ var WebSocketChannel = AbstractChannel.extend({
   toString: 'WebSocketChannel',
 
   construct: function () {
-    this.log = new KevoreeLogger(this.toString());
     this.server = null;
   },
 
   /**
    * this method will be called by the Kevoree platform when your channel has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     var port = this.dictionary.getValue('port');
     if (port == undefined) {
       port = 8088;

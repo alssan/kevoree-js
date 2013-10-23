@@ -6,8 +6,7 @@
     "prepublish": "node node_modules/kevoree-gen-model"
   },
   "dependencies": {
-    "kevoree-entities": "~0.0.1",
-    "kevoree-commons": "~0.0.1"
+    "kevoree-entities": "~0.0.1"
   },
   "devDependencies": {
     "kevoree-gen-model": "~0.0.1"

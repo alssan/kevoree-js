@@ -2,8 +2,7 @@
 // you can replace AbstractGroup here and use your own
 // ex: var MyGroup = require('./path/to/MyGroup')
 // the only thing needed is that the top level group extends AbstractGroup :)
-var AbstractGroup = require('kevoree-entities').AbstractGroup,
-    KevoreeLogger = require('kevoree-commons').KevoreeLogger;
+var AbstractGroup = require('kevoree-entities').AbstractGroup;
 
 /**
  * Kevoree group
@@ -20,7 +19,8 @@ var <%= entityName %> = <%= entityType %>.extend({
   /**
    * this method will be called by the Kevoree platform when your group has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     // TODO
   },
 

@@ -2,8 +2,7 @@
 // you can replace AbstractComponent here and use your own
 // ex: var MyComp = require('./path/to/MyComp')
 // the only thing needed is that the top level component extends AbstractComponent :)
-var AbstractComponent = require('kevoree-entities').AbstractComponent,
-    KevoreeLogger     = require('kevoree-commons').KevoreeLogger;
+var AbstractComponent = require('kevoree-entities').AbstractComponent;
 
 var BTN_ID   = 'send-msg-btn',
     INPUT_ID = 'send-msg-input';
@@ -16,14 +15,14 @@ var FakeConsole = AbstractComponent.extend({
   toString: 'FakeConsole',
 
   construct: function () {
-    this.log = new KevoreeLogger(this.toString());
     this.messages = [];
   },
 
   /**
    * this method will be called by the Kevoree platform when your component has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     this.log.debug('start method');
 
     this.setUIContent(this.generateHTML(), function (err) {

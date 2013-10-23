@@ -284,6 +284,10 @@ module.exports = Class({
     return this.uiCommand;
   },
 
+  getLogger: function () {
+    return this.log;
+  },
+
   on: function (event, callback) {
     this.emitter.addListener(event, callback);
   }

@@ -1,5 +1,4 @@
-var AbstractComponent = require('kevoree-entities').AbstractComponent,
-    KevoreeLogger     = require('kevoree-commons').KevoreeLogger;
+var AbstractComponent = require('kevoree-entities').AbstractComponent;
 
 /**
  * Kevoree component
@@ -9,14 +8,14 @@ var HelloWorldComponent = AbstractComponent.extend({
   toString: 'HelloWorldComponent',
 
   construct: function () {
-    this.log = new KevoreeLogger(this.toString());
     this.id = null;
   },
 
   /**
    *
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     var self = this;
 
     this.log.info('Hello world!');

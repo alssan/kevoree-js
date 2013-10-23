@@ -2,8 +2,7 @@
 // you can replace AbstractChannel here and use your own
 // ex: var MyChan = require('./path/to/MyChan')
 // the only thing needed is that the top level channel extends AbstractChannel :)
-var AbstractChannel = require('kevoree-entities').AbstractChannel,
-    KevoreeLogger   = require('kevoree-commons').KevoreeLogger;
+var AbstractChannel = require('kevoree-entities').AbstractChannel;
 
 /**
  * Kevoree channel
@@ -20,7 +19,8 @@ var <%= entityName %> = <%= entityType %>.extend({
   /**
    * this method will be called by the Kevoree platform when your channel has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     // TODO
   },
 
