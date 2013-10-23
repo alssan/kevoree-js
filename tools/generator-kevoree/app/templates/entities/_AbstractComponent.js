@@ -11,11 +11,6 @@ var AbstractComponent = require('kevoree-entities').AbstractComponent;
 var <%= entityName %> = <%= entityType %>.extend({
   toString: '<%= entityName %>',
 
-  construct: function () {
-    this.log = new KevoreeLogger(this.toString());
-
-  },
-
   /**
    * this method will be called by the Kevoree platform when your component has to start
    */

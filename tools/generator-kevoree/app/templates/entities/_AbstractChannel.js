@@ -11,11 +11,6 @@ var AbstractChannel = require('kevoree-entities').AbstractChannel;
 var <%= entityName %> = <%= entityType %>.extend({
   toString: '<%= entityName %>',
 
-  construct: function () {
-    this.log = new KevoreeLogger(this.toString());
-
-  },
-
   /**
    * this method will be called by the Kevoree platform when your channel has to start
    */

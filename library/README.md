@@ -81,8 +81,7 @@ Start your favorite editor so we can finally write some code for our component i
 // you can replace AbstractComponent here and use your own
 // ex: var MyComp = require('./path/to/MyComp')
 // the only thing needed is that the top level component extends AbstractComponent :)
-var AbstractComponent = require('kevoree-entities').AbstractComponent,
-    KevoreeLogger     = require('kevoree-commons').KevoreeLogger;
+var AbstractComponent = require('kevoree-entities').AbstractComponent;
 
 /**
  * Kevoree component
@@ -91,15 +90,11 @@ var AbstractComponent = require('kevoree-entities').AbstractComponent,
 var FakeConsole = AbstractComponent.extend({
   toString: 'FakeConsole',
 
-  construct: function () {
-    this.log = new KevoreeLogger(this.toString());
-
-  },
-
   /**
    * this method will be called by the Kevoree platform when your component has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this);
     // TODO
   },
 
@@ -208,7 +203,6 @@ var FakeConsole = AbstractComponent.extend({
   toString: 'FakeConsole',
 
   construct: function () {
-    this.log = new KevoreeLogger(this.toString());
     this.messages = [];
   },
 
@@ -284,7 +278,8 @@ var FakeConsole = AbstractComponent.extend({
   /**
    * this method will be called by the Kevoree runtime when your component has to start
    */
-  start: function () {
+  start: function (_super) {
+    _super.call(this); // this is mandatory, it allows your entity to get its this.log back from KevoreeCore
     this.log.debug('start method');
 
     this.setUIContent(this.generateHTML(), function (err) {
