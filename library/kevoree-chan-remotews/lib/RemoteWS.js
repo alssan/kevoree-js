@@ -93,19 +93,14 @@ var RemoteWS = AbstractChannel.extend({
    * @param msg
    */
   onSend: function (fromPortPath, destPortPath, msg) {
-    console.log('onSend called with ', fromPortPath, destPortPath, msg);
-
     var sendMessage = function () {
-      console.log("sendMessage inner function");
       if (this.ws != null) {
-        console.log('readystate: '+this.ws.readyState);
         if (this.ws.readyState == 1) { // open according to http://dev.w3.org/html5/websockets/
 
           this.ws.send(JSON.stringify({ destPortPath: destPortPath, msg: msg }));
           return;
         }
       }
-      console.log("not connected, so try to send message later");
       // we are not currently connected to remote server, wait a little and try again
       var timeoutID = setTimeout(sendMessage, 2000);
       this.timeoutIDs.push(timeoutID);

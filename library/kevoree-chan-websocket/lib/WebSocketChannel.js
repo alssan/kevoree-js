@@ -22,11 +22,8 @@ var WebSocketChannel = AbstractChannel.extend({
     _super.call(this);
 
     var port = this.dictionary.getValue('port');
-    if (typeof(port) == 'undefined' || port.length == 0) {
-      this.startWSClient();
-    } else {
-      this.startWSServer(port);
-    }
+    if (typeof(port) == 'undefined' || port.length == 0) this.startWSClient();
+    else this.startWSServer(port);
   },
 
   /**
