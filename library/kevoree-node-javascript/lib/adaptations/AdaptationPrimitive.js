@@ -1,6 +1,7 @@
 var Class   = require('pseudoclass'),
   Kotlin = require('kevoree-kotlin'),
-  kevoree = require('kevoree-library').org.kevoree;
+  kevoree = require('kevoree-library').org.kevoree,
+  KevoreeLogger = require('kevoree-commons').KevoreeLogger;
 
 /**
  * Abstract AdaptationPrimitive command
@@ -25,11 +26,12 @@ module.exports = Class({
     this.mapper = mapper;
     this.adaptModel = model;
     this.trace = trace;
+    this.log = this.node.getKevoreeCore().getLogger();
   },
 
   /**
-   * Executes adaption primitive logics
-   * @param callback Function(err, [args]) if err != null => something went wrong
+   * Executes adaptation primitive logics
+   * @param callback Function(err, [args]) if 'err' is defined => something went wrong
    */
   execute: function (callback) {
     if (callback == undefined || callback == null || typeof(callback) != 'function') {

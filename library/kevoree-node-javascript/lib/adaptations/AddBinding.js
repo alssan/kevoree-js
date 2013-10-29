@@ -21,12 +21,26 @@ module.exports = AdaptationPrimitive.extend({
           portInstance.setChannel(chanInstance);
 
           if (this.isInputPortType(mBinding.port)) {
+            // binding related port is an 'in' port type
             compInstance.addInternalInputPort(portInstance);
             chanInstance.addInternalInputPort(portInstance);
           } else {
+            // binding related port is an 'out' port type
+            // so we need to get all this channel 'in' ports
+            // and give them to this chan fragment
             compInstance.addInternalOutputPort(portInstance);
+
+            // retrieve every bindings related to this binding chan
+            var bindings = mBinding.hub.bindings.iterator();
+            while (bindings.hasNext()) {
+              var binding = bindings.next();
+              if (binding != mBinding) { // ignore this binding cause we are already processing it
+                chanInstance.addInternalInputPort(this.mapper.getObject(binding.port.path()));
+              }
+            }
           }
 
+          this.log.debug(this.toString(), 'AddBinding: job done between '+compInstance.getName()+' and '+chanInstance.getName());
           return callback();
 
         } catch (err) {

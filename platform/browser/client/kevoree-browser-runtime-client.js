@@ -58,11 +58,16 @@ kevoreeCore.setBootstrapper(bootstrapper);
 kevoreeCore.setUICommand(function (compUIManager, callback) {
   try {
     var tabName = 'tab'+(parseInt(Math.random()*1000));
-    $('#tabs-li').append('<li><a href="#'+tabName+'" data-toggle="tab">'+compUIManager.getName()+'</a></li>');
+    $('#tabs-li').append('<li id="'+tabName+'_li"><a href="#'+tabName+'" data-toggle="tab">'+compUIManager.getName()+'</a></li>');
     $('#tabs-content').append('<div class="tab-pane" id="'+tabName+'"><div id="'+tabName+'_root" class="well"></div></div>');
     var rootDiv = document.querySelector('#'+tabName+'_root');
     rootDiv.createShadowRoot = rootDiv.createShadowRoot || rootDiv.webkitCreateShadowRoot;
     compUIManager.setRoot(rootDiv.createShadowRoot());
+    compUIManager.setDestroyCmd(function () {
+      var tabLi = document.querySelector('#'+tabName+'_li');
+      tabLi.parentNode.removeChild(tabLi);
+      rootDiv.parentNode.removeChild(rootDiv);
+    });
     return callback();
 
   } catch (err) {

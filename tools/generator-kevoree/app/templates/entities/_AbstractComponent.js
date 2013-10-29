@@ -22,7 +22,8 @@ var <%= entityName %> = <%= entityType %>.extend({
   /**
    * this method will be called by the Kevoree platform when your component has to stop
    */
-  stop: function () {
+  stop: function (_super) {
+    _super.call(this);
     // TODO
   }
 });

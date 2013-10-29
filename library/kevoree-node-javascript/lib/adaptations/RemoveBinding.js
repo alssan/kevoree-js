@@ -1,5 +1,5 @@
 var AdaptationPrimitive = require('./AdaptationPrimitive'),
-  AddBinding          = require('./AddBinding');
+    AddBinding          = require('./AddBinding');
 
 module.exports = AdaptationPrimitive.extend({
   toString: 'RemoveBinding',
@@ -24,6 +24,7 @@ module.exports = AdaptationPrimitive.extend({
             compInstance.removeInternalOutputPort(portInstance);
           }
 
+          this.log.debug(this.toString(), 'RemoveBinding: job done between '+compInstance.getName()+' and '+chanInstance.getName());
           return callback();
 
         } catch (err) {
@@ -35,6 +36,7 @@ module.exports = AdaptationPrimitive.extend({
       }
     }
 
+    this.log.debug(this.toString(), 'RemoveBinding: no work done with '+this.trace.toString());
     return callback();
   },
 

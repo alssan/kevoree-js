@@ -1,5 +1,5 @@
 var AbstractNode        = require('kevoree-entities').AbstractNode,
-  AdaptationEngine    = require('./lib/AdaptationEngine');
+    AdaptationEngine    = require('./lib/AdaptationEngine');
 
 var JavascriptNode = AbstractNode.extend({
   toString: 'JavascriptNode',
@@ -10,6 +10,7 @@ var JavascriptNode = AbstractNode.extend({
 
   start: function (_super) {
     _super.call(this);
+    this.adaptationEngine.setLogger(this.getKevoreeCore().getLogger());
   },
 
   /**

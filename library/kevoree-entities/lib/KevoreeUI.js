@@ -8,6 +8,7 @@ var KevoreeUI = Class({
     this.root = null;
     this.log = new KevoreeLogger(this.toString());
     this.name = '';
+    this.destroyCmd = null;
   },
 
   isReady: function () {
@@ -42,6 +43,14 @@ var KevoreeUI = Class({
 
   setContent: function (content) {
     this.root.innerHTML = content;
+  },
+
+  destroy: function () {
+    if (this.destroyCmd) this.destroyCmd();
+  },
+
+  setDestroyCmd: function (cmd) {
+    this.destroyCmd = cmd;
   },
 
   getName: function () {

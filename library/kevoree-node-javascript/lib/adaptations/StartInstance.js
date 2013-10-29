@@ -14,6 +14,7 @@ module.exports = AdaptationPrimitive.extend({
 
       if (instance != undefined && instance != null) {
         instance.start();
+        this.log.debug(this.toString(), 'StartInstance: job done for '+instance.getName());
         return callback();
 
       } else {

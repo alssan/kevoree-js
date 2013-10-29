@@ -34,7 +34,8 @@ var HelloWorldComponent = AbstractComponent.extend({
     });
   },
 
-  stop: function () {
+  stop: function (_super) {
+    _super.call(this);
     clearInterval(this.id);
     this.id = null;
   },

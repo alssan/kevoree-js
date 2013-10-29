@@ -15,6 +15,14 @@ var AbstractComponent = KevoreeEntity.extend({
     this.ui = new KevoreeUI();
   },
 
+  stop: function () {
+    if (this.ui.isReady()) {
+      // there is an UI running for this comp
+      // remove it
+      this.ui.destroy();
+    }
+  },
+
   addInternalInputPort: function (port) {
     this.inputs[port.getPath()] = port;
     if (typeof(this[AbstractComponent.IN_PORT+port.getName()]) === 'undefined') {

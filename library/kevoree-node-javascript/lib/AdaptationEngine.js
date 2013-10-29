@@ -144,6 +144,10 @@ var AdaptationEngine = Class({
     });
 
     return list;
+  },
+
+  setLogger: function (logger) {
+    this.log = logger;
   }
 });
 

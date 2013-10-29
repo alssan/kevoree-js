@@ -41,6 +41,7 @@ module.exports = AdaptationPrimitive.extend({
 
             this.mapper.addEntry(kInstance.path(), instance);
 
+            this.log.debug(this.toString(), 'AddInstance: job done for '+instance.getName());
             return callback();
 
           } catch (e) {
@@ -82,6 +83,12 @@ module.exports = AdaptationPrimitive.extend({
       for (var i=0; i < required.size(); i++) {
         var output = required.get(i);
         this.mapper.addEntry(output.path(), new Port(output.portTypeRef.name, output.path()));
+      }
+    } else if (Kotlin.isType(kInstance.typeDefinition, kevoree.impl.ChannelTypeImpl)) {
+      var bindings = kInstance.bindings.iterator();
+      while (bindings.hasNext()) {
+        var binding = bindings.next();
+        this.mapper.addEntry(binding.port.path(), new Port(binding.port.portTypeRef.name, binding.port.path()));
       }
     }
   }

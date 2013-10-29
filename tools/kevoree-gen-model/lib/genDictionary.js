@@ -21,10 +21,10 @@ module.exports = function (typeDef, obj) {
             // create a dictionary attribute
             var attr = factory.createDictionaryAttribute();
             attr.name               = prop.replace(KevoreeEntity.DIC, '');
-            attr.optional           = objAttr.optional || true;
+            attr.optional           = (typeof(objAttr.optional) == 'undefined') ? true : objAttr.optional;
             attr.state              = objAttr.state;
             attr.datatype           = objAttr.datatype;
-            attr.fragmentDependant  = objAttr.fragmentDependant || false;
+            attr.fragmentDependant  = (typeof(objAttr.fragmentDependant) == 'undefined') ? false : objAttr.fragmentDependant;
 
             // add attribute to dictionary
             dictionary.addAttributes(attr);

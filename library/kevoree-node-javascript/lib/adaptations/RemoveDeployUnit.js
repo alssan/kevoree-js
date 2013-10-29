@@ -20,6 +20,7 @@ module.exports = AdaptationPrimitive.extend({
         if (err) return callback(err);
 
         this.mapper.removeEntry(deployUnit.path());
+        this.log.debug(this.toString(), 'RemoveDeployUnit: job done on '+deployUnit.unitName);
         return callback();
       }.bind(this));
     }

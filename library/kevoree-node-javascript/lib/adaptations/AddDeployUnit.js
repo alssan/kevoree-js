@@ -1,5 +1,5 @@
 var AdaptationPrimitive = require('./AdaptationPrimitive'),
-    RemoveDeployUnit    = require('./RemoveDeployUnit');
+  RemoveDeployUnit    = require('./RemoveDeployUnit');
 
 /**
  * AddDeployUnit Adaptation command
@@ -7,44 +7,41 @@ var AdaptationPrimitive = require('./AdaptationPrimitive'),
  * @type {AddDeployUnit} extends AdaptationPrimitive
  */
 module.exports = AdaptationPrimitive.extend({
-    toString: 'AddDeployUnit',
+  toString: 'AddDeployUnit',
 
-    /**
-     *
-     * @param _super AdaptationPrimitive parent
-     * @param callback function: if this function first parameter != null it means that there is an error
-     */
-    execute: function (_super, callback) {
-        _super.call(this, callback);
+  /**
+   *
+   * @param _super AdaptationPrimitive parent
+   * @param callback function: if this function first parameter != null it means that there is an error
+   */
+  execute: function (_super, callback) {
+    _super.call(this, callback);
 
-        var deployUnit = this.adaptModel.findByPath(this.trace.previousPath),
-            that       = this;
+    var deployUnit = this.adaptModel.findByPath(this.trace.previousPath);
 
-        if (!this.mapper.hasObject(deployUnit.path())) {
-            var bootstrapper = that.node.getKevoreeCore().getBootstrapper();
-            bootstrapper.bootstrap(deployUnit, function (err) {
-                if (err) {
-                    callback(err);
-                    return;
-                }
+    if (!this.mapper.hasObject(deployUnit.path())) {
+      var bootstrapper = this.node.getKevoreeCore().getBootstrapper();
+      bootstrapper.bootstrap(deployUnit, function (err) {
+        if (err) return callback(err);
 
-                // bootstrap success: add deployUnit path & packageName into mapper
-                that.mapper.addEntry(deployUnit.path(), deployUnit.unitName);
-                return callback();
-            });
+        // bootstrap success: add deployUnit path & packageName into mapper
+        this.mapper.addEntry(deployUnit.path(), deployUnit.unitName);
+        this.log.debug(this.toString(), 'AddDeployUnit: job done for '+deployUnit.unitName);
+        return callback();
+      }.bind(this));
 
-        } else {
-            // this deploy unit is already installed, move on
-            return callback();
-        }
-    },
-
-    undo: function (_super, callback) {
-        _super.call(this, callback);
-
-        var cmd = new RemoveDeployUnit(this.node, this.mapper, this.adaptModel, this.trace);
-        cmd.execute(callback);
-
-        return;
+    } else {
+      // this deploy unit is already installed, move on
+      return callback();
     }
+  },
+
+  undo: function (_super, callback) {
+    _super.call(this, callback);
+
+    var cmd = new RemoveDeployUnit(this.node, this.mapper, this.adaptModel, this.trace);
+    cmd.execute(callback);
+
+    return;
+  }
 });
