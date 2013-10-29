@@ -10,7 +10,7 @@ module.exports = function cleanStuff() {
         files.forEach(function (file) {
             if (file != '.gitignore') {
                 fs.unlink(path.resolve(browseredLibzPath, file), function (err) {
-                    if (err) return console.err('Unlink error: '+err.message)
+                    if (err) return console.error('Unlink error: '+err.message)
                 });
             }
         });

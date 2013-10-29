@@ -39,12 +39,11 @@ var RemoteWS = AbstractChannel.extend({
       }.bind(this);
 
       this.ws.onmessage = function (e) {
-        try {
-          data = JSON.parse(data);
-          this.localDispatch(data.destPortPath, data.msg);
-        } catch (err) {
-          this.log.warn(this.toString(), 'Unable to process received message on "'+this.getName()+'". Dropping it.');
-        }
+        var data = '';
+        if (typeof(e) === 'string') data = e;
+        else data = e.data;
+
+        this.localDispatch(data);
       }.bind(this);
 
       this.ws.onclose = function () {
@@ -81,14 +80,14 @@ var RemoteWS = AbstractChannel.extend({
    * when this output port will send a message ('n' corresponding to the number of input port
    * connected to this channel)
    * @param fromPortPath
-   * @param destPortPath
+   * @param destPortPaths
    * @param msg
    */
-  onSend: function (fromPortPath, destPortPath, msg) {
+  onSend: function (fromPortPath, destPortPaths, msg) {
     var sendMessage = function () {
       if (this.ws != null) {
         if (this.ws.readyState == 1) { // open according to http://dev.w3.org/html5/websockets/
-          this.ws.send(JSON.stringify({ destPortPath: destPortPath, msg: msg }));
+          this.ws.send(msg);
           return;
         }
       }

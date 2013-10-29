@@ -13,29 +13,32 @@ module.exports = KevoreeEntity.extend({
   },
 
   internalSend: function (outputPath, msg) {
+    var paths = [];
     for (var inputPath in this.inputs) {
-      this.onSend(outputPath, inputPath, msg);
+      paths.push(inputPath);
     }
+    this.onSend(outputPath, paths, msg);
   },
 
   /**
    *
    * @param fromPortPath
-   * @param destPortPath
+   * @param destPortPaths Array
    * @param msg
    */
-  onSend: function (fromPortPath, destPortPath, msg) {},
+  onSend: function (fromPortPath, destPortPaths, msg) {},
 
   /**
-   *
-   * @param destPortPath
+   * Dispatch messages to all bound ports
    * @param msg
    */
-  localDispatch: function (destPortPath, msg) {
-    var port = this.inputs[destPortPath];
-    var comp = port.getComponent();
-    // call component's input port function with 'msg' parameter
-    comp[port.getInputPortMethodName()](msg);
+  localDispatch: function (msg) {
+    for (var path in this.inputs) {
+      var port = this.inputs[path];
+      var comp = port.getComponent();
+      // call component's input port function with 'msg' parameter
+      comp[port.getInputPortMethodName()](msg);
+    }
   },
 
   addInternalInputPort: function (port) {

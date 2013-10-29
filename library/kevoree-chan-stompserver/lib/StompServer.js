@@ -3,7 +3,7 @@
 // ex: var MyChan = require('./path/to/MyChan')
 // the only thing needed is that the top level channel extends AbstractChannel :)
 var AbstractChannel = require('kevoree-entities').AbstractChannel,
-    Stomp           = require('stomp-client');
+    Stomp           = require('./stomp');
 
 /**
  * Kevoree channel
@@ -15,6 +15,7 @@ var StompServer = AbstractChannel.extend({
   construct: function () {
     this.client = null;
     this.connected = false;
+    this.timeoutIDs = [];
   },
 
   /**
@@ -27,37 +28,36 @@ var StompServer = AbstractChannel.extend({
     var port  = this.dictionary.getValue('port');
     var topic = this.dictionary.getValue('topic') || '/';
 
-    this.client = new Stomp(host, port);
+    this.client = new Stomp.client('ws://'+host+':'+port);
 
-    this.client.on('connect', function() {
-      this.connected = true;
-    }.bind(this));
-    this.client.on('disconnect', function() {
-      this.connected = false;
-      // TODO auto-reconnect
-    }.bind(this));
-    this.client.on('error', function() {
-      this.connected = false;
-      // TODO auto-reconnect
-    }.bind(this));
+    var connectToServer = function () {
+      var successCb = function () {
+        this.clearTimeouts();
 
-    this.client.connect(function (sessionID) {
-      this.client.subscribe(topic, function(body, headers) {
-        try {
-          var msg = JSON.parse(body);
-          this.localDispatch(msg.destPortPath, msg.msg);
-        } catch (err) {
-          this.log.warn(this.toString(), 'Unable to process received message. Dropping it.');
-        }
-      }.bind(this));
-    }.bind(this));
+        this.client.subscribe(topic, function(message) {
+          this.localDispatch(message);
+        }.bind(this));
+      }.bind(this);
+
+      var errorCb = function () {
+        var timeoutID = setTimeout(connectToServer, 5000);
+        this.timeoutIDs.push(timeoutID);
+      }.bind(this);
+
+      this.client.connect('', '', successCb, errorCb);
+    }.bind(this);
+
+    connectToServer();
   },
 
   /**
    * this method will be called by the Kevoree platform when your channel has to stop
    */
   stop: function () {
-    if (this.client != null) this.client.disconnect();
+    if (this.client != null) {
+      this.client.disconnect();
+      this.client = null;
+    }
   },
 
   /**
@@ -65,15 +65,27 @@ var StompServer = AbstractChannel.extend({
    * when this output port will send a message ('n' corresponding to the number of input port
    * connected to this channel)
    * @param fromPortPath
-   * @param destPortPath
+   * @param destPortPaths
    * @param msg
    */
-  onSend: function (fromPortPath, destPortPath, msg) {
-    if (this.client != null && this.connected == true) {
-      var topic = this.dictionary.getValue('topic') || '/';
-      this.client.publish(topic, JSON.stringify({destPortPath: destPortPath, msg: msg}));
-    }
-    // TODO set later if not yet connected
+  onSend: function (fromPortPath, destPortPaths, msg) {
+    var sendMessage = function () {
+      if (this.client != null) {
+        var topic = this.dictionary.getValue('topic') || '/';
+        this.client.send(topic, { priority: 9 }, msg);
+      } else {
+        var timeoutID = setTimeout(sendMessage, 2000);
+        this.timeoutIDs.push(timeoutID);
+      }
+    }.bind(this);
+
+    sendMessage();
+  },
+
+  clearTimeouts: function () {
+    // clear all pending timeouts
+    for (var i in this.timeoutIDs) clearTimeout(this.timeoutIDs[i]);
+    this.timeoutIDs.length = 0; // reset timeouts
   },
 
   dic_host: {

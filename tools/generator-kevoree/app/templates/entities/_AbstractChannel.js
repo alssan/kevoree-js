@@ -31,10 +31,10 @@ var <%= entityName %> = <%= entityType %>.extend({
    * when this output port will send a message ('n' corresponding to the number of input port
    * connected to this channel)
    * @param fromPortPath
-   * @param destPortPath
+   * @param destPortPaths Array
    * @param msg
    */
-  onSend: function (fromPortPath, destPortPath, msg) {
+  onSend: function (fromPortPath, destPortPaths, msg) {
     // TODO
   }
 });

@@ -39,17 +39,17 @@ var WebSocketChannel = AbstractChannel.extend({
    * when this output port will send a message ('n' corresponding to the number of input port
    * connected to this channel)
    * @param fromPortPath
-   * @param destPortPath
+   * @param destPortPaths
    * @param msg
    */
-  onSend: function (fromPortPath, destPortPath, msg) {
+  onSend: function (fromPortPath, destPortPaths, msg) {
     var port  = this.dictionary.getValue('port') || 8088;
     var hosts = this.getNodeHosts(destPortPath);
 
     // TODO try to use every value in hosts[] not only the first one
     var client = new WebSocket('ws://'+hosts[0]+':'+port);
     client.onopen = function () {
-      client.send(JSON.stringify({ destPortPath: destPortPath, msg: msg }));
+      client.send(msg);
       this.log.debug(this.toString(), 'Connection to server made for channel (message should have been sent!)');
     }.bind(this);
   },
@@ -158,8 +158,7 @@ var WebSocketChannel = AbstractChannel.extend({
  * @param data
  */
 var localDispatchHandler = function (data) {
-  var jsonMsg = JSON.parse(data);
-  this.localDispatch(jsonMsg.destPortPath, jsonMsg.msg);
+  this.localDispatch(data);
 }
 
 module.exports = WebSocketChannel;

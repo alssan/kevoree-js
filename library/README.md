@@ -167,8 +167,7 @@ Good question! If you take a closer look to `package.json` you should notice tha
         "prepublish": "node node_modules/kevoree-gen-model"
     },
 ```
-So, each time you run `npm install` or `npm publish`, this **prepublish** script should be run.  
-(/!\ Seems like there is a bug in current npm version => `npm publish` do NOT trigger **prepublish** script :/)
+So, each time you run `npm publish`, this **prepublish** script should be run.
 
 #### Step 5
 Ok now that we have an input and an output port for our component, we can add some code to their function in order for them to really do stuff for us.  
@@ -356,8 +355,8 @@ npm install
 npm publish
 ```
 
-`npm install` will update your `kevlib.json` file using __kevoree-gen-model__, and  
-`npm publish` will publish your module on npm registry (you will need to create an account on npm in order to do so)  
+`npm install` will install all npm dependencies required by your module and
+`npm publish` will update your `kevlib.json` file using __kevoree-gen-model__, and publish your module on npm registry (you will need to create an account on npm in order to do so)
 
 ##### Test FakeConsole with KevoreeWebEditor & kevoree-browser-runtime
 > Follow the installation steps described [here](https://github.com/dukeboard/kevoree-js/blob/master/README.md) to set up Kevoree's tools.  
