@@ -13,6 +13,7 @@ var WebSocketChannel = AbstractChannel.extend({
 
   construct: function () {
     this.server = null;
+    this.client = null;
   },
 
   /**
@@ -71,21 +72,26 @@ var WebSocketChannel = AbstractChannel.extend({
   startWSClient: function () {
     var addresses = this.getMasterServerAddresses();
     if (typeof(addresses) !== 'undefined' && addresses != null && addresses.length > 0) {
-      var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
+      this.client = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
-      ws.onopen = function onOpen() {
+      this.client.onopen = function onOpen() {
         var binMsg = new Uint8Array(chan.getNodeName().length+1);
         binMsg[0] = REGISTER;
         for (var i=0; i < chan.getNodeName().length; i++) {
           binMsg[i+1] = chan.getNodeName().charCodeAt(i);
         }
-        ws.send(binMsg);
+        this.client.send(binMsg);
       }.bind(this);
 
-      ws.onmessage = localDispatchHandler.bind(this);
+      this.client.onmessage = localDispatchHandler.bind(this);
 
-      ws.onclose = function onClose() {
+      this.client.onclose = function onClose() {
         chan.log.debug(this.toString(), "WebSocketChannel info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
+        // TODO: auto reconnect
+      }.bind(this);
+
+      this.client.onerror = function onError() {
+        // TODO: auto reconnect
       }.bind(this);
 
     } else {

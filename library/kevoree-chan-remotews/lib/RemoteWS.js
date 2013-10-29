@@ -36,22 +36,14 @@ var RemoteWS = AbstractChannel.extend({
         this.log.info(this.toString(), 'Successfully connected to remote server ws://'+host+':'+port+'/'+topic);
 
         this.clearTimeouts();
-
-        // on open: register this channel to the server
-        var bin = new Uint8Array(1+this.getName().length);
-        bin[0] = 0;
-        for (var i=0; i < this.getName().length; i++) {
-          bin[i+1] = this.getName().charCodeAt(i);
-        }
-        this.ws.send(bin);
       }.bind(this);
 
-      this.ws.onmessage = function (data) {
+      this.ws.onmessage = function (e) {
         try {
           data = JSON.parse(data);
           this.localDispatch(data.destPortPath, data.msg);
         } catch (err) {
-          this.log.warn(this.toString(), 'Unable to process received message. Dropping it.');
+          this.log.warn(this.toString(), 'Unable to process received message on "'+this.getName()+'". Dropping it.');
         }
       }.bind(this);
 
@@ -96,7 +88,6 @@ var RemoteWS = AbstractChannel.extend({
     var sendMessage = function () {
       if (this.ws != null) {
         if (this.ws.readyState == 1) { // open according to http://dev.w3.org/html5/websockets/
-
           this.ws.send(JSON.stringify({ destPortPath: destPortPath, msg: msg }));
           return;
         }
