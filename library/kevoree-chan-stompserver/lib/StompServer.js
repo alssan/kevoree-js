@@ -30,13 +30,15 @@ var StompServer = AbstractChannel.extend({
 
     this.client = new Stomp.client('ws://'+host+':'+port);
 
+    var that = this;
+
     var connectToServer = function () {
       var successCb = function () {
         this.clearTimeouts();
 
         this.client.subscribe(topic, function(message) {
-          this.localDispatch(message);
-        }.bind(this));
+          that.localDispatch(message);
+        });
       }.bind(this);
 
       var errorCb = function () {

@@ -36,8 +36,10 @@ module.exports = KevoreeEntity.extend({
     for (var path in this.inputs) {
       var port = this.inputs[path];
       var comp = port.getComponent();
-      // call component's input port function with 'msg' parameter
-      comp[port.getInputPortMethodName()](msg);
+      if (comp != null && port.getInputPortMethodName() != null && typeof comp[port.getInputPortMethodName()] === 'function') {
+        // call component's input port function with 'msg' parameter
+        comp[port.getInputPortMethodName()](msg);
+      }
     }
   },
 

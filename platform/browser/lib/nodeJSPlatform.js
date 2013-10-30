@@ -21,7 +21,7 @@ module.exports = function (modulesPath) {
       }
 
       console.log("New model deployed server-side : model.json (over)written at %s", serverSideModelPath);
-    })
+    });
   });
 
   knjs.start(config.nodeJSPlatform.nodeName, config.nodeJSPlatform.groupName);

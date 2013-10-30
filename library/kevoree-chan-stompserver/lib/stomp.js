@@ -105,6 +105,9 @@ var WebSocket = require('ws');
         incoming: 10000
       };
       this.subscriptions = {};
+//      this.debug = function (msg) {
+//        console.log(msg);
+//      }
     }
 
     Client.prototype._transmit = function(command, headers, body) {
@@ -137,10 +140,10 @@ var WebSocket = require('ws');
         if (typeof this.debug === "function") {
           this.debug("send PING every " + ttl + "ms");
         }
-        this.pinger = typeof window !== "undefined" && window !== null ? window.setInterval(function() {
+        this.pinger = setInterval(function() {
           _this.ws.send(Byte.LF);
           return typeof _this.debug === "function" ? _this.debug(">>> PING") : void 0;
-        }, ttl) : void 0;
+        }, ttl);
       }
       if (!(this.heartbeat.incoming === 0 || serverOutgoing === 0)) {
         ttl = Math.max(this.heartbeat.incoming, serverOutgoing);
