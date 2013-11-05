@@ -13,7 +13,7 @@ var NodeJSRuntime = Class({
     this.modulesPath = modulesPath || path.resolve(__dirname, '..');
     this.log = new KevoreeLogger(this.toString());
     this.kCore = new KevoreeCore(this.modulesPath, this.log);
-    this.bootstrapper = new Bootstrapper(this.modulesPath);
+    this.bootstrapper = new Bootstrapper(this.modulesPath, this.log);
     this.nodename = 'node0'; // default nodename
     this.groupname = 'sync'; // default groupname
     this.emitter = new EventEmitter();
@@ -51,12 +51,13 @@ var NodeJSRuntime = Class({
   },
 
   deploy: function (model) {
-    if (typeof(model) == 'undefined') {
+    if (typeof(model) == 'undefined' || model == null) {
       var self = this;
       // deploy default bootstrap model
-      bootstrapHelper(this.nodename, this.groupname, this.modulesPath, function (err, model) {
-        self.kCore.deploy(model);
-      });
+      this.log.warn('No bootstrap model given: using a default bootstrap model');
+      bootstrapHelper(this.nodename, this.groupname, this.modulesPath, function (err, bootstrapModel) {
+        self.kCore.deploy(bootstrapModel);
+      }, this.log);
     } else {
       // if a model has been given: use it to bootstrap
       this.kCore.deploy(model);

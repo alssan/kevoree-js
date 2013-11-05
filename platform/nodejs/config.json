@@ -1,3 +1,4 @@
 {
-    "nodeName":     "node0"
+  "nodeName":  "node0",
+  "groupName": "sync"
 }

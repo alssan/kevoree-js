@@ -1,12 +1,11 @@
 var npm     = require('npm'),
-  path    = require('path'),
-  kevoree = require('kevoree-library').org.kevoree;
+    path    = require('path'),
+    kevoree = require('kevoree-library').org.kevoree;
 
-var compare    = new kevoree.compare.DefaultModelCompare();
 var loader     = new kevoree.loader.JSONModelLoader();
 var factory    = new kevoree.impl.DefaultKevoreeFactory();
 
-var bootstrapModel = function bootstrapModel(modulesPath, nodename, groupname, callback) {
+var bootstrapModel = function bootstrapModel(modulesPath, nodename, groupname, callback, logger) {
   var wsGrpModelJson = require(path.resolve(modulesPath, 'node_modules', 'kevoree-group-websocket', 'kevlib.json'));
   var wsGrpModel = loader.loadModelFromString(JSON.stringify(wsGrpModelJson)).get(0);
 
@@ -42,15 +41,15 @@ var bootstrapModel = function bootstrapModel(modulesPath, nodename, groupname, c
   return callback(null, wsGrpModel);
 }
 
-module.exports = function (nodename, groupname, modulesPath, callback) {
+module.exports = function (nodename, groupname, modulesPath, callback, logger) {
   try {
     // try to bootstrapModel without downloading and installing module from npm
-    bootstrapModel(modulesPath, nodename, groupname, callback);
+    bootstrapModel(modulesPath, nodename, groupname, callback, logger);
 
   } catch (err) {
     // bootstrapping failed which means (probably) that module wasn't installed yet
     // so let's do it :D
-    console.log("Unable to find DeployUnit (kevoree-group-websocket) locally: downloading & installing it...");
+    logger.info("Unable to find DeployUnit (kevoree-group-websocket) locally: downloading & installing it...");
     // load npm
     npm.load({}, function (err) {
       if (err) return callback(err);
@@ -59,7 +58,7 @@ module.exports = function (nodename, groupname, modulesPath, callback) {
       npm.commands.install(modulesPath, ['kevoree-group-websocket'], function installKevWSGrpCb(err) {
         if (err) return callback(err);
 
-        bootstrapModel(modulesPath, nodename, groupname, callback);
+        bootstrapModel(modulesPath, nodename, groupname, callback, logger);
       });
     });
   }

@@ -1,5 +1,4 @@
 var Bootstrapper    = require('kevoree-commons').Bootstrapper,
-    KevoreeLogger   = require('kevoree-commons').KevoreeLogger,
     NPMResolver     = require('./NPMResolver'),
     path            = require('path');
 
@@ -17,11 +16,11 @@ module.exports = Bootstrapper.extend({
     /**
      *
      */
-    construct: function (modulesPath) {
-        this.log = new KevoreeLogger(this.toString());
+    construct: function (modulesPath, logger) {
+        this.log = logger;
 
         this.resolvers = {};
-        this.resolvers[NPM] = new NPMResolver(modulesPath);
+        this.resolvers[NPM] = new NPMResolver(modulesPath, logger);
     },
 
     /**
