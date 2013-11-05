@@ -16,13 +16,7 @@ var AbstractGroup   = require('kevoree-entities').AbstractGroup,
  * to one, and only one, node in the list of all the connected subnodes of this group.
  * By doing so, the node that has its "port" attribute set, became the "master server" and all other
  * nodes are going to try to initiate a persistent connection (through WebSocket) to this master server.
- * Pull request made on client nodes are, actually, going to be made to master server, and then forwarded
- * to client node if it is connected. If the client is not yet connected to master server, you will get
- * the current model used by the master server.
- * Same goes for push requests but you don't get a model, so if the client is not connected, the master
- * server will keep the model you wanted to push to the client, and deliver it to the node once connected.
- * This can induce a delay or the adaptation, so you can set the dictionary attribute "forcePush" to "true"
- * if you want that all the currently connected nodes get the push even if the targetted one isn't connected.
+ * Push and pull request are all forwarded to master server node.
  *
  * @type {WebSocketGroup}
  */
@@ -52,7 +46,6 @@ var WebSocketGroup = AbstractGroup.extend({
     if (this.dictionary.getValue('port') != undefined) {
       this.server = this.startWSServer(this.dictionary.getValue('port'));
     } else {
-      this.log.debug(this.toString(), "There is no 'port' attribute defined: starting a WebSocket client on this node");
       this.client = this.startWSClient();
     }
   },
@@ -106,7 +99,7 @@ var WebSocketGroup = AbstractGroup.extend({
   },
 
   onClientPush: function (model, targetNodeName) {
-    throw new Error("WebSocketGroup error: Push request can only be made on master server node (for now).");
+    this.onServerPush(model, this.getMasterServerAddresses());
   },
 
   onServerPull: function (addresses, callback) {
@@ -133,7 +126,7 @@ var WebSocketGroup = AbstractGroup.extend({
   },
 
   onClientPull: function (targetNodeName, callback) {
-    callback(new Error("WebSocketGroup error: Pull request can only be made on master server node (for now)."));
+    this.onServerPull(this.getMasterServerAddresses(), callback);
   },
 
   checkNoMultipleMasterServer: function () {
@@ -214,7 +207,7 @@ var WebSocketGroup = AbstractGroup.extend({
           group.kCore.deploy(model);
         };
         ws.onclose = function onClose() {
-          group.log.debug(this.toString(), "WebSocketGroup info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
+          group.log.info(this.toString(), "client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
         };
 
         ws.onerror = function onError() {
@@ -354,18 +347,11 @@ var WebSocketGroup = AbstractGroup.extend({
     this.connectedNodes[nodeName] = clientSocket;
     this.log.info(this.toString(), "New registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+")");
 
-    var self = this;
     clientSocket.on('close', function () {
       // on client disconnection : remove connected node entry from map
       delete this.connectedNodes.nodeName;
       this.log.info(this.toString(), "Registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+") left server.");
     }.bind(this));
-  },
-
-  dic_forcePush: {
-    optional: false,
-    fragmentDependant: false,
-    defaultValue: false
   }
 });
 
