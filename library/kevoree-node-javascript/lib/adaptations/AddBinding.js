@@ -40,7 +40,7 @@ module.exports = AdaptationPrimitive.extend({
             }
           }
 
-          this.log.debug(this.toString(), 'AddBinding: job done between '+compInstance.getName()+' and '+chanInstance.getName());
+          this.log.debug(this.toString(), 'job done between '+compInstance.getName()+' and '+chanInstance.getName());
           return callback();
 
         } catch (err) {
@@ -48,7 +48,7 @@ module.exports = AdaptationPrimitive.extend({
         }
 
       } else {
-        return callback(new Error("AddBinding error: unable to find channel or component instance(s)."));
+        return callback(new Error(this.toString()+" error: unable to find channel or component instance(s)."));
       }
     }
 

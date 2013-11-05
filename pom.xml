@@ -9,8 +9,8 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <kmf.version>1.6.0</kmf.version>
-        <kevoree.version>2.0.12</kevoree.version>
+        <kmf.version>1.8.2-SNAPSHOT</kmf.version>
+        <kevoree.version>2.1-SNAPSHOT</kevoree.version>
     </properties>
 
     <modules>

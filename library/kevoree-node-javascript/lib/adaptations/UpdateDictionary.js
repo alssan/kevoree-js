@@ -25,7 +25,7 @@ module.exports = AdaptationPrimitive.extend({
         dictionary.setEntry(dicValue.attribute.name, dicValue.value);
       }
 
-      this.log.debug(this.toString(), 'UpdateDictionary: job done for attribute '+dicValue.attribute.name);
+      this.log.debug(this.toString(), 'job done for attribute '+dicValue.attribute.name);
       return callback();
     }
 

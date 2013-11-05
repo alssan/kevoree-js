@@ -24,7 +24,7 @@ module.exports = AdaptationPrimitive.extend({
             compInstance.removeInternalOutputPort(portInstance);
           }
 
-          this.log.debug(this.toString(), 'RemoveBinding: job done between '+compInstance.getName()+' and '+chanInstance.getName());
+          this.log.debug(this.toString(), 'job done between '+compInstance.getName()+' and '+chanInstance.getName());
           return callback();
 
         } catch (err) {
@@ -32,11 +32,11 @@ module.exports = AdaptationPrimitive.extend({
         }
 
       } else {
-        return callback(new Error("RemoveBinding error: unable to find channel or component instance(s)."));
+        return callback(new Error(this.toString()+" error: unable to find channel or component instance(s)."));
       }
     }
 
-    this.log.debug(this.toString(), 'RemoveBinding: no work done with '+this.trace.toString());
+    this.log.debug(this.toString(), 'no work done with '+this.trace.toString());
     return callback();
   },
 

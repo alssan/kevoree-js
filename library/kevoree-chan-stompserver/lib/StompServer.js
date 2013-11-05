@@ -10,7 +10,7 @@ var AbstractChannel = require('kevoree-entities').AbstractChannel,
  * @type {StompServer}
  */
 var StompServer = AbstractChannel.extend({
-  toString: 'StompServer',
+  toString: 'StompChannel',
 
   construct: function () {
     this.client = null;
@@ -25,7 +25,7 @@ var StompServer = AbstractChannel.extend({
     _super.call(this);
 
     var host  = this.dictionary.getValue('host');
-    var port  = this.dictionary.getValue('port');
+    var port  = this.dictionary.getValue('serverPort');
     var topic = this.dictionary.getValue('topic') || '/';
 
     this.client = new Stomp.client('ws://'+host+':'+port);
@@ -94,7 +94,7 @@ var StompServer = AbstractChannel.extend({
     optional: false,
     fragmentDependant: false
   },
-  dic_port: {
+  dic_serverPort: {
     optional: false,
     fragmentDependant: false
   },
@@ -102,6 +102,12 @@ var StompServer = AbstractChannel.extend({
     optional: true,
     fragmentDependant: false,
     defaultValue: '/'
+  },
+  dic_login: {
+    // TODO
+  },
+  dic_pass: {
+    // TODO
   }
 });
 

@@ -17,7 +17,7 @@ var BROWSER_MODULES = 'browser_modules',
  *
  * Request param = {
  *  type: string,       // deployUnit.type (npm, git, etc...)
- *  name: string,       // deployUnit.unitName (kevoree-node, kevoree-comp-helloworld, ...)
+ *  name: string,       // deployUnit.name (kevoree-node, kevoree-comp-helloworld, ...)
  *  version: string     // deployUnit.version (0.0.1, ...)
  * }
  *

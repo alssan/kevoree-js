@@ -34,7 +34,7 @@ var FakeConsole = AbstractComponent.extend({
    */
   stop: function (_super) {
     _super.call(this);
-    this.log.debug('Stopping FakeConsole '+this.name);
+    this.log.debug(this.toString(), 'Stopping FakeConsole '+this.name);
     // TODO
   },
 

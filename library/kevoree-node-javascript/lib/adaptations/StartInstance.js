@@ -14,11 +14,11 @@ module.exports = AdaptationPrimitive.extend({
 
       if (instance != undefined && instance != null) {
         instance.start();
-        this.log.debug(this.toString(), 'StartInstance: job done for '+instance.getName());
+        this.log.debug(this.toString(), 'job done for '+instance.getName());
         return callback();
 
       } else {
-        return callback(new Error("StartInstance error: unable to start instance "+kInstance.name));
+        return callback(new Error(this.toString()+" error: unable to start instance "+kInstance.name));
       }
     }
 

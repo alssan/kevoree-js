@@ -31,7 +31,7 @@ var BrowserBootstrapper = Bootstrapper.extend({
     this.resolver('resolve', deployUnit, function (err, EntityClass) {
       if (err) {
         bootstrapper.log.error(err.message);
-        return callback(new Error("'"+deployUnit.unitName+"' bootstrap failed!"));
+        return callback(new Error("'"+deployUnit.name+"' bootstrap failed!"));
       }
 
       // install success
@@ -44,7 +44,7 @@ var BrowserBootstrapper = Bootstrapper.extend({
     this.resolver('uninstall', deployUnit, function (err) {
       if (err) {
         bootstrapper.log.error(err.message);
-        return callback(new Error("'"+deployUnit.unitName+"' uninstall failed!"));
+        return callback(new Error("'"+deployUnit.name+"' uninstall failed!"));
       }
 
       // uninstall success

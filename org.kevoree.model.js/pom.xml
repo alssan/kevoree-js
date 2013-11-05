@@ -73,7 +73,6 @@
                         <configuration>
                             <ecore>${metamodel.ecore}</ecore>
                             <packagePrefix>org</packagePrefix>
-                            <clearOutput>false</clearOutput>
                             <js>true</js>
                             <events>true</events>
                         </configuration>

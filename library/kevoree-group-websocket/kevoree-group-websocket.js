@@ -1,15 +1,28 @@
 var AbstractGroup   = require('kevoree-entities').AbstractGroup,
-    kevoree         = require('kevoree-library').org.kevoree,
-    WebSocket       = require('ws'),
-    WSServer        = require('ws').Server,
+  kevoree         = require('kevoree-library').org.kevoree,
+  WebSocket       = require('ws'),
+  WSServer        = require('ws').Server,
 
-    PULL        = 0,
-    PUSH        = 1,
-    REGISTER    = 3,
-    PULL_JSON   = 42;
+// protocol constants
+  PULL        = 0,
+  PUSH        = 1,
+  REGISTER    = 3,
+  PULL_JSON   = 42;
 
 /**
  * WebSocketGroup: Kevoree group that handles model transfers through WebSocket protocol
+ * This group allows only one node to be the "master server" for all other. In other words, when you
+ * are making your model and it relies on this group, you should only set the dictionary "port" attribute
+ * to one, and only one, node in the list of all the connected subnodes of this group.
+ * By doing so, the node that has its "port" attribute set, became the "master server" and all other
+ * nodes are going to try to initiate a persistent connection (through WebSocket) to this master server.
+ * Pull request made on client nodes are, actually, going to be made to master server, and then forwarded
+ * to client node if it is connected. If the client is not yet connected to master server, you will get
+ * the current model used by the master server.
+ * Same goes for push requests but you don't get a model, so if the client is not connected, the master
+ * server will keep the model you wanted to push to the client, and deliver it to the node once connected.
+ * This can induce a delay or the adaptation, so you can set the dictionary attribute "forcePush" to "true"
+ * if you want that all the currently connected nodes get the push even if the targetted one isn't connected.
  *
  * @type {WebSocketGroup}
  */
@@ -27,6 +40,7 @@ var WebSocketGroup = AbstractGroup.extend({
     this.server = null;
     this.client = null;
     this.connectedNodes = {};
+    this.timeoutID = null;
   },
 
   start: function (_super) {
@@ -51,15 +65,11 @@ var WebSocketGroup = AbstractGroup.extend({
     }
 
     if (this.client != null) {
+      // close client connection
       this.client.close();
+      // remove reconnection task because we closed on purpose
+      clearTimeout(this.timeoutID);
     }
-  },
-
-  update: function (_super) {
-    _super.call(this);
-
-    this.stop();
-    this.start();
   },
 
   push: function (model, targetNodeName) {
@@ -182,28 +192,46 @@ var WebSocketGroup = AbstractGroup.extend({
     var addresses = this.getMasterServerAddresses();
     if (typeof(addresses) !== 'undefined' && addresses != null && addresses.length > 0) {
       var group = this;
+      var connectToServer = function () {
+        var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
-      var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
+        ws.onopen = function onOpen() {
+          clearTimeout(group.timeoutID);
+          group.timeoutID = null;
+          var binMsg = new Uint8Array(group.getNodeName().length+1);
+          binMsg[0] = REGISTER;
+          for (var i=0; i<group.getNodeName().length; i++) {
+            binMsg[i+1] = group.getNodeName().charCodeAt(i);
+          }
+          ws.send(binMsg);
+        };
+        ws.onmessage = function onMessage(e) {
+          var data = '';
+          if (typeof(e) === 'string') data = e;
+          else data = e.data;
+          var jsonLoader = new kevoree.loader.JSONModelLoader();
+          var model = jsonLoader.loadModelFromString(data).get(0);
+          group.kCore.deploy(model);
+        };
+        ws.onclose = function onClose() {
+          group.log.debug(this.toString(), "WebSocketGroup info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
+        };
 
-      ws.onopen = function onOpen() {
-        var binMsg = new Uint8Array(group.getNodeName().length+1);
-        binMsg[0] = REGISTER;
-        for (var i=0; i<group.getNodeName().length; i++) {
-          binMsg[i+1] = group.getNodeName().charCodeAt(i);
+        ws.onerror = function onError() {
+          // if there is an error, retry to initiate connection in 5 seconds
+          clearTimeout(group.timeoutID);
+          group.timeoutID = null;
+          group.timeoutID = setTimeout(connectToServer, 5000);
         }
-        ws.send(binMsg);
-      };
-      ws.onmessage = function onMessage(e) {
-        var data = '';
-        if (typeof(e) === 'string') data = e;
-        else data = e.data;
-        var jsonLoader = new kevoree.loader.JSONModelLoader();
-        var model = jsonLoader.loadModelFromString(data).get(0);
-        group.kCore.deploy(model);
-      };
-      ws.onclose = function onClose() {
-        group.log.debug(this.toString(), "WebSocketGroup info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
-      };
+
+        ws.onclose = function onClose() {
+          // when websocket is closed, retry connection in 5 seconds
+          clearTimeout(group.timeoutID);
+          group.timeoutID = null;
+          group.timeoutID = setTimeout(connectToServer, 5000);
+        }
+      }
+      connectToServer();
 
     } else {
       throw new Error("There is no master server in your model. You must specify a master server by giving a value to one port attribute.");
@@ -329,9 +357,15 @@ var WebSocketGroup = AbstractGroup.extend({
     var self = this;
     clientSocket.on('close', function () {
       // on client disconnection : remove connected node entry from map
-      delete self.connectedNodes.nodeName;
-      self.log.info(this.toString(), "Registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+") left server.");
-    });
+      delete this.connectedNodes.nodeName;
+      this.log.info(this.toString(), "Registered client '"+nodeName+"' ("+clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+") left server.");
+    }.bind(this));
+  },
+
+  dic_forcePush: {
+    optional: false,
+    fragmentDependant: false,
+    defaultValue: false
   }
 });
 

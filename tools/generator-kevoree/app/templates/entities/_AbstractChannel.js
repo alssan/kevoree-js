@@ -27,11 +27,10 @@ var <%= entityName %> = <%= entityType %>.extend({
   },
 
   /**
-   * When a channel is bound with an output port this method will be called 'n' times
-   * when this output port will send a message ('n' corresponding to the number of input port
-   * connected to this channel)
-   * @param fromPortPath
-   * @param destPortPaths Array
+   * When a channel is bound with an output port this method will be called when a message is sent
+   *
+   * @param fromPortPath port that sends the message
+   * @param destPortPaths port paths of connected input port that should receive the message
    * @param msg
    */
   onSend: function (fromPortPath, destPortPaths, msg) {

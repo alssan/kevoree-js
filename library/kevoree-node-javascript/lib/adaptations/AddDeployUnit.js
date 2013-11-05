@@ -25,8 +25,8 @@ module.exports = AdaptationPrimitive.extend({
         if (err) return callback(err);
 
         // bootstrap success: add deployUnit path & packageName into mapper
-        this.mapper.addEntry(deployUnit.path(), deployUnit.unitName);
-        this.log.debug(this.toString(), 'AddDeployUnit: job done for '+deployUnit.unitName);
+        this.mapper.addEntry(deployUnit.path(), deployUnit.name);
+        this.log.debug(this.toString(), 'job done for '+deployUnit.name);
         return callback();
       }.bind(this));
 

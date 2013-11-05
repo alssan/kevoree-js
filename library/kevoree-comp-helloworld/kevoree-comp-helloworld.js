@@ -16,20 +16,16 @@ var HelloWorldComponent = AbstractComponent.extend({
    */
   start: function (_super) {
     _super.call(this);
-    var self = this;
-
     this.log.info(this.toString(), 'Hello world!');
 
     this.id = setInterval(function () {
       // send a message through output port 'sendText' every 2 seconds
-      self.out_sendText('hello world '+(new Date));
-    }, 2000);
+      this.out_sendText('hello world '+(new Date()));
+    }.bind(this), 2000);
 
     this.setUIContent('<p>Hello world</p>', function (err) {
       if (err) {
-        console.log("Something went wrong while setting view content", 'Reason: '+err.message);
-      } else {
-        console.log("View content set successfully");
+        this.log.warn(this.toString(), "Something went wrong while setting view content (reason: "+err.message+")");
       }
     });
   },

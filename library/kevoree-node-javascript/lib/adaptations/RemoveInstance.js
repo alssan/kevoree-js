@@ -25,16 +25,16 @@ module.exports = AdaptationPrimitive.extend({
       if (instance != undefined && instance != null) {
         this.mapper.removeEntry(kInstance.path());
         this.doSpecificTypeProcess(kInstance);
-        this.log.debug(this.toString(), 'RemoveInstance: job done for '+instance.getName());
+        this.log.debug(this.toString(), 'job done for '+instance.getName());
         return callback();
 
       } else {
-        callback(new Error("RemoveInstance error: unable to remove instance "+kInstance.path()));
+        callback(new Error(this.toString()+" error: unable to remove instance "+kInstance.path()));
         return;
       }
     }
 
-    this.log.debug(this.toString(), 'RemoveInstance: no work done with '+this.trace.toString());
+    this.log.debug(this.toString(), 'no work done with '+this.trace.toString());
     return callback();
   },
 

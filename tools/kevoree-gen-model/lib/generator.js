@@ -72,7 +72,7 @@ var generator = function generator(dirPath, quiet_, callback) {
 
                         // create the project deployUnit
                         var deployUnit = factory.createDeployUnit();
-                        deployUnit.unitName = projectPackageJson.name;
+                        deployUnit.name = projectPackageJson.name;
                         deployUnit.version = projectPackageJson.version;
                         deployUnit.type = 'npm';
                         deployUnit.targetNodeType = jsNodeTD;
@@ -93,7 +93,7 @@ var generator = function generator(dirPath, quiet_, callback) {
             } else {
                 // create the project deployUnit
                 var deployUnit = factory.createDeployUnit();
-                deployUnit.unitName = projectPackageJson.name;
+                deployUnit.name = projectPackageJson.name;
                 deployUnit.version = projectPackageJson.version;
                 deployUnit.type = 'npm';
 

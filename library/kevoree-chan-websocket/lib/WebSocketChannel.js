@@ -14,6 +14,7 @@ var WebSocketChannel = AbstractChannel.extend({
   construct: function () {
     this.server = null;
     this.client = null;
+    this.connectedClients = [];
   },
 
   /**
@@ -21,6 +22,8 @@ var WebSocketChannel = AbstractChannel.extend({
    */
   start: function (_super) {
     _super.call(this);
+
+    this.checkNoMultipleMasterServer();
 
     var port = this.dictionary.getValue('port');
     if (typeof(port) == 'undefined' || port.length == 0) this.startWSClient();
@@ -31,27 +34,28 @@ var WebSocketChannel = AbstractChannel.extend({
    * this method will be called by the Kevoree platform when your channel has to stop
    */
   stop: function () {
+    this.log.warn(this.toString(), 'stop() method not implemented yet.');
     // TODO
   },
 
   /**
-   * When a channel is bound with an output port this method will be called 'n' times
-   * when this output port will send a message ('n' corresponding to the number of input port
-   * connected to this channel)
-   * @param fromPortPath
-   * @param destPortPaths
+   * When a channel is bound with an output port this method will be called when a message is sent
+   *
+   * @param fromPortPath port that sends the message
+   * @param destPortPaths port paths of connected input port that should receive the message
    * @param msg
    */
   onSend: function (fromPortPath, destPortPaths, msg) {
-    var port  = this.dictionary.getValue('port') || 8088;
-    var hosts = this.getNodeHosts(destPortPath);
+    if (this.client != null) {
+      // directly send message to server because we can't much more =)
+      this.client.send(msg);
 
-    // TODO try to use every value in hosts[] not only the first one
-    var client = new WebSocket('ws://'+hosts[0]+':'+port);
-    client.onopen = function () {
-      client.send(msg);
-      this.log.debug(this.toString(), 'Connection to server made for channel (message should have been sent!)');
-    }.bind(this);
+    } else if (this.server != null) {
+      // broadcast message to each connected clients
+      for (var i in this.connectedClients) {
+        this.connectedClients[i].send(msg);
+      }
+    }
   },
 
   startWSServer: function (port) {
@@ -60,7 +64,16 @@ var WebSocketChannel = AbstractChannel.extend({
       this.log.debug(this.toString(), 'New server created for channel');
 
       this.server.on('connection', function(ws) {
+        this.connectedClients.push(ws);
+
         ws.onmessage = localDispatchHandler.bind(this);
+        ws.onerror = function () {
+          this.connectedClients.splice(this.connectedClients.indexOf(ws), 1);
+        }.bind(this);
+        ws.onclose = function () {
+          this.connectedClients.splice(this.connectedClients.indexOf(ws), 1);
+        }.bind(this);
+
       }.bind(this));
     } catch (err) {
       // if we end-up here it most certainly means that we are running on the browser
@@ -74,19 +87,10 @@ var WebSocketChannel = AbstractChannel.extend({
     if (typeof(addresses) !== 'undefined' && addresses != null && addresses.length > 0) {
       this.client = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
-      this.client.onopen = function onOpen() {
-        var binMsg = new Uint8Array(chan.getNodeName().length+1);
-        binMsg[0] = REGISTER;
-        for (var i=0; i < chan.getNodeName().length; i++) {
-          binMsg[i+1] = chan.getNodeName().charCodeAt(i);
-        }
-        this.client.send(binMsg);
-      }.bind(this);
-
       this.client.onmessage = localDispatchHandler.bind(this);
 
       this.client.onclose = function onClose() {
-        chan.log.debug(this.toString(), "WebSocketChannel info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
+        this.log.debug(this.toString(), "WebSocketChannel info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
         // TODO: auto reconnect
       }.bind(this);
 
@@ -100,28 +104,38 @@ var WebSocketChannel = AbstractChannel.extend({
   },
 
   getMasterServerAddresses: function () {
-    var model = this.getKevoreeCore().getCurrentModel();
-    var bindings = model.mBindings ? model.mBindings.iterator() : null;
-    if (bindings) {
-      while (bindings.hasNext()) {
-        var binding = bindings.next();
-        if (binding.hub.path() == this.getPath()) {
-          // this binding refers to this channel
+    var addresses = [];
+
+    var chan = this.getModelEntity();
+    var values = (chan.dictionary.values) ? chan.dictionary.values.iterator() : null;
+    if (values) {
+      while (values.hasNext()) {
+        var val = values.next();
+        if (val.value && val.value.length > 0) {
+          var port = val.value;
+          var hosts = this.getNodeHosts(val.targetNode);
+          for (var host in hosts) addresses.push(host+':'+port);
+          return addresses;
         }
       }
     }
   },
 
-  getNodeHosts: function (portPath) {
+  getNodeHostsByPort: function (portPath) {
     var model = this.getKevoreeCore().getCurrentModel();
     var node = model.findByPath(portPath).eContainer().eContainer();
+    return this.getNodeHosts(node);
+  },
+
+  getNodeHosts: function (targetNode) {
+    var model = this.getKevoreeCore().getDeployModel();
     var hosts = [];
 
     var networks = model.nodeNetworks ? model.nodeNetworks.iterator() : null;
     if (networks) {
       while (networks.hasNext()) {
         var net = networks.next();
-        if (net.target.name == node.name) {
+        if (net.target.name == targetNode.name) {
           var links = net.link ? net.link.iterator() : null;
           if (links) {
             while (links.hasNext()) {
@@ -146,6 +160,21 @@ var WebSocketChannel = AbstractChannel.extend({
     return hosts;
   },
 
+  checkNoMultipleMasterServer: function () {
+    var portDefined = 0;
+    var chan = this.getModelEntity();
+    var values = (chan.dictionary.values) ? chan.dictionary.values.iterator() : null;
+    if (values) {
+      while (values.hasNext()) {
+        var val = values.next();
+        if (val.value && val.value.length > 0) portDefined++;
+      }
+    }
+
+    if (portDefined == 0 || portDefined > 1)
+      throw new Error(this.toString()+' error: You must specify one and only one port attribute per fragment.');
+  },
+
   dic_port: {
     fragmentDependant: true,
     optional: true
@@ -158,7 +187,14 @@ var WebSocketChannel = AbstractChannel.extend({
  * @param data
  */
 var localDispatchHandler = function (data) {
-  this.localDispatch(data);
+  if (data.type != 'binary' || typeof(data.data) == 'string') {
+    // received data is a String
+    this.localDispatch(data.data);
+
+  } else {
+    // received data is binary
+    this.localDispatch(String.fromCharCode.apply(null, new Uint8Array(data.data)));
+  }
 }
 
 module.exports = WebSocketChannel;

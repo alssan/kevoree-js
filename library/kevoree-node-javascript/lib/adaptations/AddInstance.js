@@ -41,7 +41,7 @@ module.exports = AdaptationPrimitive.extend({
 
             this.mapper.addEntry(kInstance.path(), instance);
 
-            this.log.debug(this.toString(), 'AddInstance: job done for '+instance.getName());
+            this.log.debug(this.toString(), 'job done for '+instance.getName());
             return callback();
 
           } catch (e) {
@@ -50,7 +50,7 @@ module.exports = AdaptationPrimitive.extend({
 
         } else {
           // there is no DeployUnit installed for this instance TypeDefinition
-          return callback(new Error("No DeployUnit installed for "+this.kInstance.path()));
+          return callback(new Error(this.toString()+ " error: no DeployUnit installed for "+this.kInstance.path()));
         }
       }
     }

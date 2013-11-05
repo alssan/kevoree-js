@@ -43,7 +43,7 @@ var bootstrapHelper = function bootstrapHelper(model, targetNodeName, callback) 
  * @param callback function(err, grp)
  */
 var installGroupType = function installGroupType(model, targetNodeName, kGrp, callback) {
-  var packageName = kGrp.typeDefinition.deployUnits.get(0).unitName,
+  var packageName = kGrp.typeDefinition.deployUnits.get(0).name,
     versionName = kGrp.typeDefinition.deployUnits.get(0).version;
 
   npm.commands.install([packageName+'@'+versionName], function installKevWSGrpCb(err) {

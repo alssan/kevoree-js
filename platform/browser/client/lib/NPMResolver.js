@@ -25,7 +25,7 @@ var NPMResolver = Resolver.extend({
       url: '/resolve',
       data: {
         type: deployUnit.type,
-        name: deployUnit.unitName,
+        name: deployUnit.name,
         version: deployUnit.version
       },
       success: function (resp) {
@@ -40,10 +40,10 @@ var NPMResolver = Resolver.extend({
           }
 
           // zip installed successfully
-          $.getScript('filesystem:'+window.location.origin+'/persistent/kev_libraries/'+deployUnit.unitName+'@'+deployUnit.version+'/'+deployUnit.unitName+'-bundle.js', function () {
-            resolver.log.info("Zip '"+deployUnit.unitName+"' installed and module loaded successfully");
+          $.getScript('filesystem:'+window.location.origin+'/persistent/kev_libraries/'+deployUnit.name+'@'+deployUnit.version+'/'+deployUnit.name+'-bundle.js', function () {
+            resolver.log.info("Zip '"+deployUnit.name+"' installed and module loaded successfully");
 
-            var ModuleEntry = require(deployUnit.unitName);
+            var ModuleEntry = require(deployUnit.name);
 
             callback(null, ModuleEntry);
           });
@@ -51,7 +51,7 @@ var NPMResolver = Resolver.extend({
       },
       error: function (err) {
         if (err.responseText.length == 0) {
-          err.responseText = "Kevoree Runtime server was not able to process '/resolve' request ("+deployUnit.unitName+":"+deployUnit.version+")";
+          err.responseText = "Kevoree Runtime server was not able to process '/resolve' request ("+deployUnit.name+":"+deployUnit.version+")";
         }
         callback(new Error(err.responseText));
       }

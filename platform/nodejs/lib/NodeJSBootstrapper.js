@@ -35,7 +35,7 @@ module.exports = Bootstrapper.extend({
         this.resolver('resolve', deployUnit, function (err, EntityClass) {
             if (err) {
                 bootstrapper.log.error(err.message);
-                callback(new Error("'"+deployUnit.unitName+"' bootstrap failed!"));
+                callback(new Error("'"+deployUnit.name+"' bootstrap failed!"));
                 return;
             }
 
@@ -50,7 +50,7 @@ module.exports = Bootstrapper.extend({
         this.resolver('uninstall', deployUnit, function (err) {
             if (err) {
                 bootstrapper.log.error(err.message);
-                callback(new Error("'"+deployUnit.unitName+"' uninstall failed!"));
+                callback(new Error("'"+deployUnit.name+"' uninstall failed!"));
                 return;
             }
 

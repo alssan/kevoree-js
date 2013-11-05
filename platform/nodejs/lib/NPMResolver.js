@@ -12,7 +12,7 @@ var NPMResolver = Resolver.extend({
   resolve: function (deployUnit, callback) {
     var resolver = this;
 
-    var packageName    = deployUnit.unitName,
+    var packageName    = deployUnit.name,
         packageVersion = deployUnit.version;
 
     try {
@@ -50,7 +50,7 @@ var NPMResolver = Resolver.extend({
         return callback(new Error('RemoveDeployUnit error: unable to load npm module'));
       }
 
-      var packageName     = deployUnit.unitName,
+      var packageName     = deployUnit.name,
         packageVersion  = deployUnit.version;
 
       // load success
