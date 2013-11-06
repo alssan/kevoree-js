@@ -9,7 +9,7 @@ var KevScriptChecker = Class({
    * @throws Error on model invalidity
    */
   check: function (parsedModel) {
-    return false;
+    return true;
   }
 });
 

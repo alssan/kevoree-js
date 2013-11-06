@@ -1,12 +1,14 @@
-var Class            = require('pseudoclass'),
-    KevScriptParser  = require('./../parser/kevscript-parser'),
-    KevScriptChecker = require('./KevScriptChecker');
+var Class              = require('pseudoclass'),
+    KevScriptParser    = require('./../parser/kevscript-parser'),
+    KevScriptChecker   = require('./KevScriptChecker'),
+    KevScriptGenerator = require('./KevScriptGenerator');
 
 var KevScript = Class({
   toString: 'KevScript',
 
   construct: function () {
     this.checker = new KevScriptChecker();
+    this.generator = new KevScriptGenerator();
   },
 
   /**
@@ -18,7 +20,7 @@ var KevScript = Class({
   parse: function (data) {
     var parsedModel = KevScriptParser.parse(data);
     if (this.checker.check(parsedModel)) {
-
+      return this.generator.gen(parsedModel);
     } else return null;
   }
 });

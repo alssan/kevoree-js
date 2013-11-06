@@ -7,7 +7,8 @@
     nodes: {},
     groups: {},
     chans: {},
-    bindings: []
+    bindings: [],
+    deployUnits: []
   };
 
   var findEntity = function findEntity(name) {
@@ -79,7 +80,7 @@ instructions
 
 
 instruction
-  = (addEntity / addNodeToGroup / removeNodeFromGroup / updateDictionary / addBinding) _
+  = (addEntity / addNodeToGroup / removeNodeFromGroup / updateDictionary / addBinding / merge) _
 
 addEntity
   = entity:(addNode / addComp / addGroup / addChan) dictionary:(_ Dictionary)?
@@ -176,6 +177,22 @@ addBinding
     } else throw getErrorPosition()+'A binding can only be made between a component\'s port and a channel (they must be defined before)';
   }
 
+merge
+  = MergeToken _ def:MergeDefinition
+  { model.deployUnits.push(def); }
+  
+MergeDefinition
+  = def:(MavenDefinition / NPMDefinition) // TODO add other type of merging possible (local ? etc)
+  { return def; }
+
+MavenDefinition
+  = 'mvn' _ ':' _ groupId:mergestring _ ':' _ name:mergestring _ ':' _ version:mergestring
+  { return {type: 'mvn', name: name, groupId: groupId, version: version}; }
+
+NPMDefinition
+  = 'npm' _ ':' _ name:string version:(_ ':' _ mergestring)?
+  { return {type: 'npm', name: name, version: version[3]}; }
+
 Dictionary
   = '{' _ first:Attribute others:([,]? _ Attribute)* _ '}'
   {
@@ -213,6 +230,10 @@ NodeList
   }
 
 /* ===== Lexical Elements ===== */
+mergestring
+  = chars:moarchar+
+  { return chars.join(''); }
+
 string
   = chars:char+
   { return chars.join(''); }
@@ -250,8 +271,14 @@ RemoveToken
 UpdateDictionaryToken
   = 'updateDictionary' / 'dictionary' / 'dic'
 
+MergeToken
+  = 'merge' / '~'
+
 char
-  = [a-zA-Z0-9_-]
+  = [a-zA-Z0-9_\-]
+
+moarchar
+  = [a-zA-Z0-9_\-.]
 
 /* ===== Whitespace ===== */
 

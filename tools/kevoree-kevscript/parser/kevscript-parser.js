@@ -49,9 +49,14 @@ module.exports = (function(){
         "removeNodeFromGroup": parse_removeNodeFromGroup,
         "updateDictionary": parse_updateDictionary,
         "addBinding": parse_addBinding,
+        "merge": parse_merge,
+        "MergeDefinition": parse_MergeDefinition,
+        "MavenDefinition": parse_MavenDefinition,
+        "NPMDefinition": parse_NPMDefinition,
         "Dictionary": parse_Dictionary,
         "Attribute": parse_Attribute,
         "NodeList": parse_NodeList,
+        "mergestring": parse_mergestring,
         "string": parse_string,
         "AddNodeToken": parse_AddNodeToken,
         "DelNodeToken": parse_DelNodeToken,
@@ -64,7 +69,9 @@ module.exports = (function(){
         "AddToken": parse_AddToken,
         "RemoveToken": parse_RemoveToken,
         "UpdateDictionaryToken": parse_UpdateDictionaryToken,
+        "MergeToken": parse_MergeToken,
         "char": parse_char,
+        "moarchar": parse_moarchar,
         "_": parse__,
         "whitespace": parse_whitespace
       };
@@ -181,6 +188,9 @@ module.exports = (function(){
               result0 = parse_updateDictionary();
               if (result0 === null) {
                 result0 = parse_addBinding();
+                if (result0 === null) {
+                  result0 = parse_merge();
+                }
               }
             }
           }
@@ -905,6 +915,286 @@ module.exports = (function(){
         return result0;
       }
       
+      function parse_merge() {
+        var result0, result1, result2;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_MergeToken();
+        if (result0 !== null) {
+          result1 = parse__();
+          if (result1 !== null) {
+            result2 = parse_MergeDefinition();
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, def) { model.deployUnits.push(def); })(pos0, result0[2]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_MergeDefinition() {
+        var result0;
+        var pos0;
+        
+        pos0 = pos;
+        result0 = parse_MavenDefinition();
+        if (result0 === null) {
+          result0 = parse_NPMDefinition();
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, def) { return def; })(pos0, result0);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_MavenDefinition() {
+        var result0, result1, result2, result3, result4, result5, result6, result7, result8, result9, result10, result11, result12;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        if (input.substr(pos, 3) === "mvn") {
+          result0 = "mvn";
+          pos += 3;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"mvn\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse__();
+          if (result1 !== null) {
+            if (input.charCodeAt(pos) === 58) {
+              result2 = ":";
+              pos++;
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\":\"");
+              }
+            }
+            if (result2 !== null) {
+              result3 = parse__();
+              if (result3 !== null) {
+                result4 = parse_mergestring();
+                if (result4 !== null) {
+                  result5 = parse__();
+                  if (result5 !== null) {
+                    if (input.charCodeAt(pos) === 58) {
+                      result6 = ":";
+                      pos++;
+                    } else {
+                      result6 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("\":\"");
+                      }
+                    }
+                    if (result6 !== null) {
+                      result7 = parse__();
+                      if (result7 !== null) {
+                        result8 = parse_mergestring();
+                        if (result8 !== null) {
+                          result9 = parse__();
+                          if (result9 !== null) {
+                            if (input.charCodeAt(pos) === 58) {
+                              result10 = ":";
+                              pos++;
+                            } else {
+                              result10 = null;
+                              if (reportFailures === 0) {
+                                matchFailed("\":\"");
+                              }
+                            }
+                            if (result10 !== null) {
+                              result11 = parse__();
+                              if (result11 !== null) {
+                                result12 = parse_mergestring();
+                                if (result12 !== null) {
+                                  result0 = [result0, result1, result2, result3, result4, result5, result6, result7, result8, result9, result10, result11, result12];
+                                } else {
+                                  result0 = null;
+                                  pos = pos1;
+                                }
+                              } else {
+                                result0 = null;
+                                pos = pos1;
+                              }
+                            } else {
+                              result0 = null;
+                              pos = pos1;
+                            }
+                          } else {
+                            result0 = null;
+                            pos = pos1;
+                          }
+                        } else {
+                          result0 = null;
+                          pos = pos1;
+                        }
+                      } else {
+                        result0 = null;
+                        pos = pos1;
+                      }
+                    } else {
+                      result0 = null;
+                      pos = pos1;
+                    }
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, groupId, name, version) { return {type: 'mvn', name: name, groupId: groupId, version: version}; })(pos0, result0[4], result0[8], result0[12]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_NPMDefinition() {
+        var result0, result1, result2, result3, result4, result5, result6, result7, result8;
+        var pos0, pos1, pos2;
+        
+        pos0 = pos;
+        pos1 = pos;
+        if (input.substr(pos, 3) === "npm") {
+          result0 = "npm";
+          pos += 3;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"npm\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse__();
+          if (result1 !== null) {
+            if (input.charCodeAt(pos) === 58) {
+              result2 = ":";
+              pos++;
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\":\"");
+              }
+            }
+            if (result2 !== null) {
+              result3 = parse__();
+              if (result3 !== null) {
+                result4 = parse_string();
+                if (result4 !== null) {
+                  pos2 = pos;
+                  result5 = parse__();
+                  if (result5 !== null) {
+                    if (input.charCodeAt(pos) === 58) {
+                      result6 = ":";
+                      pos++;
+                    } else {
+                      result6 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("\":\"");
+                      }
+                    }
+                    if (result6 !== null) {
+                      result7 = parse__();
+                      if (result7 !== null) {
+                        result8 = parse_mergestring();
+                        if (result8 !== null) {
+                          result5 = [result5, result6, result7, result8];
+                        } else {
+                          result5 = null;
+                          pos = pos2;
+                        }
+                      } else {
+                        result5 = null;
+                        pos = pos2;
+                      }
+                    } else {
+                      result5 = null;
+                      pos = pos2;
+                    }
+                  } else {
+                    result5 = null;
+                    pos = pos2;
+                  }
+                  result5 = result5 !== null ? result5 : "";
+                  if (result5 !== null) {
+                    result0 = [result0, result1, result2, result3, result4, result5];
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, name, version) { return {type: 'npm', name: name, version: version[3]}; })(pos0, result0[4], result0[5]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
       function parse_Dictionary() {
         var result0, result1, result2, result3, result4, result5, result6;
         var pos0, pos1, pos2;
@@ -1314,6 +1604,30 @@ module.exports = (function(){
             }
             return nodeList;
           })(pos0, result0[2], result0[3]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_mergestring() {
+        var result0, result1;
+        var pos0;
+        
+        pos0 = pos;
+        result1 = parse_moarchar();
+        if (result1 !== null) {
+          result0 = [];
+          while (result1 !== null) {
+            result0.push(result1);
+            result1 = parse_moarchar();
+          }
+        } else {
+          result0 = null;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, chars) { return chars.join(''); })(pos0, result0);
         }
         if (result0 === null) {
           pos = pos0;
@@ -1763,6 +2077,32 @@ module.exports = (function(){
         return result0;
       }
       
+      function parse_MergeToken() {
+        var result0;
+        
+        if (input.substr(pos, 5) === "merge") {
+          result0 = "merge";
+          pos += 5;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"merge\"");
+          }
+        }
+        if (result0 === null) {
+          if (input.charCodeAt(pos) === 126) {
+            result0 = "~";
+            pos++;
+          } else {
+            result0 = null;
+            if (reportFailures === 0) {
+              matchFailed("\"~\"");
+            }
+          }
+        }
+        return result0;
+      }
+      
       function parse_char() {
         var result0;
         
@@ -1773,6 +2113,21 @@ module.exports = (function(){
           result0 = null;
           if (reportFailures === 0) {
             matchFailed("[a-zA-Z0-9_\\-]");
+          }
+        }
+        return result0;
+      }
+      
+      function parse_moarchar() {
+        var result0;
+        
+        if (/^[a-zA-Z0-9_\-.]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("[a-zA-Z0-9_\\-.]");
           }
         }
         return result0;
@@ -1861,7 +2216,8 @@ module.exports = (function(){
           nodes: {},
           groups: {},
           chans: {},
-          bindings: []
+          bindings: [],
+          deployUnits: []
         };
       
         var findEntity = function findEntity(name) {

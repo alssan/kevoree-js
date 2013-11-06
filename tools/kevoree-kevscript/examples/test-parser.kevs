@@ -1,3 +1,8 @@
+merge npm:kevoree-node-javascript
+~ npm:kevoree-group-websocket:0.0.3
+merge npm:kevoree-chan-websocket
+~ mvn:org.kevoree.library.javase:org.kevoree.library.javase.webSocketGroup:2.0.6-SNAPSHOT
+
 +node JavascriptNode node0 {rofl: 'copter'}
 +node JavascriptNode node1
 +node JavascriptNode node2
