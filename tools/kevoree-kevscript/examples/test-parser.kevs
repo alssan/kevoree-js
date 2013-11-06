@@ -1,0 +1,8 @@
++node JavascriptNode node0
++node JavascriptNode node1
++node JavascriptNode node2
++c@node0 FakeConsole comp0
++g WebSocketGroup sync
+add [node0, node1] sync
+add node2 sync
+- node1 sync
