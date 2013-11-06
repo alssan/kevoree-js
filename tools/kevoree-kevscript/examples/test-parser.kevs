@@ -1,4 +1,4 @@
-+node JavascriptNode node0
++node JavascriptNode node0 {rofl: 'copter'}
 +node JavascriptNode node1
 +node JavascriptNode node2
 +c@node0 FakeConsole comp0
@@ -6,3 +6,15 @@
 add [node0, node1] sync
 add node2 sync
 - node1 sync
+- [node0, node2] sync
+add * sync
+remove * sync
+add node2 sync
++chan WebSocketChannel chan0
+updateDictionary sync {foo: "bar", baz: "potato"}
+dic sync {port@node0: '8000'}
+dic comp0 {myAtt: "andItsValue", dep@node2: "yeah"}
+dic node0 {rpz: 'lafamille'}
+comp0.portName => chan0
++ch WebSocketChannel chan1
+comp0.portName2 => chan1

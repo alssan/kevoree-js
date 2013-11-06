@@ -40,15 +40,19 @@ module.exports = (function(){
         "start": parse_start,
         "instructions": parse_instructions,
         "instruction": parse_instruction,
+        "addEntity": parse_addEntity,
         "addNode": parse_addNode,
         "addComp": parse_addComp,
         "addGroup": parse_addGroup,
         "addChan": parse_addChan,
         "addNodeToGroup": parse_addNodeToGroup,
         "removeNodeFromGroup": parse_removeNodeFromGroup,
+        "updateDictionary": parse_updateDictionary,
+        "addBinding": parse_addBinding,
+        "Dictionary": parse_Dictionary,
+        "Attribute": parse_Attribute,
         "NodeList": parse_NodeList,
-        "EntityType": parse_EntityType,
-        "EntityName": parse_EntityName,
+        "string": parse_string,
         "AddNodeToken": parse_AddNodeToken,
         "DelNodeToken": parse_DelNodeToken,
         "AddCompToken": parse_AddCompToken,
@@ -59,6 +63,7 @@ module.exports = (function(){
         "DelChanToken": parse_DelChanToken,
         "AddToken": parse_AddToken,
         "RemoveToken": parse_RemoveToken,
+        "UpdateDictionaryToken": parse_UpdateDictionaryToken,
         "char": parse_char,
         "_": parse__,
         "whitespace": parse_whitespace
@@ -167,18 +172,15 @@ module.exports = (function(){
         var pos0;
         
         pos0 = pos;
-        result0 = parse_addNode();
+        result0 = parse_addEntity();
         if (result0 === null) {
-          result0 = parse_addComp();
+          result0 = parse_addNodeToGroup();
           if (result0 === null) {
-            result0 = parse_addGroup();
+            result0 = parse_removeNodeFromGroup();
             if (result0 === null) {
-              result0 = parse_addChan();
+              result0 = parse_updateDictionary();
               if (result0 === null) {
-                result0 = parse_addNodeToGroup();
-                if (result0 === null) {
-                  result0 = parse_removeNodeFromGroup();
-                }
+                result0 = parse_addBinding();
               }
             }
           }
@@ -198,6 +200,74 @@ module.exports = (function(){
         return result0;
       }
       
+      function parse_addEntity() {
+        var result0, result1, result2;
+        var pos0, pos1, pos2;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_addNode();
+        if (result0 === null) {
+          result0 = parse_addComp();
+          if (result0 === null) {
+            result0 = parse_addGroup();
+            if (result0 === null) {
+              result0 = parse_addChan();
+            }
+          }
+        }
+        if (result0 !== null) {
+          pos2 = pos;
+          result1 = parse__();
+          if (result1 !== null) {
+            result2 = parse_Dictionary();
+            if (result2 !== null) {
+              result1 = [result1, result2];
+            } else {
+              result1 = null;
+              pos = pos2;
+            }
+          } else {
+            result1 = null;
+            pos = pos2;
+          }
+          result1 = result1 !== null ? result1 : "";
+          if (result1 !== null) {
+            result0 = [result0, result1];
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, entity, dictionary) {
+            dictionary = dictionary[1];
+            if (typeof(dictionary) != 'ujndefined') {
+              entity.dictionary = entity.dictionary || {};
+              for (var i in dictionary) {
+                if (typeof(dictionary[i].targetNodeName) == 'undefined') {
+                  entity.dictionary[dictionary[i].name] = {
+                    value: dictionary[i].value
+                  };
+                } else {
+                  entity.dictionary[dictionary[i].name] = {
+                    value: dictionary[i].value,
+                    targetNodeName: dictionary[i].targetNodeName
+                  };
+                }
+              }
+            }
+          })(pos0, result0[0], result0[1]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
       function parse_addNode() {
         var result0, result1, result2, result3, result4;
         var pos0, pos1;
@@ -208,11 +278,11 @@ module.exports = (function(){
         if (result0 !== null) {
           result1 = parse__();
           if (result1 !== null) {
-            result2 = parse_EntityType();
+            result2 = parse_string();
             if (result2 !== null) {
               result3 = parse__();
               if (result3 !== null) {
-                result4 = parse_EntityName();
+                result4 = parse_string();
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
                 } else {
@@ -236,7 +306,10 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, type, name) { return model.nodes[name] = {type: type, components: {}}; })(pos0, result0[2], result0[4]);
+          result0 = (function(offset, type, name) {
+            model.nodes[name] = {type: type, components: {}};
+            return model.nodes[name];
+          })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -266,15 +339,15 @@ module.exports = (function(){
             if (result2 !== null) {
               result3 = parse__();
               if (result3 !== null) {
-                result4 = parse_EntityName();
+                result4 = parse_string();
                 if (result4 !== null) {
                   result5 = parse__();
                   if (result5 !== null) {
-                    result6 = parse_EntityType();
+                    result6 = parse_string();
                     if (result6 !== null) {
                       result7 = parse__();
                       if (result7 !== null) {
-                        result8 = parse_EntityName();
+                        result8 = parse_string();
                         if (result8 !== null) {
                           result0 = [result0, result1, result2, result3, result4, result5, result6, result7, result8];
                         } else {
@@ -314,7 +387,10 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, nodeName, type, name) { return model.nodes[nodeName].components[name] = {type: type}; })(pos0, result0[4], result0[6], result0[8]);
+          result0 = (function(offset, nodeName, type, name) {
+            model.nodes[nodeName].components[name] = {type: type};
+            return model.nodes[nodeName].components[name];
+          })(pos0, result0[4], result0[6], result0[8]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -332,11 +408,11 @@ module.exports = (function(){
         if (result0 !== null) {
           result1 = parse__();
           if (result1 !== null) {
-            result2 = parse_EntityType();
+            result2 = parse_string();
             if (result2 !== null) {
               result3 = parse__();
               if (result3 !== null) {
-                result4 = parse_EntityName();
+                result4 = parse_string();
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
                 } else {
@@ -360,7 +436,10 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, type, name) { return model.groups[name] = {type: type, subnodes: []}; })(pos0, result0[2], result0[4]);
+          result0 = (function(offset, type, name) {
+            model.groups[name] = {type: type, subnodes: []};
+            return model.groups[name];
+          })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -378,11 +457,11 @@ module.exports = (function(){
         if (result0 !== null) {
           result1 = parse__();
           if (result1 !== null) {
-            result2 = parse_EntityType();
+            result2 = parse_string();
             if (result2 !== null) {
               result3 = parse__();
               if (result3 !== null) {
-                result4 = parse_EntityName();
+                result4 = parse_string();
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
                 } else {
@@ -406,7 +485,10 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, type, name) { return model.chans[name] = {type: type}; })(pos0, result0[2], result0[4]);
+          result0 = (function(offset, type, name) {
+            model.chans[name] = {type: type};
+            return model.chans[name];
+          })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -424,11 +506,11 @@ module.exports = (function(){
         if (result0 !== null) {
           result1 = parse__();
           if (result1 !== null) {
-            result2 = parse_EntityName();
+            result2 = parse_string();
             if (result2 !== null) {
               result3 = parse__();
               if (result3 !== null) {
-                result4 = parse_EntityName();
+                result4 = parse_string();
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
                 } else {
@@ -452,7 +534,7 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, nodeName, groupName) { return model.groups[groupName].subnodes.push(nodeName); })(pos0, result0[2], result0[4]);
+          result0 = (function(offset, nodeName, groupName) { model.groups[groupName].subnodes.push(nodeName); })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -468,7 +550,7 @@ module.exports = (function(){
               if (result2 !== null) {
                 result3 = parse__();
                 if (result3 !== null) {
-                  result4 = parse_EntityName();
+                  result4 = parse_string();
                   if (result4 !== null) {
                     result0 = [result0, result1, result2, result3, result4];
                   } else {
@@ -496,11 +578,63 @@ module.exports = (function(){
               for (var i in nodeList) {
                 model.groups[groupName].subnodes.push(nodeList[i]);
               }
-              return model.groups;
             })(pos0, result0[2], result0[4]);
           }
           if (result0 === null) {
             pos = pos0;
+          }
+          if (result0 === null) {
+            pos0 = pos;
+            pos1 = pos;
+            result0 = parse_AddToken();
+            if (result0 !== null) {
+              result1 = parse__();
+              if (result1 !== null) {
+                if (input.charCodeAt(pos) === 42) {
+                  result2 = "*";
+                  pos++;
+                } else {
+                  result2 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\"*\"");
+                  }
+                }
+                if (result2 !== null) {
+                  result3 = parse__();
+                  if (result3 !== null) {
+                    result4 = parse_string();
+                    if (result4 !== null) {
+                      result0 = [result0, result1, result2, result3, result4];
+                    } else {
+                      result0 = null;
+                      pos = pos1;
+                    }
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+            if (result0 !== null) {
+              result0 = (function(offset, groupName) {
+                for (var nodeName in model.nodes) {
+                  model.groups[groupName].subnodes.push(nodeName);
+                }
+              })(pos0, result0[4]);
+            }
+            if (result0 === null) {
+              pos = pos0;
+            }
           }
         }
         return result0;
@@ -516,11 +650,11 @@ module.exports = (function(){
         if (result0 !== null) {
           result1 = parse__();
           if (result1 !== null) {
-            result2 = parse_EntityName();
+            result2 = parse_string();
             if (result2 !== null) {
               result3 = parse__();
               if (result3 !== null) {
-                result4 = parse_EntityName();
+                result4 = parse_string();
                 if (result4 !== null) {
                   result0 = [result0, result1, result2, result3, result4];
                 } else {
@@ -546,7 +680,7 @@ module.exports = (function(){
         if (result0 !== null) {
           result0 = (function(offset, nodeName, groupName) {
             var subnodes = model.groups[groupName].subnodes;
-            return subnodes.splice(subnodes.indexOf(nodeName), 1);
+            subnodes.splice(subnodes.indexOf(nodeName), 1);
           })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
@@ -563,7 +697,7 @@ module.exports = (function(){
               if (result2 !== null) {
                 result3 = parse__();
                 if (result3 !== null) {
-                  result4 = parse_EntityName();
+                  result4 = parse_string();
                   if (result4 !== null) {
                     result0 = [result0, result1, result2, result3, result4];
                   } else {
@@ -592,35 +726,222 @@ module.exports = (function(){
               for (var i in nodeList) {
                 subnodes.splice(subnodes.indexOf(nodeList[i]), 1);
               }
-              return model.groups;
             })(pos0, result0[2], result0[4]);
           }
           if (result0 === null) {
             pos = pos0;
           }
+          if (result0 === null) {
+            pos0 = pos;
+            pos1 = pos;
+            result0 = parse_RemoveToken();
+            if (result0 !== null) {
+              result1 = parse__();
+              if (result1 !== null) {
+                if (input.charCodeAt(pos) === 42) {
+                  result2 = "*";
+                  pos++;
+                } else {
+                  result2 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\"*\"");
+                  }
+                }
+                if (result2 !== null) {
+                  result3 = parse__();
+                  if (result3 !== null) {
+                    result4 = parse_string();
+                    if (result4 !== null) {
+                      result0 = [result0, result1, result2, result3, result4];
+                    } else {
+                      result0 = null;
+                      pos = pos1;
+                    }
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+            if (result0 !== null) {
+              result0 = (function(offset, groupName) { model.groups[groupName].subnodes.length = 0; })(pos0, result0[4]);
+            }
+            if (result0 === null) {
+              pos = pos0;
+            }
+          }
         }
         return result0;
       }
       
-      function parse_NodeList() {
+      function parse_updateDictionary() {
+        var result0, result1, result2, result3, result4;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_UpdateDictionaryToken();
+        if (result0 !== null) {
+          result1 = parse__();
+          if (result1 !== null) {
+            result2 = parse_string();
+            if (result2 !== null) {
+              result3 = parse__();
+              if (result3 !== null) {
+                result4 = parse_Dictionary();
+                if (result4 !== null) {
+                  result0 = [result0, result1, result2, result3, result4];
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, name, dictionary) {
+            var entity = findEntity(name);
+            entity.dictionary = entity.dictionary || {};
+            for (var i in dictionary) {
+              if (typeof(dictionary[i].targetNodeName) == 'undefined') {
+                entity.dictionary[dictionary[i].name] = {
+                  value: dictionary[i].value
+                };
+              } else {
+                entity.dictionary[dictionary[i].name] = {
+                  value: dictionary[i].value,
+                  targetNodeName: dictionary[i].targetNodeName
+                };
+              }
+            }
+          })(pos0, result0[2], result0[4]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_addBinding() {
+        var result0, result1, result2, result3, result4, result5, result6;
+        var pos0, pos1;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_string();
+        if (result0 !== null) {
+          if (input.charCodeAt(pos) === 46) {
+            result1 = ".";
+            pos++;
+          } else {
+            result1 = null;
+            if (reportFailures === 0) {
+              matchFailed("\".\"");
+            }
+          }
+          if (result1 !== null) {
+            result2 = parse_string();
+            if (result2 !== null) {
+              result3 = parse__();
+              if (result3 !== null) {
+                if (input.substr(pos, 2) === "=>") {
+                  result4 = "=>";
+                  pos += 2;
+                } else {
+                  result4 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\"=>\"");
+                  }
+                }
+                if (result4 !== null) {
+                  result5 = parse__();
+                  if (result5 !== null) {
+                    result6 = parse_string();
+                    if (result6 !== null) {
+                      result0 = [result0, result1, result2, result3, result4, result5, result6];
+                    } else {
+                      result0 = null;
+                      pos = pos1;
+                    }
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, compName, compPort, chanName) {
+            if (isComponent(compName) && isChannel(chanName)) {
+              model.bindings.push({from: {comp: compName, port: compPort}, to: chanName});
+            } else throw getErrorPosition()+'A binding can only be made between a component\'s port and a channel (they must be defined before)';
+          })(pos0, result0[0], result0[2], result0[6]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_Dictionary() {
         var result0, result1, result2, result3, result4, result5, result6;
         var pos0, pos1, pos2;
         
         pos0 = pos;
         pos1 = pos;
-        if (input.charCodeAt(pos) === 91) {
-          result0 = "[";
+        if (input.charCodeAt(pos) === 123) {
+          result0 = "{";
           pos++;
         } else {
           result0 = null;
           if (reportFailures === 0) {
-            matchFailed("\"[\"");
+            matchFailed("\"{\"");
           }
         }
         if (result0 !== null) {
           result1 = parse__();
           if (result1 !== null) {
-            result2 = parse_EntityName();
+            result2 = parse_Attribute();
             if (result2 !== null) {
               result3 = [];
               pos2 = pos;
@@ -637,7 +958,7 @@ module.exports = (function(){
               if (result4 !== null) {
                 result5 = parse__();
                 if (result5 !== null) {
-                  result6 = parse_EntityName();
+                  result6 = parse_Attribute();
                   if (result6 !== null) {
                     result4 = [result4, result5, result6];
                   } else {
@@ -668,7 +989,285 @@ module.exports = (function(){
                 if (result4 !== null) {
                   result5 = parse__();
                   if (result5 !== null) {
-                    result6 = parse_EntityName();
+                    result6 = parse_Attribute();
+                    if (result6 !== null) {
+                      result4 = [result4, result5, result6];
+                    } else {
+                      result4 = null;
+                      pos = pos2;
+                    }
+                  } else {
+                    result4 = null;
+                    pos = pos2;
+                  }
+                } else {
+                  result4 = null;
+                  pos = pos2;
+                }
+              }
+              if (result3 !== null) {
+                result4 = parse__();
+                if (result4 !== null) {
+                  if (input.charCodeAt(pos) === 125) {
+                    result5 = "}";
+                    pos++;
+                  } else {
+                    result5 = null;
+                    if (reportFailures === 0) {
+                      matchFailed("\"}\"");
+                    }
+                  }
+                  if (result5 !== null) {
+                    result0 = [result0, result1, result2, result3, result4, result5];
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, first, others) {
+            var attList = [];
+            attList.push(first);
+            for (var i=0; i < others.length; i++) {
+              attList.push(others[i][2]);
+            }
+            return attList;
+          })(pos0, result0[2], result0[3]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_Attribute() {
+        var result0, result1, result2, result3, result4, result5, result6, result7, result8, result9, result10;
+        var pos0, pos1, pos2;
+        
+        pos0 = pos;
+        pos1 = pos;
+        result0 = parse_string();
+        if (result0 !== null) {
+          result1 = parse__();
+          if (result1 !== null) {
+            pos2 = pos;
+            if (input.charCodeAt(pos) === 64) {
+              result2 = "@";
+              pos++;
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"@\"");
+              }
+            }
+            if (result2 !== null) {
+              result3 = parse__();
+              if (result3 !== null) {
+                result4 = parse_string();
+                if (result4 !== null) {
+                  result2 = [result2, result3, result4];
+                } else {
+                  result2 = null;
+                  pos = pos2;
+                }
+              } else {
+                result2 = null;
+                pos = pos2;
+              }
+            } else {
+              result2 = null;
+              pos = pos2;
+            }
+            result2 = result2 !== null ? result2 : "";
+            if (result2 !== null) {
+              result3 = parse__();
+              if (result3 !== null) {
+                if (input.charCodeAt(pos) === 58) {
+                  result4 = ":";
+                  pos++;
+                } else {
+                  result4 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("\":\"");
+                  }
+                }
+                if (result4 !== null) {
+                  result5 = parse__();
+                  if (result5 !== null) {
+                    if (/^["']/.test(input.charAt(pos))) {
+                      result6 = input.charAt(pos);
+                      pos++;
+                    } else {
+                      result6 = null;
+                      if (reportFailures === 0) {
+                        matchFailed("[\"']");
+                      }
+                    }
+                    if (result6 !== null) {
+                      result7 = parse__();
+                      if (result7 !== null) {
+                        result8 = parse_string();
+                        if (result8 !== null) {
+                          result9 = parse__();
+                          if (result9 !== null) {
+                            if (/^["']/.test(input.charAt(pos))) {
+                              result10 = input.charAt(pos);
+                              pos++;
+                            } else {
+                              result10 = null;
+                              if (reportFailures === 0) {
+                                matchFailed("[\"']");
+                              }
+                            }
+                            if (result10 !== null) {
+                              result0 = [result0, result1, result2, result3, result4, result5, result6, result7, result8, result9, result10];
+                            } else {
+                              result0 = null;
+                              pos = pos1;
+                            }
+                          } else {
+                            result0 = null;
+                            pos = pos1;
+                          }
+                        } else {
+                          result0 = null;
+                          pos = pos1;
+                        }
+                      } else {
+                        result0 = null;
+                        pos = pos1;
+                      }
+                    } else {
+                      result0 = null;
+                      pos = pos1;
+                    }
+                  } else {
+                    result0 = null;
+                    pos = pos1;
+                  }
+                } else {
+                  result0 = null;
+                  pos = pos1;
+                }
+              } else {
+                result0 = null;
+                pos = pos1;
+              }
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
+        }
+        if (result0 !== null) {
+          result0 = (function(offset, attName, nodeName, attValue) {
+            if (typeof(nodeName[2]) != 'undefined') {
+              // attribute is fragmentDependant
+              return {name: attName, value: attValue, targetNodeName: nodeName[2]};
+            } else {
+              // attribute is not fragmentDependant
+              return {name: attName, value: attValue};
+            }
+          })(pos0, result0[0], result0[2], result0[8]);
+        }
+        if (result0 === null) {
+          pos = pos0;
+        }
+        return result0;
+      }
+      
+      function parse_NodeList() {
+        var result0, result1, result2, result3, result4, result5, result6;
+        var pos0, pos1, pos2;
+        
+        pos0 = pos;
+        pos1 = pos;
+        if (input.charCodeAt(pos) === 91) {
+          result0 = "[";
+          pos++;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"[\"");
+          }
+        }
+        if (result0 !== null) {
+          result1 = parse__();
+          if (result1 !== null) {
+            result2 = parse_string();
+            if (result2 !== null) {
+              result3 = [];
+              pos2 = pos;
+              if (/^[,]/.test(input.charAt(pos))) {
+                result4 = input.charAt(pos);
+                pos++;
+              } else {
+                result4 = null;
+                if (reportFailures === 0) {
+                  matchFailed("[,]");
+                }
+              }
+              result4 = result4 !== null ? result4 : "";
+              if (result4 !== null) {
+                result5 = parse__();
+                if (result5 !== null) {
+                  result6 = parse_string();
+                  if (result6 !== null) {
+                    result4 = [result4, result5, result6];
+                  } else {
+                    result4 = null;
+                    pos = pos2;
+                  }
+                } else {
+                  result4 = null;
+                  pos = pos2;
+                }
+              } else {
+                result4 = null;
+                pos = pos2;
+              }
+              while (result4 !== null) {
+                result3.push(result4);
+                pos2 = pos;
+                if (/^[,]/.test(input.charAt(pos))) {
+                  result4 = input.charAt(pos);
+                  pos++;
+                } else {
+                  result4 = null;
+                  if (reportFailures === 0) {
+                    matchFailed("[,]");
+                  }
+                }
+                result4 = result4 !== null ? result4 : "";
+                if (result4 !== null) {
+                  result5 = parse__();
+                  if (result5 !== null) {
+                    result6 = parse_string();
                     if (result6 !== null) {
                       result4 = [result4, result5, result6];
                     } else {
@@ -738,31 +1337,7 @@ module.exports = (function(){
         return result0;
       }
       
-      function parse_EntityType() {
-        var result0, result1;
-        var pos0;
-        
-        pos0 = pos;
-        result1 = parse_char();
-        if (result1 !== null) {
-          result0 = [];
-          while (result1 !== null) {
-            result0.push(result1);
-            result1 = parse_char();
-          }
-        } else {
-          result0 = null;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, chars) { return chars.join(''); })(pos0, result0);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_EntityName() {
+      function parse_string() {
         var result0, result1;
         var pos0;
         
@@ -1167,6 +1742,43 @@ module.exports = (function(){
         return result0;
       }
       
+      function parse_UpdateDictionaryToken() {
+        var result0;
+        
+        if (input.substr(pos, 16) === "updateDictionary") {
+          result0 = "updateDictionary";
+          pos += 16;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("\"updateDictionary\"");
+          }
+        }
+        if (result0 === null) {
+          if (input.substr(pos, 10) === "dictionary") {
+            result0 = "dictionary";
+            pos += 10;
+          } else {
+            result0 = null;
+            if (reportFailures === 0) {
+              matchFailed("\"dictionary\"");
+            }
+          }
+          if (result0 === null) {
+            if (input.substr(pos, 3) === "dic") {
+              result0 = "dic";
+              pos += 3;
+            } else {
+              result0 = null;
+              if (reportFailures === 0) {
+                matchFailed("\"dic\"");
+              }
+            }
+          }
+        }
+        return result0;
+      }
+      
       function parse_char() {
         var result0;
         
@@ -1261,13 +1873,45 @@ module.exports = (function(){
       }
       
       
-        var kevoree = require('kevoree-library').org.kevoree;
-        var factory = new kevoree.impl.DefaultKevoreeFactory();
         var model = {
           nodes: {},
           groups: {},
-          chans: {}
+          chans: {},
+          bindings: []
         };
+      
+        var findEntity = function findEntity(name) {
+          var entity = model.nodes[name] || model.groups[name] || model.chans[name] || null;
+          if (entity == null) {
+            // unable to find entity in nodes, groups and channels, lets check in components
+            for (var nodeName in model.nodes) {
+              for (var compName in model.nodes[nodeName].components) {
+                if (compName == name) return model.nodes[nodeName].components[compName];
+              }
+            }
+            var error = computeErrorPosition();
+            throw getErrorPosition()+'Unable to find entity named "'+name+'"';
+          }
+          return entity;
+        };
+      
+        var isComponent = function isComponent(name) {
+          for (var nodeName in model.nodes) {
+            for (var compName in model.nodes[nodeName].components) {
+              if (compName == name) return true;
+            }
+          }
+          return false;
+        };
+      
+        var isChannel = function isChannel(name) {
+          return (typeof(model.chans[name]) == 'undefined') ? false : true;
+        }
+      
+        var getErrorPosition = function getErrorPosition() {
+          var error = computeErrorPosition();
+          return '[l.'+error.line+' c.'+error.column+'] ';
+        }
       
       
       var result = parseFunctions[startRule]();
