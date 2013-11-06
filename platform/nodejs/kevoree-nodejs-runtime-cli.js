@@ -27,14 +27,7 @@ kRuntime.on('error', function (err) {
 
 var loadModelFromCmdLineArg = function loadModelFromCmdLineArg() {
   if (argv.model && argv.model.length > 0) {
-    var modelPath = null;
-    if (argv.model.substr(0, 1) == '/') {
-      // fullpath given let's go
-      modelPath = argv.model;
-    } else {
-      // relative path given
-      modelPath = path.resolve(__dirname, argv.model);
-    }
+    var modelPath = path.resolve(argv.model);
     try {
       return loader.loadModelFromString(JSON.stringify(require(modelPath))).get(0);
     } catch (ignore) {

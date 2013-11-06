@@ -25,6 +25,8 @@
   "homepage": "https://github.com/dukeboard/kevoree-js",
   "dependencies": {
     "pegjs": "~0.7.0",
-    "grunt": "~0.4.1"
+    "grunt": "~0.4.1",
+    "pseudoclass": "~0.2.6",
+    "optimist": "~0.6.0"
   }
 }
