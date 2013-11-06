@@ -18,7 +18,7 @@ var KevScript = Class({
   parse: function (data) {
     var parsedModel = KevScriptParser.parse(data);
     if (this.checker.check(parsedModel)) {
-      
+
     } else return null;
   }
 });
