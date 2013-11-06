@@ -38,9 +38,33 @@
     return (typeof(model.chans[name]) == 'undefined') ? false : true;
   }
 
+  var isNode = function isNode(name) {
+   return (typeof(model.nodes[name]) == 'undefined') ? false : true; 
+  }
+
+  var isGroup = function isGroup(name) {
+   return (typeof(model.groups[name]) == 'undefined') ? false : true; 
+  }
+
   var getErrorPosition = function getErrorPosition() {
     var error = computeErrorPosition();
     return '[l.'+error.line+' c.'+error.column+'] ';
+  };
+
+  var processDictionary = function processDictionary(entity, dictionary) {
+    entity.dictionary = entity.dictionary || {};
+    for (var i in dictionary) {
+      if (typeof(dictionary[i].targetNodeName) == 'undefined') {
+        entity.dictionary[dictionary[i].name] = {
+          value: dictionary[i].value
+        };
+      } else {
+        entity.dictionary[dictionary[i].name] = {
+          value: dictionary[i].value,
+          targetNodeName: dictionary[i].targetNodeName
+        };
+      }
+    }
   }
 }
 
@@ -61,20 +85,8 @@ addEntity
   = entity:(addNode / addComp / addGroup / addChan) dictionary:(_ Dictionary)?
   {
     dictionary = dictionary[1];
-    if (typeof(dictionary) != 'ujndefined') {
-      entity.dictionary = entity.dictionary || {};
-      for (var i in dictionary) {
-        if (typeof(dictionary[i].targetNodeName) == 'undefined') {
-          entity.dictionary[dictionary[i].name] = {
-            value: dictionary[i].value
-          };
-        } else {
-          entity.dictionary[dictionary[i].name] = {
-            value: dictionary[i].value,
-            targetNodeName: dictionary[i].targetNodeName
-          };
-        }
-      }
+    if (typeof(dictionary) != 'undefined') {
+      processDictionary(entity, dictionary);
     }
   }
 
@@ -112,15 +124,21 @@ addChan
 
 addNodeToGroup
   = AddToken _ nodeName:string _ groupName:string
-  { model.groups[groupName].subnodes.push(nodeName); }
+  {
+    if (!isNode(nodeName)) throw getErrorPosition()+'You must only add nodes to groups. "'+nodeName+'" is not a node or is not defined.';
+    if (!isGroup(groupName)) throw getErrorPosition()+'You must only add nodes to groups. "'+groupName+'" is not a group or is not defined.';
+    model.groups[groupName].subnodes.push(nodeName);
+  }
   / AddToken _ nodeList:NodeList _ groupName:string
   { 
+    if (!isGroup(groupName)) throw getErrorPosition()+'You must only add nodes to groups. "'+groupName+'" is not a group or is not defined.';
     for (var i in nodeList) {
       model.groups[groupName].subnodes.push(nodeList[i]);
     }
   }
   / AddToken _ '*' _ groupName:string
   {
+    if (!isGroup(groupName)) throw getErrorPosition()+'You must only add nodes to groups. "'+groupName+'" is not a group or is not defined.';
     for (var nodeName in model.nodes) {
       model.groups[groupName].subnodes.push(nodeName);
     }
@@ -147,19 +165,7 @@ updateDictionary
   = UpdateDictionaryToken _ name:string _ dictionary:Dictionary
   {
     var entity = findEntity(name);
-    entity.dictionary = entity.dictionary || {};
-    for (var i in dictionary) {
-      if (typeof(dictionary[i].targetNodeName) == 'undefined') {
-        entity.dictionary[dictionary[i].name] = {
-          value: dictionary[i].value
-        };
-      } else {
-        entity.dictionary[dictionary[i].name] = {
-          value: dictionary[i].value,
-          targetNodeName: dictionary[i].targetNodeName
-        };
-      }
-    }
+    processDictionary(entity, dictionary);
   }
 
 addBinding
@@ -196,9 +202,11 @@ Attribute
 NodeList
   = '[' _ first:string others:([,]? _ string)*  _ ']'
   {
+    if (!isNode(first)) throw getErrorPosition()+'"'+first+'" is not a node or is not defined.';
     var nodeList = [];
     nodeList.push(first);
     for (var i=0; i < others.length; i++) {
+      if (!isNode(others[i][2])) throw getErrorPosition()+'"'+others[i][2]+'" is not a node or is not defined.';
       nodeList.push(others[i][2]);
     }
     return nodeList;

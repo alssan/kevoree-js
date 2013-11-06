@@ -245,20 +245,8 @@ module.exports = (function(){
         if (result0 !== null) {
           result0 = (function(offset, entity, dictionary) {
             dictionary = dictionary[1];
-            if (typeof(dictionary) != 'ujndefined') {
-              entity.dictionary = entity.dictionary || {};
-              for (var i in dictionary) {
-                if (typeof(dictionary[i].targetNodeName) == 'undefined') {
-                  entity.dictionary[dictionary[i].name] = {
-                    value: dictionary[i].value
-                  };
-                } else {
-                  entity.dictionary[dictionary[i].name] = {
-                    value: dictionary[i].value,
-                    targetNodeName: dictionary[i].targetNodeName
-                  };
-                }
-              }
+            if (typeof(dictionary) != 'undefined') {
+              processDictionary(entity, dictionary);
             }
           })(pos0, result0[0], result0[1]);
         }
@@ -534,7 +522,11 @@ module.exports = (function(){
           pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, nodeName, groupName) { model.groups[groupName].subnodes.push(nodeName); })(pos0, result0[2], result0[4]);
+          result0 = (function(offset, nodeName, groupName) {
+            if (!isNode(nodeName)) throw getErrorPosition()+'You must only add nodes to groups. "'+nodeName+'" is not a node or is not defined.';
+            if (!isGroup(groupName)) throw getErrorPosition()+'You must only add nodes to groups. "'+groupName+'" is not a group or is not defined.';
+            model.groups[groupName].subnodes.push(nodeName);
+          })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -575,6 +567,7 @@ module.exports = (function(){
           }
           if (result0 !== null) {
             result0 = (function(offset, nodeList, groupName) { 
+              if (!isGroup(groupName)) throw getErrorPosition()+'You must only add nodes to groups. "'+groupName+'" is not a group or is not defined.';
               for (var i in nodeList) {
                 model.groups[groupName].subnodes.push(nodeList[i]);
               }
@@ -627,6 +620,7 @@ module.exports = (function(){
             }
             if (result0 !== null) {
               result0 = (function(offset, groupName) {
+                if (!isGroup(groupName)) throw getErrorPosition()+'You must only add nodes to groups. "'+groupName+'" is not a group or is not defined.';
                 for (var nodeName in model.nodes) {
                   model.groups[groupName].subnodes.push(nodeName);
                 }
@@ -824,19 +818,7 @@ module.exports = (function(){
         if (result0 !== null) {
           result0 = (function(offset, name, dictionary) {
             var entity = findEntity(name);
-            entity.dictionary = entity.dictionary || {};
-            for (var i in dictionary) {
-              if (typeof(dictionary[i].targetNodeName) == 'undefined') {
-                entity.dictionary[dictionary[i].name] = {
-                  value: dictionary[i].value
-                };
-              } else {
-                entity.dictionary[dictionary[i].name] = {
-                  value: dictionary[i].value,
-                  targetNodeName: dictionary[i].targetNodeName
-                };
-              }
-            }
+            processDictionary(entity, dictionary);
           })(pos0, result0[2], result0[4]);
         }
         if (result0 === null) {
@@ -1323,9 +1305,11 @@ module.exports = (function(){
         }
         if (result0 !== null) {
           result0 = (function(offset, first, others) {
+            if (!isNode(first)) throw getErrorPosition()+'"'+first+'" is not a node or is not defined.';
             var nodeList = [];
             nodeList.push(first);
             for (var i=0; i < others.length; i++) {
+              if (!isNode(others[i][2])) throw getErrorPosition()+'"'+others[i][2]+'" is not a node or is not defined.';
               nodeList.push(others[i][2]);
             }
             return nodeList;
@@ -1908,9 +1892,33 @@ module.exports = (function(){
           return (typeof(model.chans[name]) == 'undefined') ? false : true;
         }
       
+        var isNode = function isNode(name) {
+         return (typeof(model.nodes[name]) == 'undefined') ? false : true; 
+        }
+      
+        var isGroup = function isGroup(name) {
+         return (typeof(model.groups[name]) == 'undefined') ? false : true; 
+        }
+      
         var getErrorPosition = function getErrorPosition() {
           var error = computeErrorPosition();
           return '[l.'+error.line+' c.'+error.column+'] ';
+        };
+      
+        var processDictionary = function processDictionary(entity, dictionary) {
+          entity.dictionary = entity.dictionary || {};
+          for (var i in dictionary) {
+            if (typeof(dictionary[i].targetNodeName) == 'undefined') {
+              entity.dictionary[dictionary[i].name] = {
+                value: dictionary[i].value
+              };
+            } else {
+              entity.dictionary[dictionary[i].name] = {
+                value: dictionary[i].value,
+                targetNodeName: dictionary[i].targetNodeName
+              };
+            }
+          }
         }
       
       
