@@ -182,15 +182,15 @@ merge
   { model.deployUnits.push(def); }
   
 MergeDefinition
-  = def:(MavenDefinition / NPMDefinition) // TODO add other type of merging possible (local ? etc)
+  = ['"]? def:(MavenDefinition / NPMDefinition) ['"]? // TODO add other type of merging possible (local ? etc)
   { return def; }
 
 MavenDefinition
-  = 'mvn' _ ':' _ groupId:mergestring _ ':' _ name:mergestring _ ':' _ version:mergestring
+  = 'mvn' _ ':' _ groupId:mergestring _ [:/] _ name:mergestring _ [:/@] _ version:mergestring
   { return {type: 'mvn', name: name, groupId: groupId, version: version}; }
 
 NPMDefinition
-  = 'npm' _ ':' _ name:string version:(_ ':' _ mergestring)?
+  = 'npm' _ ':' _ name:string version:(_ [:/@] _ mergestring)?
   { return {type: 'npm', name: name, version: version[3]}; }
 
 Dictionary

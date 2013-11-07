@@ -11,12 +11,20 @@ var loader = new kevoree.loader.JSONModelLoader();
  * @param callback
  */
 module.exports = function (unitName, version, callback) {
+  if (typeof(callback) == 'undefined') {
+    callback = version;
+    version = null;
+  }
   try {
     // try to require.resolve model directly (this will work if the module has already been installed)
     require.resolve(unitName);
     var packageJson = require(path.resolve('node_modules', unitName, 'package.json'));
-    if (packageJson.version == version) return model();
-    else throw new Error('Version mismatch (wanted: '+version+', found: '+packageJson.version+')');
+    if (typeof(version) != 'undefined' && version != null) {
+      if (packageJson.version == version) return model();
+      else throw new Error('Version mismatch (wanted: '+version+', found: '+packageJson.version+')');
+    } else {
+      return model();
+    }
 
   } catch (err) {
     // module wasn't installed locally : let's do it
@@ -24,7 +32,7 @@ module.exports = function (unitName, version, callback) {
     npm.load({}, function (err) {
       if (err) return callback(err);
 
-      npm.commands.install([unitName+'@'+version], function (err) {
+      npm.commands.install([(version == null) ? unitName : unitName+'@'+version], function (err) {
         if (err) return callback(err);
 
         try {

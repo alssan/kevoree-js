@@ -950,16 +950,53 @@ module.exports = (function(){
       }
       
       function parse_MergeDefinition() {
-        var result0;
-        var pos0;
+        var result0, result1, result2;
+        var pos0, pos1;
         
         pos0 = pos;
-        result0 = parse_MavenDefinition();
-        if (result0 === null) {
-          result0 = parse_NPMDefinition();
+        pos1 = pos;
+        if (/^['"]/.test(input.charAt(pos))) {
+          result0 = input.charAt(pos);
+          pos++;
+        } else {
+          result0 = null;
+          if (reportFailures === 0) {
+            matchFailed("['\"]");
+          }
+        }
+        result0 = result0 !== null ? result0 : "";
+        if (result0 !== null) {
+          result1 = parse_MavenDefinition();
+          if (result1 === null) {
+            result1 = parse_NPMDefinition();
+          }
+          if (result1 !== null) {
+            if (/^['"]/.test(input.charAt(pos))) {
+              result2 = input.charAt(pos);
+              pos++;
+            } else {
+              result2 = null;
+              if (reportFailures === 0) {
+                matchFailed("['\"]");
+              }
+            }
+            result2 = result2 !== null ? result2 : "";
+            if (result2 !== null) {
+              result0 = [result0, result1, result2];
+            } else {
+              result0 = null;
+              pos = pos1;
+            }
+          } else {
+            result0 = null;
+            pos = pos1;
+          }
+        } else {
+          result0 = null;
+          pos = pos1;
         }
         if (result0 !== null) {
-          result0 = (function(offset, def) { return def; })(pos0, result0);
+          result0 = (function(offset, def) { return def; })(pos0, result0[1]);
         }
         if (result0 === null) {
           pos = pos0;
@@ -1001,13 +1038,13 @@ module.exports = (function(){
                 if (result4 !== null) {
                   result5 = parse__();
                   if (result5 !== null) {
-                    if (input.charCodeAt(pos) === 58) {
-                      result6 = ":";
+                    if (/^[:\/]/.test(input.charAt(pos))) {
+                      result6 = input.charAt(pos);
                       pos++;
                     } else {
                       result6 = null;
                       if (reportFailures === 0) {
-                        matchFailed("\":\"");
+                        matchFailed("[:\\/]");
                       }
                     }
                     if (result6 !== null) {
@@ -1017,13 +1054,13 @@ module.exports = (function(){
                         if (result8 !== null) {
                           result9 = parse__();
                           if (result9 !== null) {
-                            if (input.charCodeAt(pos) === 58) {
-                              result10 = ":";
+                            if (/^[:\/@]/.test(input.charAt(pos))) {
+                              result10 = input.charAt(pos);
                               pos++;
                             } else {
                               result10 = null;
                               if (reportFailures === 0) {
-                                matchFailed("\":\"");
+                                matchFailed("[:\\/@]");
                               }
                             }
                             if (result10 !== null) {
@@ -1128,13 +1165,13 @@ module.exports = (function(){
                   pos2 = pos;
                   result5 = parse__();
                   if (result5 !== null) {
-                    if (input.charCodeAt(pos) === 58) {
-                      result6 = ":";
+                    if (/^[:\/@]/.test(input.charAt(pos))) {
+                      result6 = input.charAt(pos);
                       pos++;
                     } else {
                       result6 = null;
                       if (reportFailures === 0) {
-                        matchFailed("\":\"");
+                        matchFailed("[:\\/@]");
                       }
                     }
                     if (result6 !== null) {

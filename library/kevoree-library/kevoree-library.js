@@ -33,7 +33,87 @@ var Kotlin = require('kevoree-kotlin');
       },
       endVisitRef: function (refName) {
       }
-    }), ModelAttributeVisitor: Kotlin.createTrait(null), ModelLoader: ModelLoader, KMFContainer: KMFContainer, DataStore: Kotlin.createTrait(null), KMFContainerProxy: Kotlin.createTrait(null), PersistenceKMFFactory: Kotlin.createTrait(KMFFactory), ModelSerializer: ModelSerializer, ModelCompare: Kotlin.createTrait(null, /** @lends _c.ModelCompare.prototype */ {
+    }), ModelAttributeVisitor: Kotlin.createTrait(null), ModelLoader: ModelLoader, KMFContainer: KMFContainer, DataStore: Kotlin.createTrait(null), KMFContainerProxy: Kotlin.createTrait(KMFContainer), PersistenceKMFFactory: Kotlin.createTrait(KMFFactory, /** @lends _c.PersistenceKMFFactory.prototype */ {
+      remove: function (elem) {
+        if (this.datastore != null) {
+          var tmp$0, tmp$1, tmp$2, tmp$3;
+          ((tmp$0 = this.datastore) != null ? tmp$0 : Kotlin.throwNPE()).remove('trace', (tmp$1 = elem.path()) != null ? tmp$1 : Kotlin.throwNPE());
+          ((tmp$2 = this.datastore) != null ? tmp$2 : Kotlin.throwNPE()).remove('type', (tmp$3 = elem.path()) != null ? tmp$3 : Kotlin.throwNPE());
+        }
+      },
+      lookupFrom: function (basePath, relationInParent, key) {
+        return this.lookup(basePath + '/' + relationInParent + '[' + key + ']');
+      },
+      clearCache: function () {
+        this.elem_cache.clear();
+      },
+      lookup: function (path) {
+        var path2 = path;
+        if (Kotlin.equals(path2, '/')) {
+          path2 = '';
+        }
+        if (path2.startsWith('/')) {
+          path2 = path2.substring(1);
+        }
+        if (this.elem_cache.containsKey(path2)) {
+          return this.elem_cache.get(path2);
+        }
+        if (this.datastore != null) {
+          var tmp$0;
+          var typeName = ((tmp$0 = this.datastore) != null ? tmp$0 : Kotlin.throwNPE()).get('type', path2);
+          if (typeName != null) {
+            var tmp$1;
+            var elem = (tmp$1 = this.create(typeName)) != null ? tmp$1 : Kotlin.throwNPE();
+            this.elem_cache.put(path2, elem);
+            elem.originFactory = this;
+            elem.isResolved = false;
+            elem.setOriginPath(path2);
+            return elem;
+          }
+           else {
+            throw new Error('Empty Type Name for ' + path2);
+          }
+        }
+        return null;
+      },
+      getTraces: function (path) {
+        var sequence = this.compare.createSequence();
+        var tmp$0;
+        var traces = (tmp$0 = this.datastore) != null ? tmp$0.get('trace', path) : null;
+        if (traces != null) {
+          sequence.populateFromString(traces);
+          return sequence;
+        }
+        return null;
+      },
+      instrumentElem: function (elem) {
+      },
+      persist: function (elem) {
+        if (this.datastore != null) {
+          var traces = elem.toTraces(true, true);
+          var traceSeq = this.compare.createSequence();
+          traceSeq.populate(traces);
+          var tmp$0, tmp$1, tmp$2, tmp$3;
+          ((tmp$0 = this.datastore) != null ? tmp$0 : Kotlin.throwNPE()).put('trace', (tmp$1 = elem.path()) != null ? tmp$1 : Kotlin.throwNPE(), traceSeq.exportToString());
+          ((tmp$2 = this.datastore) != null ? tmp$2 : Kotlin.throwNPE()).put('type', (tmp$3 = elem.path()) != null ? tmp$3 : Kotlin.throwNPE(), elem.metaClassName());
+          if (Kotlin.isType(elem, _c.KMFContainerProxy)) {
+            elem.originFactory = this;
+          }
+        }
+      },
+      persistBatch: function (batch) {
+        {
+          var tmp$0 = batch.elements.iterator();
+          while (tmp$0.hasNext()) {
+            var b = tmp$0.next();
+            this.persist(b);
+          }
+        }
+      },
+      createBatch: function () {
+        return new _.org.kevoree.modeling.api.persistence.Batch();
+      }
+    }), ModelSerializer: ModelSerializer, ModelCompare: Kotlin.createTrait(null, /** @lends _c.ModelCompare.prototype */ {
       diff: function (origin, target) {
         return this.createSequence().populate(this.internal_diff(origin, target, false, false));
       },
@@ -593,6 +673,13 @@ var Kotlin = require('kevoree-kotlin');
         traceApplicator.applyTraceOnModel(this);
         return true;
       },
+      silentlyApplyOn: function (target) {
+        var tmp$0;
+        var traceApplicator = new _.org.kevoree.modeling.api.trace.ModelTraceApplicator(target, (tmp$0 = this.factory) != null ? tmp$0 : Kotlin.throwNPE());
+        traceApplicator.fireEvents = false;
+        traceApplicator.applyTraceOnModel(this);
+        return true;
+      },
       reverse: function () {
         var tmp$0;
         this.traces = (tmp$0 = _.kotlin.reverse_7(this.traces)) != null ? tmp$0 : Kotlin.throwNPE();
@@ -948,6 +1035,9 @@ var Kotlin = require('kevoree-kotlin');
         if (this.internal_readOnlyElem) {
           return;
         }
+        if (Kotlin.equals(this.eContainer(), container)) {
+          return;
+        }
         var tempUnsetCmd = this.internal_unsetCmd;
         this.internal_unsetCmd = null;
         if (tempUnsetCmd != null) {
@@ -1131,6 +1221,9 @@ var Kotlin = require('kevoree-kotlin');
         return resultTest.v;
       },
       findByPath: function (query) {
+        if (Kotlin.equals(query, this.path())) {
+          return this;
+        }
         var firstSepIndex = _.js.indexOf(query, '[');
         if (firstSepIndex === -1) {
           if (query.length === 0) {
@@ -1206,6 +1299,18 @@ var Kotlin = require('kevoree-kotlin');
               }
             }
           }
+        }
+        return traces;
+      },
+      toTraces: function (attributes, references) {
+        var traces = new Kotlin.ArrayList(0);
+        if (attributes) {
+          var attVisitorFill = _c.KMFContainerImpl.f8(this, traces);
+          this.visitAttributes(attVisitorFill);
+        }
+        if (references) {
+          var refVisitorFill = _c.KMFContainerImpl.f9(this, traces);
+          this.visit(refVisitorFill, false, true, true);
         }
         return traces;
       }
@@ -1324,6 +1429,24 @@ var Kotlin = require('kevoree-kotlin');
               }
             }
             values.remove(concatedKey);
+          }
+        });
+      },
+      f8: function ($outer, traces) {
+        return Kotlin.createObject(_c.ModelAttributeVisitor, null, {
+          visit: function (value, name, parent) {
+            var tmp$0;
+            traces.add(new _.org.kevoree.modeling.api.trace.ModelSetTrace((tmp$0 = $outer.path()) != null ? tmp$0 : Kotlin.throwNPE(), name, null, _.org.kevoree.modeling.api.util.AttConverter.convFlatAtt(value), null));
+          }
+        });
+      },
+      f9: function ($outer, traces) {
+        return Kotlin.createObject(_c.ModelVisitor, function $fun() {
+          $fun.baseInitializer.call(this);
+        }, {
+          visit: function (elem, refNameInParent, parent) {
+            var tmp$0, tmp$1;
+            traces.add(new _.org.kevoree.modeling.api.trace.ModelAddTrace((tmp$0 = $outer.path()) != null ? tmp$0 : Kotlin.throwNPE(), refNameInParent, (tmp$1 = elem.path()) != null ? tmp$1 : Kotlin.throwNPE(), null));
           }
         });
       }
@@ -6543,6 +6666,53 @@ var Kotlin = require('kevoree-kotlin');
             }),
             persistence: Kotlin.definePackage(null, /** @lends _.org.kevoree.modeling.api.persistence */ {
               DataStore: _c.DataStore,
+              MemoryDataStore: Kotlin.createClass(_c.DataStore, function () {
+                this.maps = new Kotlin.PrimitiveHashMap(0);
+              }, /** @lends _.org.kevoree.modeling.api.persistence.MemoryDataStore.prototype */ {
+                getOrCreateSegment: function (segment) {
+                  if (!this.maps.containsKey(segment)) {
+                    this.maps.put(segment, new Kotlin.PrimitiveHashMap(0));
+                  }
+                  var tmp$0;
+                  return (tmp$0 = this.maps.get(segment)) != null ? tmp$0 : Kotlin.throwNPE();
+                },
+                put: function (segment, key, value) {
+                  this.getOrCreateSegment(segment).put(key, value);
+                },
+                get: function (segment, key) {
+                  return this.getOrCreateSegment(segment).get(key);
+                },
+                remove: function (segment, key) {
+                  this.getOrCreateSegment(segment).remove(key);
+                }
+              }),
+              Batch: Kotlin.createClass(_c.ModelVisitor, function $fun() {
+                $fun.baseInitializer.call(this);
+                this.elements = new Kotlin.ArrayList(0);
+              }, /** @lends _.org.kevoree.modeling.api.persistence.Batch.prototype */ {
+                visit: function (elem, refNameInParent, parent) {
+                  if (Kotlin.isType(elem, _c.KMFContainerProxy)) {
+                    if (!elem.isResolved) {
+                      this.noChildrenVisit();
+                    }
+                     else {
+                      this.elements.add(elem);
+                    }
+                  }
+                   else {
+                    this.elements.add(elem);
+                  }
+                },
+                addElement: function (e) {
+                  this.elements.add(e);
+                  return this;
+                },
+                addElementAndReachable: function (e) {
+                  this.elements.add(e);
+                  e.visit(this, true, true, true);
+                  return this;
+                }
+              }),
               KMFContainerProxy: _c.KMFContainerProxy
             }),
             xmi: Kotlin.definePackage(function () {
@@ -7143,11 +7313,12 @@ var Kotlin = require('kevoree-kotlin');
                 this.pendingParent = null;
                 this.pendingParentRefName = null;
                 this.pendingObjPath = null;
+                this.fireEvents = true;
               }, /** @lends _.org.kevoree.modeling.api.trace.ModelTraceApplicator.prototype */ {
                 tryClosePending: function (srcPath) {
                   if (this.pendingObj != null && !Kotlin.equals(this.pendingObjPath, srcPath)) {
                     var tmp$0, tmp$1;
-                    ((tmp$0 = this.pendingParent) != null ? tmp$0 : Kotlin.throwNPE()).reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.ADD, (tmp$1 = this.pendingParentRefName) != null ? tmp$1 : Kotlin.throwNPE(), this.pendingObj, true, true);
+                    ((tmp$0 = this.pendingParent) != null ? tmp$0 : Kotlin.throwNPE()).reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.ADD, (tmp$1 = this.pendingParentRefName) != null ? tmp$1 : Kotlin.throwNPE(), this.pendingObj, true, this.fireEvents);
                     this.pendingObj = null;
                     this.pendingObjPath = null;
                     this.pendingParentRefName = null;
@@ -7164,7 +7335,7 @@ var Kotlin = require('kevoree-kotlin');
                   }
                   var targetElem = tmp$0;
                   if (targetElem != null) {
-                    target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.ADD, refName, targetElem, true, true);
+                    target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.ADD, refName, targetElem, true, this.fireEvents);
                   }
                    else {
                     this.pendingObj = this.factory.create(potentialTypeName != null ? potentialTypeName : Kotlin.throwNPE());
@@ -7180,89 +7351,83 @@ var Kotlin = require('kevoree-kotlin');
                       var trace = tmp$0.next();
                       var target = this.targetModel;
                       if (Kotlin.isType(trace, _.org.kevoree.modeling.api.trace.ModelAddTrace)) {
-                        var castedTrace = trace != null ? trace : Kotlin.throwNPE();
                         this.tryClosePending(null);
                         if (!Kotlin.equals(trace.srcPath, '')) {
                           var tmp$1;
-                          target = (tmp$1 = this.targetModel.findByPath(castedTrace.srcPath)) != null ? tmp$1 : Kotlin.throwNPE();
+                          target = (tmp$1 = this.targetModel.findByPath(trace.srcPath)) != null ? tmp$1 : Kotlin.throwNPE();
                         }
-                        this.createOrAdd(castedTrace.previousPath, target, castedTrace.refName, castedTrace.typeName);
+                        this.createOrAdd(trace.previousPath, target, trace.refName, trace.typeName);
                       }
                       if (Kotlin.isType(trace, _.org.kevoree.modeling.api.trace.ModelAddAllTrace)) {
-                        var castedTrace_0 = trace != null ? trace : Kotlin.throwNPE();
                         this.tryClosePending(null);
                         var i = 0;
                         var tmp$2;
                         {
-                          var tmp$3 = ((tmp$2 = castedTrace_0.previousPath) != null ? tmp$2 : Kotlin.throwNPE()).iterator();
+                          var tmp$3 = ((tmp$2 = trace.previousPath) != null ? tmp$2 : Kotlin.throwNPE()).iterator();
                           while (tmp$3.hasNext()) {
                             var path = tmp$3.next();
                             var tmp$4;
-                            this.createOrAdd(path, target, castedTrace_0.refName, ((tmp$4 = castedTrace_0.typeName) != null ? tmp$4 : Kotlin.throwNPE()).get(i));
+                            this.createOrAdd(path, target, trace.refName, ((tmp$4 = trace.typeName) != null ? tmp$4 : Kotlin.throwNPE()).get(i));
                             i++;
                           }
                         }
                       }
                       if (Kotlin.isType(trace, _.org.kevoree.modeling.api.trace.ModelRemoveTrace)) {
-                        var castedTrace_1 = trace != null ? trace : Kotlin.throwNPE();
                         this.tryClosePending(trace.srcPath);
                         var tempTarget = this.targetModel;
                         if (!Kotlin.equals(trace.srcPath, '')) {
-                          tempTarget = this.targetModel.findByPath(castedTrace_1.srcPath);
+                          tempTarget = this.targetModel.findByPath(trace.srcPath);
                         }
                         if (tempTarget != null) {
-                          (tempTarget != null ? tempTarget : Kotlin.throwNPE()).reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.REMOVE, castedTrace_1.refName, this.targetModel.findByPath(castedTrace_1.objPath), true, true);
+                          (tempTarget != null ? tempTarget : Kotlin.throwNPE()).reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.REMOVE, trace.refName, this.targetModel.findByPath(trace.objPath), true, this.fireEvents);
                         }
                       }
                       if (Kotlin.isType(trace, _.org.kevoree.modeling.api.trace.ModelRemoveAllTrace)) {
-                        var castedTrace_2 = trace != null ? trace : Kotlin.throwNPE();
                         this.tryClosePending(trace.srcPath);
                         var tempTarget_0 = this.targetModel;
                         if (!Kotlin.equals(trace.srcPath, '')) {
-                          tempTarget_0 = this.targetModel.findByPath(castedTrace_2.srcPath);
+                          tempTarget_0 = this.targetModel.findByPath(trace.srcPath);
                         }
                         if (tempTarget_0 != null) {
-                          (tempTarget_0 != null ? tempTarget_0 : Kotlin.throwNPE()).reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.REMOVE_ALL, castedTrace_2.refName, null, true, true);
+                          (tempTarget_0 != null ? tempTarget_0 : Kotlin.throwNPE()).reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.REMOVE_ALL, trace.refName, null, true, this.fireEvents);
                         }
                       }
                       if (Kotlin.isType(trace, _.org.kevoree.modeling.api.trace.ModelSetTrace)) {
-                        var castedTrace_3 = trace != null ? trace : Kotlin.throwNPE();
                         this.tryClosePending(trace.srcPath);
-                        if (!Kotlin.equals(trace.srcPath, '') && !Kotlin.equals(castedTrace_3.srcPath, this.pendingObjPath)) {
-                          var tempObject = this.targetModel.findByPath(castedTrace_3.srcPath);
+                        if (!Kotlin.equals(trace.srcPath, '') && !Kotlin.equals(trace.srcPath, this.pendingObjPath)) {
+                          var tempObject = this.targetModel.findByPath(trace.srcPath);
                           if (tempObject == null) {
-                            throw new Error('Set Trace source not found for path : ' + castedTrace_3.srcPath + '/ pending ' + this.pendingObjPath + '\n' + trace.toString());
+                            throw new Error('Set Trace source not found for path : ' + trace.srcPath + ' pending ' + this.pendingObjPath + '\n' + trace.toString());
                           }
                           target = tempObject != null ? tempObject : Kotlin.throwNPE();
                         }
                          else {
-                          if (Kotlin.equals(castedTrace_3.srcPath, this.pendingObjPath) && this.pendingObj != null) {
+                          if (Kotlin.equals(trace.srcPath, this.pendingObjPath) && this.pendingObj != null) {
                             var tmp$5;
                             target = (tmp$5 = this.pendingObj) != null ? tmp$5 : Kotlin.throwNPE();
                           }
                         }
-                        if (castedTrace_3.content != null) {
-                          target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.SET, castedTrace_3.refName, castedTrace_3.content, true, true);
+                        if (trace.content != null) {
+                          target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.SET, trace.refName, trace.content, true, this.fireEvents);
                         }
                          else {
-                          var tmp$7;
-                          if (castedTrace_3.objPath != null) {
-                            var tmp$6;
-                            tmp$7 = this.targetModel.findByPath((tmp$6 = castedTrace_3.objPath) != null ? tmp$6 : Kotlin.throwNPE());
+                          var tmp$6;
+                          if (trace.objPath != null) {
+                            tmp$6 = this.targetModel.findByPath(trace.objPath);
                           }
                            else {
-                            tmp$7 = null;
+                            tmp$6 = null;
                           }
-                          var targetContentPath = tmp$7;
+                          var targetContentPath = tmp$6;
                           if (targetContentPath != null) {
-                            target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.SET, castedTrace_3.refName, targetContentPath, true, true);
+                            target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.SET, trace.refName, targetContentPath, true, this.fireEvents);
                           }
                            else {
-                            if (castedTrace_3.typeName != null && !Kotlin.equals(castedTrace_3.typeName, '')) {
-                              this.createOrAdd(castedTrace_3.objPath, target, castedTrace_3.refName, castedTrace_3.typeName);
+                            if (trace.typeName != null && !Kotlin.equals(trace.typeName, '')) {
+                              this.createOrAdd(trace.objPath, target, trace.refName, trace.typeName);
                             }
                              else {
-                              target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.SET, castedTrace_3.refName, targetContentPath, true, true);
+                              target.reflexiveMutator(_.org.kevoree.modeling.api.util.ActionType.object.SET, trace.refName, targetContentPath, true, this.fireEvents);
                             }
                           }
                         }
@@ -7715,12 +7880,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this._subTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.TypeLibraryImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._subTypes) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._subTypes) != null ? tmp$1.clear() : null;
             },
             name: {
               get: function () {
@@ -7737,6 +7907,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -7901,7 +8073,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findSubTypesByID: function (key) {
               return this._subTypes.get(key);
@@ -7945,6 +8123,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$metaData = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$started = true;
@@ -7957,11 +8136,15 @@ var Kotlin = require('kevoree-kotlin');
             this.$namespace = null;
           }, /** @lends _.org.kevoree.impl.ComponentInstanceImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.typeDefinition = null;
               this.dictionary = null;
-              var tmp$0, tmp$1;
-              (tmp$0 = this._provided) != null ? tmp$0.clear() : null;
-              (tmp$1 = this._required) != null ? tmp$1.clear() : null;
+              var tmp$1, tmp$2;
+              (tmp$1 = this._provided) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._required) != null ? tmp$2.clear() : null;
               this.namespace = null;
             },
             name: {
@@ -7979,6 +8162,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -8460,7 +8645,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findProvidedByID: function (key) {
               return this._provided.get(key);
@@ -8559,12 +8750,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._ports = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.WireImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._ports) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._ports) != null ? tmp$1.clear() : null;
             },
             generated_KMF_ID: {
               get: function () {
@@ -8581,6 +8777,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -8712,7 +8910,6 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             reflexiveMutator: function (mutationType, refName, value, setOpposite, fireEvents) {
-              console.log("reflexiveMutator REMOVE >>> "+_.org.kevoree.modeling.api.util.ActionType.object.REMOVE);
               if (refName === _.org.kevoree.util.Constants.Att_generated_KMF_ID) {
                 this.internal_generated_KMF_ID(value, fireEvents);
               }
@@ -8749,7 +8946,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findPortsByID: function (key) {
               return this._ports.get(key);
@@ -8793,12 +8996,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$url = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this._units = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.RepositoryImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._units) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._units) != null ? tmp$1.clear() : null;
             },
             url: {
               get: function () {
@@ -8815,6 +9023,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.url)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$url;
@@ -8979,7 +9189,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.url);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.url);
+              }
+              return this.key_cache;
             },
             findUnitsByID: function (key) {
               return this._units.get(key);
@@ -9023,13 +9239,18 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._bindings = new Kotlin.PrimitiveHashMap(0);
             this.$portTypeRef = null;
           }, /** @lends _.org.kevoree.impl.PortImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._bindings) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._bindings) != null ? tmp$1.clear() : null;
               this.portTypeRef = null;
             },
             generated_KMF_ID: {
@@ -9047,6 +9268,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -9264,7 +9487,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findBindingsByID: function (key) {
               return this._bindings.get(key);
@@ -9320,12 +9549,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._portTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.ExtraFonctionalPropertyImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._portTypes) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._portTypes) != null ? tmp$1.clear() : null;
             },
             generated_KMF_ID: {
               get: function () {
@@ -9342,6 +9576,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -9506,7 +9742,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findPortTypesByID: function (key) {
               return this._portTypes.get(key);
@@ -9550,12 +9792,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this._genericTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.TypedElementImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._genericTypes) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._genericTypes) != null ? tmp$1.clear() : null;
             },
             name: {
               get: function () {
@@ -9572,6 +9819,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -9736,7 +9985,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findGenericTypesByID: function (key) {
               return this._genericTypes.get(key);
@@ -9780,6 +10035,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$metaData = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$started = true;
@@ -9792,13 +10048,17 @@ var Kotlin = require('kevoree-kotlin');
             this._groups = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.ContainerNodeImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.typeDefinition = null;
               this.dictionary = null;
-              var tmp$0, tmp$1, tmp$2;
-              (tmp$0 = this._components) != null ? tmp$0.clear() : null;
-              (tmp$1 = this._hosts) != null ? tmp$1.clear() : null;
+              var tmp$1, tmp$2, tmp$3;
+              (tmp$1 = this._components) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._hosts) != null ? tmp$2.clear() : null;
               this.host = null;
-              (tmp$2 = this._groups) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._groups) != null ? tmp$3.clear() : null;
             },
             name: {
               get: function () {
@@ -9815,6 +10075,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -10472,7 +10734,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findComponentsByID: function (key) {
               return this._components.get(key);
@@ -10586,6 +10854,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$optional = _.org.kevoree.util.Constants.BOOLEAN_DEFAULTVAL;
             this.$noDependency = _.org.kevoree.util.Constants.BOOLEAN_DEFAULTVAL;
@@ -10594,9 +10863,13 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllMappingsCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.PortTypeRefImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.ref = null;
-              var tmp$0;
-              (tmp$0 = this._mappings) != null ? tmp$0.clear() : null;
+              var tmp$1;
+              (tmp$1 = this._mappings) != null ? tmp$1.clear() : null;
             },
             name: {
               get: function () {
@@ -10613,6 +10886,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -10868,7 +11143,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findMappingsByID: function (key) {
               return this._mappings.get(key);
@@ -10928,6 +11209,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$groupName = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$version = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -10938,8 +11220,12 @@ var Kotlin = require('kevoree-kotlin');
             this.$targetNodeType = null;
           }, /** @lends _.org.kevoree.impl.DeployUnitImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._requiredLibs) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._requiredLibs) != null ? tmp$1.clear() : null;
               this.targetNodeType = null;
             },
             name: {
@@ -10957,6 +11243,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -10987,6 +11275,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.groupName)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$groupName;
@@ -11017,6 +11307,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.version)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$version;
@@ -11068,6 +11360,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.hashcode)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$hashcode;
@@ -11304,7 +11598,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.groupName) + '/' + Kotlin.toString(this.hashcode) + '/' + Kotlin.toString(this.name) + '/' + Kotlin.toString(this.version);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.groupName) + '/' + Kotlin.toString(this.hashcode) + '/' + Kotlin.toString(this.name) + '/' + Kotlin.toString(this.version);
+              }
+              return this.key_cache;
             },
             findRequiredLibsByID: function (key) {
               return this._requiredLibs.get(key);
@@ -11365,11 +11665,16 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$value = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$lastCheck = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
           }, /** @lends _.org.kevoree.impl.NetworkPropertyImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
             },
             name: {
               get: function () {
@@ -11386,6 +11691,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -11458,7 +11765,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               {
@@ -11487,6 +11800,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -11499,10 +11813,14 @@ var Kotlin = require('kevoree-kotlin');
             this._superTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.GroupTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
             },
             name: {
               get: function () {
@@ -11519,6 +11837,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -12013,7 +12333,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -12092,6 +12418,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$optional = _.org.kevoree.util.Constants.BOOLEAN_DEFAULTVAL;
             this.$state = _.org.kevoree.util.Constants.BOOLEAN_DEFAULTVAL;
@@ -12100,8 +12427,12 @@ var Kotlin = require('kevoree-kotlin');
             this._genericTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.DictionaryAttributeImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._genericTypes) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._genericTypes) != null ? tmp$1.clear() : null;
             },
             name: {
               get: function () {
@@ -12118,6 +12449,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -12378,7 +12711,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findGenericTypesByID: function (key) {
               return this._genericTypes.get(key);
@@ -12426,6 +12765,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$metaData = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$started = true;
@@ -12433,6 +12773,10 @@ var Kotlin = require('kevoree-kotlin');
             this.$dictionary = null;
           }, /** @lends _.org.kevoree.impl.InstanceImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.typeDefinition = null;
               this.dictionary = null;
             },
@@ -12451,6 +12795,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -12602,7 +12948,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               if (relationName === _.org.kevoree.util.Constants.Ref_typeDefinition) {
@@ -12659,6 +13011,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -12675,10 +13028,14 @@ var Kotlin = require('kevoree-kotlin');
             this._superTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.ChannelTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
             },
             name: {
               get: function () {
@@ -12695,6 +13052,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -13285,7 +13644,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -13368,6 +13733,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._link = new Kotlin.PrimitiveHashMap(0);
             this.removeAllLinkCurrentlyProcessing = false;
@@ -13375,8 +13741,12 @@ var Kotlin = require('kevoree-kotlin');
             this.$target = null;
           }, /** @lends _.org.kevoree.impl.NodeNetworkImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._link) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._link) != null ? tmp$1.clear() : null;
               this.initBy = null;
               this.target = null;
             },
@@ -13395,6 +13765,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -13638,7 +14010,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findLinkByID: function (key) {
               return this._link.get(key);
@@ -13708,6 +14086,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -13723,12 +14102,16 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllManagedPrimitiveTypeRefsCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.NodeTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1, tmp$2, tmp$3;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2, tmp$3, tmp$4;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
-              (tmp$2 = this._managedPrimitiveTypes) != null ? tmp$2.clear() : null;
-              (tmp$3 = this._managedPrimitiveTypeRefs) != null ? tmp$3.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._managedPrimitiveTypes) != null ? tmp$3.clear() : null;
+              (tmp$4 = this._managedPrimitiveTypeRefs) != null ? tmp$4.clear() : null;
             },
             name: {
               get: function () {
@@ -13745,6 +14128,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -14526,7 +14911,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -14635,11 +15026,16 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$order = _.org.kevoree.util.Constants.INT_DEFAULTVAL;
             this.$type = null;
           }, /** @lends _.org.kevoree.impl.ParameterImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.type = null;
             },
             name: {
@@ -14657,6 +15053,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -14741,7 +15139,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               if (relationName === _.org.kevoree.util.Constants.Ref_type) {
@@ -14783,6 +15187,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -14802,14 +15207,18 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllProvidedCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.ComponentTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1, tmp$2, tmp$3, tmp$4;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2, tmp$3, tmp$4, tmp$5;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
-              (tmp$2 = this._required) != null ? tmp$2.clear() : null;
-              (tmp$3 = this._integrationPatterns) != null ? tmp$3.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._required) != null ? tmp$3.clear() : null;
+              (tmp$4 = this._integrationPatterns) != null ? tmp$4.clear() : null;
               this.extraFonctionalProperties = null;
-              (tmp$4 = this._provided) != null ? tmp$4.clear() : null;
+              (tmp$5 = this._provided) != null ? tmp$5.clear() : null;
             },
             name: {
               get: function () {
@@ -14826,6 +15235,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -15804,7 +16215,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -15940,6 +16357,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$metaData = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$started = true;
@@ -15948,10 +16366,14 @@ var Kotlin = require('kevoree-kotlin');
             this._subNodes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.GroupImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.typeDefinition = null;
               this.dictionary = null;
-              var tmp$0;
-              (tmp$0 = this._subNodes) != null ? tmp$0.clear() : null;
+              var tmp$1;
+              (tmp$1 = this._subNodes) != null ? tmp$1.clear() : null;
             },
             name: {
               get: function () {
@@ -15968,6 +16390,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -16276,7 +16700,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findSubNodesByID: function (key) {
               return this._subNodes.get(key);
@@ -16348,6 +16778,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$networkType = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$estimatedRate = _.org.kevoree.util.Constants.INT_DEFAULTVAL;
             this.$lastCheck = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -16357,8 +16788,12 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllNetworkPropertiesCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.NodeLinkImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._networkProperties) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._networkProperties) != null ? tmp$1.clear() : null;
             },
             networkType: {
               get: function () {
@@ -16459,6 +16894,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -16642,7 +17079,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findNetworkPropertiesByID: function (key) {
               return this._networkProperties.get(key);
@@ -16690,11 +17133,16 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$maxTime = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this.$ref = null;
           }, /** @lends _.org.kevoree.impl.AdaptationPrimitiveTypeRefImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.ref = null;
             },
             maxTime: {
@@ -16733,6 +17181,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -16796,7 +17246,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               if (relationName === _.org.kevoree.util.Constants.Ref_ref) {
@@ -16838,6 +17294,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._nodes = new Kotlin.PrimitiveHashMap(0);
             this.removeAllNodesCurrentlyProcessing = false;
@@ -16863,18 +17320,22 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllAdaptationPrimitiveTypesCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.ContainerRootImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1, tmp$2, tmp$3, tmp$4, tmp$5, tmp$6, tmp$7, tmp$8, tmp$9, tmp$10;
-              (tmp$0 = this._nodes) != null ? tmp$0.clear() : null;
-              (tmp$1 = this._typeDefinitions) != null ? tmp$1.clear() : null;
-              (tmp$2 = this._repositories) != null ? tmp$2.clear() : null;
-              (tmp$3 = this._dataTypes) != null ? tmp$3.clear() : null;
-              (tmp$4 = this._libraries) != null ? tmp$4.clear() : null;
-              (tmp$5 = this._hubs) != null ? tmp$5.clear() : null;
-              (tmp$6 = this._mBindings) != null ? tmp$6.clear() : null;
-              (tmp$7 = this._deployUnits) != null ? tmp$7.clear() : null;
-              (tmp$8 = this._nodeNetworks) != null ? tmp$8.clear() : null;
-              (tmp$9 = this._groups) != null ? tmp$9.clear() : null;
-              (tmp$10 = this._adaptationPrimitiveTypes) != null ? tmp$10.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2, tmp$3, tmp$4, tmp$5, tmp$6, tmp$7, tmp$8, tmp$9, tmp$10, tmp$11;
+              (tmp$1 = this._nodes) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._typeDefinitions) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._repositories) != null ? tmp$3.clear() : null;
+              (tmp$4 = this._dataTypes) != null ? tmp$4.clear() : null;
+              (tmp$5 = this._libraries) != null ? tmp$5.clear() : null;
+              (tmp$6 = this._hubs) != null ? tmp$6.clear() : null;
+              (tmp$7 = this._mBindings) != null ? tmp$7.clear() : null;
+              (tmp$8 = this._deployUnits) != null ? tmp$8.clear() : null;
+              (tmp$9 = this._nodeNetworks) != null ? tmp$9.clear() : null;
+              (tmp$10 = this._groups) != null ? tmp$10.clear() : null;
+              (tmp$11 = this._adaptationPrimitiveTypes) != null ? tmp$11.clear() : null;
             },
             generated_KMF_ID: {
               get: function () {
@@ -16891,6 +17352,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -18532,7 +18995,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findNodesByID: function (key) {
               return this._nodes.get(key);
@@ -18726,14 +19195,19 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this._childs = new Kotlin.PrimitiveHashMap(0);
             this.removeAllChildsCurrentlyProcessing = false;
             this.$parent = null;
           }, /** @lends _.org.kevoree.impl.NamespaceImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._childs) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._childs) != null ? tmp$1.clear() : null;
               this.parent = null;
             },
             name: {
@@ -18751,6 +19225,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -18958,7 +19434,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findChildsByID: function (key) {
               return this._childs.get(key);
@@ -19016,6 +19498,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -19027,11 +19510,15 @@ var Kotlin = require('kevoree-kotlin');
             this._filters = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.MessagePortTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1, tmp$2;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2, tmp$3;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
-              (tmp$2 = this._filters) != null ? tmp$2.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._filters) != null ? tmp$3.clear() : null;
             },
             name: {
               get: function () {
@@ -19048,6 +19535,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -19634,7 +20123,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -19726,6 +20221,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -19748,16 +20244,20 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllWiresCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.CompositeTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1, tmp$2, tmp$3, tmp$4, tmp$5, tmp$6;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2, tmp$3, tmp$4, tmp$5, tmp$6, tmp$7;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
-              (tmp$2 = this._required) != null ? tmp$2.clear() : null;
-              (tmp$3 = this._integrationPatterns) != null ? tmp$3.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._required) != null ? tmp$3.clear() : null;
+              (tmp$4 = this._integrationPatterns) != null ? tmp$4.clear() : null;
               this.extraFonctionalProperties = null;
-              (tmp$4 = this._provided) != null ? tmp$4.clear() : null;
-              (tmp$5 = this._childs) != null ? tmp$5.clear() : null;
-              (tmp$6 = this._wires) != null ? tmp$6.clear() : null;
+              (tmp$5 = this._provided) != null ? tmp$5.clear() : null;
+              (tmp$6 = this._childs) != null ? tmp$6.clear() : null;
+              (tmp$7 = this._wires) != null ? tmp$7.clear() : null;
             },
             name: {
               get: function () {
@@ -19774,6 +20274,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -21039,7 +21541,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -21205,14 +21713,19 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this._parameters = new Kotlin.PrimitiveHashMap(0);
             this.removeAllParametersCurrentlyProcessing = false;
             this.$returnType = null;
           }, /** @lends _.org.kevoree.impl.OperationImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._parameters) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._parameters) != null ? tmp$1.clear() : null;
               this.returnType = null;
             },
             name: {
@@ -21230,6 +21743,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -21437,7 +21952,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findParametersByID: function (key) {
               return this._parameters.get(key);
@@ -21495,6 +22016,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$metaData = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$started = true;
@@ -21503,10 +22025,14 @@ var Kotlin = require('kevoree-kotlin');
             this._bindings = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.ChannelImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.typeDefinition = null;
               this.dictionary = null;
-              var tmp$0;
-              (tmp$0 = this._bindings) != null ? tmp$0.clear() : null;
+              var tmp$1;
+              (tmp$1 = this._bindings) != null ? tmp$1.clear() : null;
             },
             name: {
               get: function () {
@@ -21523,6 +22049,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -21831,7 +22359,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findBindingsByID: function (key) {
               return this._bindings.get(key);
@@ -22246,13 +22780,18 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._values = new Kotlin.PrimitiveHashMap(0);
             this.removeAllValuesCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.DictionaryImpl.prototype */ {
             delete: function () {
-              var tmp$0;
-              (tmp$0 = this._values) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1;
+              (tmp$1 = this._values) != null ? tmp$1.clear() : null;
             },
             generated_KMF_ID: {
               get: function () {
@@ -22269,6 +22808,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -22440,7 +22981,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findValuesByID: function (key) {
               return this._values.get(key);
@@ -22484,9 +23031,14 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
           }, /** @lends _.org.kevoree.impl.AdaptationPrimitiveTypeImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
             },
             name: {
               get: function () {
@@ -22503,6 +23055,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -22527,7 +23081,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               {
@@ -22554,6 +23114,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this._attributes = new Kotlin.PrimitiveHashMap(0);
             this.removeAllAttributesCurrentlyProcessing = false;
@@ -22561,9 +23122,13 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllDefaultValuesCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.DictionaryTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1;
-              (tmp$0 = this._attributes) != null ? tmp$0.clear() : null;
-              (tmp$1 = this._defaultValues) != null ? tmp$1.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2;
+              (tmp$1 = this._attributes) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._defaultValues) != null ? tmp$2.clear() : null;
             },
             generated_KMF_ID: {
               get: function () {
@@ -22580,6 +23145,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -22898,7 +23465,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findAttributesByID: function (key) {
               return this._attributes.get(key);
@@ -22957,15 +23530,20 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this._extraFonctionalProperties = new Kotlin.PrimitiveHashMap(0);
             this.removeAllExtraFonctionalPropertiesCurrentlyProcessing = false;
             this._portTypes = new Kotlin.PrimitiveHashMap(0);
           }, /** @lends _.org.kevoree.impl.IntegrationPatternImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1;
-              (tmp$0 = this._extraFonctionalProperties) != null ? tmp$0.clear() : null;
-              (tmp$1 = this._portTypes) != null ? tmp$1.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2;
+              (tmp$1 = this._extraFonctionalProperties) != null ? tmp$1.clear() : null;
+              (tmp$2 = this._portTypes) != null ? tmp$2.clear() : null;
             },
             name: {
               get: function () {
@@ -22982,6 +23560,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -23293,7 +23873,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findExtraFonctionalPropertiesByID: function (key) {
               return this._extraFonctionalProperties.get(key);
@@ -23354,11 +23940,16 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this.$port = null;
             this.$hub = null;
           }, /** @lends _.org.kevoree.impl.MBindingImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.port = null;
               this.hub = null;
             },
@@ -23377,6 +23968,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -23491,7 +24084,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               if (relationName === _.org.kevoree.util.Constants.Ref_port) {
@@ -23544,9 +24143,14 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
           }, /** @lends _.org.kevoree.impl.NamedElementImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
             },
             name: {
               get: function () {
@@ -23563,6 +24167,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -23587,7 +24193,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               {
@@ -23614,6 +24226,7 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$name = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$factoryBean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$bean = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
@@ -23627,11 +24240,15 @@ var Kotlin = require('kevoree-kotlin');
             this.removeAllOperationsCurrentlyProcessing = false;
           }, /** @lends _.org.kevoree.impl.ServicePortTypeImpl.prototype */ {
             delete: function () {
-              var tmp$0, tmp$1, tmp$2;
-              (tmp$0 = this._deployUnits) != null ? tmp$0.clear() : null;
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
+              var tmp$1, tmp$2, tmp$3;
+              (tmp$1 = this._deployUnits) != null ? tmp$1.clear() : null;
               this.dictionaryType = null;
-              (tmp$1 = this._superTypes) != null ? tmp$1.clear() : null;
-              (tmp$2 = this._operations) != null ? tmp$2.clear() : null;
+              (tmp$2 = this._superTypes) != null ? tmp$2.clear() : null;
+              (tmp$3 = this._operations) != null ? tmp$3.clear() : null;
             },
             name: {
               get: function () {
@@ -23648,6 +24265,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.name)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$name;
@@ -24265,7 +24884,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return Kotlin.toString(this.name);
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = Kotlin.toString(this.name);
+              }
+              return this.key_cache;
             },
             findDeployUnitsByID: function (key) {
               return this._deployUnits.get(key);
@@ -24358,12 +24983,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$value = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
             this.$attribute = null;
             this.$targetNode = null;
           }, /** @lends _.org.kevoree.impl.DictionaryValueImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
               this.attribute = null;
               this.targetNode = null;
             },
@@ -24403,6 +25033,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -24502,7 +25134,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               if (relationName === _.org.kevoree.util.Constants.Ref_attribute) {
@@ -24556,12 +25194,17 @@ var Kotlin = require('kevoree-kotlin');
             this.internal_modelElementListeners = null;
             this.internal_modelTreeListeners = null;
             this.path_cache = null;
+            this.key_cache = null;
             this.$beanMethodName = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$serviceMethodName = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$paramTypes = _.org.kevoree.util.Constants.STRING_DEFAULTVAL;
             this.$generated_KMF_ID = '' + Math.random() + (new Date()).getTime();
           }, /** @lends _.org.kevoree.impl.PortTypeMappingImpl.prototype */ {
             delete: function () {
+              if (this.internal_unsetCmd != null) {
+                var tmp$0;
+                ((tmp$0 = this.internal_unsetCmd) != null ? tmp$0 : Kotlin.throwNPE()).run();
+              }
             },
             beanMethodName: {
               get: function () {
@@ -24641,6 +25284,8 @@ var Kotlin = require('kevoree-kotlin');
               if (!Kotlin.equals(iP, this.generated_KMF_ID)) {
                 var oldPath = this.path();
                 var oldId = this.internalGetKey();
+                this.path_cache = null;
+                this.key_cache = null;
                 var previousParent = this.eContainer();
                 var previousRefNameInParent = this.getRefInParent();
                 var kmf_previousVal = this.$generated_KMF_ID;
@@ -24674,7 +25319,13 @@ var Kotlin = require('kevoree-kotlin');
               }
             },
             internalGetKey: function () {
-              return this.generated_KMF_ID;
+              if (this.key_cache != null) {
+                return this.key_cache;
+              }
+               else {
+                this.key_cache = this.generated_KMF_ID;
+              }
+              return this.key_cache;
             },
             findByID: function (relationName, idP) {
               {

@@ -27,6 +27,9 @@
     "pegjs": "~0.7.0",
     "grunt": "~0.4.1",
     "pseudoclass": "~0.2.6",
-    "optimist": "~0.6.0"
+    "optimist": "~0.6.0",
+    "kevoree-model-sync": "0.0.1",
+    "async": "~0.2.9",
+    "kevoree-library": "0.0.3"
   }
 }

@@ -7,7 +7,7 @@ var path = require('path'),
               .alias('o', 'output')
               .describe('k', 'Path to the KevScript source file you want to transform into a Kevoree JSON model')
               .describe('o', 'Where to write the output Kevoree JSON model')
-              .default('o', '.')
+              .default('o', 'model.json')
               .argv,
     KevScript = require('./lib/KevScript'),
     kevoree   = require('kevoree-library').org.kevoree;
@@ -20,15 +20,19 @@ var serializer = new kevoree.serializer.JSONModelSerializer();
 fs.readFile(input, 'utf8', function (err, data) {
   if (err) throw err;
 
-  var model = kevs.parse(data);
-  try {
-    var modelStr = JSON.stringify(JSON.parse(serializer.serialize(model)), null, 4);
-    fs.writeFile(output, modelStr, 'utf8', function (err) {
-      if (err) throw err;
-      console.log('Success =)');
-    });
-  } catch (err) {
-    console.log("Unable to serialize ContainerRoot model.\n", err.stack);
-  }
+  kevs.parse(data, function (err, model) {
+    if (err) throw err;
+    try {
+      var modelStr = JSON.stringify(JSON.parse(serializer.serialize(model)), null, 4);
+      fs.writeFile(output, modelStr, 'utf8', function (err) {
+        if (err) throw err;
+        console.log('Kevoree model generated succefully from KevScript file');
+        console.log('kevs used:\t'+input);
+        console.log('model gen:\t'+output);
+      });
+    } catch (err) {
+      console.log("Unable to serialize ContainerRoot model.\n", err.stack);
+    }
+  });
 });
 

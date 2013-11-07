@@ -1,27 +1,34 @@
-var Class              = require('pseudoclass'),
-    KevScriptParser    = require('./../parser/kevscript-parser'),
-    KevScriptChecker   = require('./KevScriptChecker'),
-    KevScriptGenerator = require('./KevScriptGenerator');
+var Class     = require('pseudoclass'),
+    kevs      = require('./../parser/kevscript-parser'),
+    validator = require('./validator'),
+    generator = require('./generator');
 
 var KevScript = Class({
   toString: 'KevScript',
 
-  construct: function () {
-    this.checker = new KevScriptChecker();
-    this.generator = new KevScriptGenerator();
-  },
-
   /**
    * Parses given KevScript source-code in parameter 'data' and returns a ContainerRoot.
    * @param data string
-   * @return {ContainerRoot}
+   * @param callback function (Error, ContainerRoot)
    * @throws Error on SyntaxError and on source code validity and such
    */
-  parse: function (data) {
-    var parsedModel = KevScriptParser.parse(data);
-    if (this.checker.check(parsedModel)) {
-      return this.generator.gen(parsedModel);
-    } else return null;
+  parse: function (data, ctxModel, callback) {
+    if (typeof(callback) == 'undefined') {
+      callback = ctxModel;
+      ctxModel = null;
+    }
+
+    var parsedModel = kevs.parse(data);
+    generator(parsedModel, ctxModel, function (err, model) {
+      if (err) return callback(err);
+
+      validator(model, function (err) {
+        if (err) return callback(err);
+
+        // validation ok :)
+        callback(null, model);
+      });
+    });
   }
 });
 
