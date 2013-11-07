@@ -24,6 +24,11 @@ var generator = function generator(parsedModel, ctxModel, callback) {
     if (err) return callback(err);
 
     // merging models succeed
+    processNodes(model, parsedModel.nodes, callback);
+    processGroups(model, parsedModel.groups, callback);
+    processChans(model, parsedModel.chans, callback);
+    processBindings(model, parsedModel.bindings, callback);
+
     return callback(null, model);
   });
 }
@@ -50,7 +55,7 @@ var mergeModels = function mergeModels(model, deployUnits, callback) {
         } else {
           // other type are not handled yet
           console.log('KevScript model generator does not handle "'+du.type+'" for DeployUnit resolving yet.');
-          cb();
+          return cb();
         }
       });
     })(deployUnits[i]);
@@ -70,6 +75,156 @@ var mergeModels = function mergeModels(model, deployUnits, callback) {
     // good to go
     callback();
   });
+}
+
+var processNodes = function processNodes(model, nodes, callback) {
+  // processNodes
+  for (var name in nodes) {
+    try {
+      var node = factory.createContainerNode();
+      node.name = name;
+      node.typeDefinition = model.findTypeDefinitionsByID(nodes[name].type);
+      // process components
+      for (var compName in nodes[name].components) {
+        var comp = factory.createComponentInstance();
+        comp.name = compName;
+        comp.typeDefinition = model.findTypeDefinitionsByID(nodes[name].components[compName].type);
+        processDictionary(model, comp, nodes[name].components[compName].dictionary, callback);
+        node.addComponents(comp);
+      }
+      processDictionary(model, node, nodes[name].dictionary, callback);
+      model.addNodes(node);
+
+    } catch (err) {
+      return callback(err);
+    }
+  }
+}
+
+var processGroups = function processGroups(model, groups, callback) {
+  for (var name in groups) {
+    try {
+      var grp = factory.createGroup();
+      grp.name = name;
+      grp.typeDefinition = model.findTypeDefinitionsByID(groups[name].type);
+
+      // add subnodes
+      for (var i in groups[name].subnodes) {
+        var node = model.findNodesByID(groups[name].subnodes[i]);
+        grp.addSubNodes(node);
+        node.addGroups(grp);
+      }
+
+      processDictionary(model, grp, groups[name].dictionary, callback);
+      model.addGroups(grp);
+
+    } catch (err) {
+      return callback(err);
+    }
+  }
+}
+
+var processChans = function processChans(model, chans, callback) {
+  for (var name in chans) {
+    try {
+      var chan = factory.createChannel();
+      chan.name = name;
+      chan.typeDefinition = model.findTypeDefinitionsByID(chans[name].type);
+      processDictionary(model, chan, chans[name].dictionary, callback);
+      model.addHubs(chan);
+
+    } catch (err) {
+      return callback(err);
+    }
+  }
+}
+
+var processBindings = function processBindings(model, bindings, callback) {
+  for (var i in bindings) {
+    try {
+      var binding = factory.createMBinding();
+      // process port
+      var port = factory.createPort();
+      port.name = bindings[i].from.port;
+      // lets try to find the component in the model
+      var nodes = model.nodes.iterator();
+      while (nodes.hasNext()) {
+        var node = nodes.next();
+        var comps = node.components.iterator();
+        while (comps.hasNext()) {
+          var comp = comps.next();
+          if (comp.name == bindings[i].from.comp) {
+            // this is the component we are looking for
+            // now determine if the port we want to add is a "required" or a "provided"
+            var provided = comp.typeDefinition.provided.iterator();
+            while (provided.hasNext()) {
+              var providedPort = provided.next();
+              if (providedPort.name == port.name) {
+                // this is the port ref we are looking for
+                port.portTypeRef = providedPort;
+                comp.addProvided(port);
+                break;
+              }
+            }
+
+            if (!port.portTypeRef) {
+              // not a provided apparently, check if it is a required
+              var required = comp.typeDefinition.required.iterator();
+              while (required.hasNext()) {
+                var requiredPort = required.next();
+                if (requiredPort.name == port.name) {
+                  // this is the port ref we are looking for
+                  port.portTypeRef = requiredPort;
+                  comp.addRequired(port);
+                  break;
+                }
+              }
+            }
+
+            if (!port.portTypeRef) {
+              return callback(new Error('Unable to find "'+port.name+'" in "'+comp.typeDefinition.name+'" typeDef ports'));
+            }
+
+            // if we reach this point, it means that we have found the port and set it properly
+            port.addBindings(binding);
+          }
+        }
+      }
+
+      binding.hub = model.findHubsByID(bindings[i].to);
+      model.addMBindings(binding);
+    } catch (err) {
+      return callback(err);
+    }
+  }
+}
+
+var processDictionary = function processDictionary(model, entity, dictionary, callback) {
+  try {
+    var dic = entity.dictionary || factory.createDictionary();
+    var attrs = entity.typeDefinition.dictionaryType.attributes;
+
+    function getDictionaryAttributeFromName(name) {
+      for (var i=0; i < attrs.size(); i++) {
+        if (attrs.get(i).name == name) return attrs.get(i);
+      }
+      return callback(new Error('Unable to find "'+name+'" in "'+entity.typeDefinition.name+'" typeDef dictionary.'));
+    }
+
+    for (var name in dictionary) {
+      var val = factory.createDictionaryValue();
+      val.attribute = getDictionaryAttributeFromName(name);
+      val.value = dictionary[name].value;
+      if (typeof(dictionary[name].targetNodeName) != 'undefined') {
+        val.targetNode = model.findNodesByID(dictionary[name].targetNodeName);
+      }
+      dic.addValues(val);
+    }
+
+    entity.dictionary = dic;
+  } catch (err) {
+    return callback(err);
+  }
 }
 
 module.exports = generator;

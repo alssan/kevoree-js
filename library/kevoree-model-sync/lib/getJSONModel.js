@@ -27,22 +27,26 @@ module.exports = function (unitName, version, callback) {
     }
 
   } catch (err) {
-    // module wasn't installed locally : let's do it
-    console.log("getJSONModel: Reinstalling library (reason: %s)", err.message);
-    npm.load({}, function (err) {
-      if (err) return callback(err);
-
-      npm.commands.install([(version == null) ? unitName : unitName+'@'+version], function (err) {
+    if (err.code == 'MODULE_NOT_FOUND') {
+      // module wasn't installed locally : let's do it
+      console.log("getJSONModel: Reinstalling library (reason: %s)", err.message);
+      npm.load({}, function (err) {
         if (err) return callback(err);
 
-        try {
-          return model();
+        npm.commands.install([(version == null) ? unitName : unitName+'@'+version], function (err) {
+          if (err) return callback(err);
 
-        } catch (err) {
-          return callback(err);
-        }
-      })
-    });
+          try {
+            return model();
+
+          } catch (err) {
+            return callback(err);
+          }
+        })
+      });
+    } else {
+      return callback(err);
+    }
   }
 
   /**
