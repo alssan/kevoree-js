@@ -61,17 +61,23 @@ var generator = function generator(ast, ctxModel, callback) {
    * @param mergeStmt
    */
   function processMerge(mergeStmt) {
-    console.log('MERGE =================');
-    for (var i in mergeStmt.children) {
-      console.log(mergeStmt.children[i]);
-    }
+    var type     = mergeStmt.children[0].children.join('');
+    var mergeDef = mergeStmt.children[1].children.join('');
+    console.log(type, mergeDef);
   }
 
   function processAdd(addStmt) {
-    console.log('ADD =================');
-    for (var i in addStmt.children) {
-      console.log(addStmt.children[i]);
+    var names = [];
+    var type = addStmt.children[1].children.join('');;
+
+    if (addStmt.children[0].type == 'nameList') {
+      for (var i in addStmt.children[0].children) {
+        names.push(addStmt.children[0].children[i].children.join(''));
+      }
+    } else {
+      names.push(addStmt.children[0].children.join(''));
     }
+    console.log(names, type);
   }
 
   function processMove(moveStmt) {
@@ -82,10 +88,22 @@ var generator = function generator(ast, ctxModel, callback) {
   }
 
   function processAttach(attachStmt) {
-    console.log('ATTACH =================');
-    for (var i in attachStmt.children) {
-      console.log(attachStmt.children[i]);
+    var nodes = [];
+    var target = attachStmt.children[1].children.join('');;
+
+    if (attachStmt.children[0].type == 'nameList') {
+      var nodeList = attachStmt.children[0].children;
+      for (var i in nodeList) {
+        nodes.push(nodeList[i].children.join(''));
+      }
+
+    } else if (attachStmt.children[0] == '*') {
+      // TODO add currently created node instance to the given target
+      nodes.push('all_nodes');
+    } else {
+      nodes.push(attachStmt.children[0].children.join(''));
     }
+    console.log(nodes, target);
   }
 
   function processBinding(bindingStmt) {

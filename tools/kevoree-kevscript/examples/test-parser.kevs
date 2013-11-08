@@ -1,6 +1,7 @@
 merge npm:kevoree-group-websocket@0.0.2
 merge mvn:org.kevoree.library.javase:org.kevoree.library.javase.websocketgrp:2.0.5-SNAPSHOT
 
-add node0 : JavascriptNode
+add node0, node1 : JavascriptNode
 add sync : WebSocketGroup
-attach node0 sync
+attach node0, node1 sync
+attach * sync
