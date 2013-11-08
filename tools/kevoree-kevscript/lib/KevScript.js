@@ -1,7 +1,7 @@
 var Class     = require('pseudoclass'),
-    kevs      = require('./../parser/kevscript-parser'),
-    validator = require('./validator'),
+    kevs      = require('./parser'),
     generator = require('./generator');
+    waxeye    = require('./waxeye');
 
 var KevScript = Class({
   toString: 'KevScript',
@@ -18,16 +18,14 @@ var KevScript = Class({
       ctxModel = null;
     }
 
-    var parsedModel = kevs.parse(data);
-    generator(parsedModel, ctxModel, function (err, model) {
+    var parser = new kevs.Parser();
+    var ast = parser.parse(data);
+    if (ast instanceof waxeye.ParseError) return callback(ast);
+
+    generator(ast, ctxModel, function (err, model) {
       if (err) return callback(err);
 
-      validator(model, function (err) {
-        if (err) return callback(err);
-
-        // validation ok :)
-        callback(null, model);
-      });
+      callback(null, model);
     });
   }
 });

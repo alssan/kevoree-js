@@ -1,23 +1,6 @@
-merge npm:kevoree-node-javascript
-~ npm:kevoree-group-websocket@0.0.2
-merge "npm:kevoree-chan-websocket"
-~ npm:kevoree-comp-fakeconsole
+merge npm:kevoree-group-websocket@0.0.2
+merge mvn:org.kevoree.library.javase:org.kevoree.library.javase.websocketgrp:2.0.5-SNAPSHOT
 
-+node JavascriptNode node0
-+node JavascriptNode node1
-+node JavascriptNode node2
-+c@node0 FakeConsole comp0
-+c@node1 FakeConsole comp1
-+g WebSocketGroup sync
-add [node0, node1] sync
-add node2 sync
-- node1 sync
-- [node0, node2] sync
-remove * sync
-add * sync
-+chan WebSocketChannel chan0
-updateDictionary sync {port@node0: '8000'}
-comp0.sendMsg => chan0
-+ch WebSocketChannel chan1
-comp1.sendMsg => chan1
-comp0.inMsg => chan0
+add node0 : JavascriptNode
+add sync : WebSocketGroup
+attach node0 sync
