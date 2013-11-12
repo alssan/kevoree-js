@@ -21,3 +21,9 @@ comp0.sendMsg => chan0
 
 set comp0 {foo="bar", baz='potato'}
 set sync {forcePush="false"}, {port='8000'}@node0, {port='8001'}@node1
+
+network node0 192.168.0.1
+
+detach node0 sync
+detach node0, node1 sync
+detach * sync

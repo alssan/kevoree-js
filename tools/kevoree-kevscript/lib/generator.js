@@ -167,21 +167,34 @@ var generator = function generator(ast, ctxModel, callback) {
   }
 
   function processNetwork(netStmt) {
-    for (var i in netStmt.children) {
-      console.log('NETWORK', netStmt.children[i]);
-    }
+    var name  = netStmt.children[0].children.join('');
+    var value = netStmt.children[1].children.join('');
+    console.log('NETWORK', name, value);
   }
 
   function processRemove(removeStmt) {
-    for (var i in removeStmt.children) {
-      console.log('REMOVE', removeStmt.children[i]);
-    }
+    var name  = netStmt.children[0].children.join('');
+    console.log('NETWORK', name);
   }
 
   function processDetach(detachStmt) {
-    for (var i in detachStmt.children) {
-      console.log('DETACH', detachStmt.children[i]);
+    var nodes = [];
+    var target = detachStmt.children[1].children.join('');
+
+    if (detachStmt.children[0].type == 'nameList') {
+      var nodeList = detachStmt.children[0].children;
+      for (var i in nodeList) {
+        nodes.push(nodeList[i].children.join(''));
+      }
+
+    } else if (detachStmt.children[0] == '*') {
+      // TODO add currently created node instance to the given target
+      nodes.push('all_nodes');
+    } else {
+      nodes.push(detachStmt.children[0].children.join(''));
     }
+
+    console.log('DETACH', nodes, target);
   }
 }
 

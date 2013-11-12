@@ -98,7 +98,7 @@ var Parser = (function() {
             new waxeye.State([new waxeye.Edge(26, 2, false)], false),
             new waxeye.State([new waxeye.Edge(23, 3, false)], false),
             new waxeye.State([new waxeye.Edge(26, 4, false)], false),
-            new waxeye.State([new waxeye.Edge(23, 5, false)], false),
+            new waxeye.State([new waxeye.Edge(24, 5, false)], false),
             new waxeye.State([], true)], waxeye.FA.LEFT),
         new waxeye.FA("dictionary", [new waxeye.State([new waxeye.Edge(10, 1, false)], false),
             new waxeye.State([new waxeye.Edge(26, 2, false)], true),
