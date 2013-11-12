@@ -21,7 +21,10 @@ fs.readFile(input, 'utf8', function (err, data) {
   if (err) throw err;
 
   kevs.parse(data, function (err, model) {
-    if (err) throw err;
+    if (err) {
+      console.error(err.message);
+      process.exit(1);
+    }
     try {
       var modelStr = JSON.stringify(JSON.parse(serializer.serialize(model)), null, 4);
       fs.writeFile(output, modelStr, 'utf8', function (err) {
