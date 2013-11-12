@@ -173,8 +173,16 @@ var generator = function generator(ast, ctxModel, callback) {
   }
 
   function processRemove(removeStmt) {
-    var name  = netStmt.children[0].children.join('');
-    console.log('NETWORK', name);
+    var names = [];
+
+    if (removeStmt.children[0].type == 'nameList') {
+      for (var i in removeStmt.children[0].children) {
+        names.push(removeStmt.children[0].children[i].children.join(''));
+      }
+    } else {
+      names.push(removeStmt.children[0].children.join(''));
+    }
+    console.log('REMOVE', names);
   }
 
   function processDetach(detachStmt) {
