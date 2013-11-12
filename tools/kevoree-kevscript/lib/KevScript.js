@@ -1,7 +1,6 @@
 var Class       = require('pseudoclass'),
     kevs        = require('./parser'),
-    interpreter = require('./interpreter'),
-    waxeye      = require('./waxeye');
+    interpreter = require('./interpreter');
 
 var KevScript = Class({
   toString: 'KevScript',

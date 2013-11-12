@@ -8,11 +8,11 @@ var compare = new kevoree.compare.DefaultModelCompare();
 
 /**
  *
- * @param parsedModel
+ * @param astModel
  * @param ctxModel
  * @param callback
  */
-var generator = function generator(parsedModel, ctxModel, callback) {
+var generator = function generator(astModel, ctxModel, callback) {
   var model = null;
   // if we have a context model, clone it and use it has a base
   if (ctxModel) model = cloner.clone(ctxModel, false);
@@ -20,14 +20,14 @@ var generator = function generator(parsedModel, ctxModel, callback) {
   else model = factory.createContainerRoot();
 
   // merge models
-  mergeModels(model, parsedModel.deployUnits, function (err) {
+  mergeModels(model, astModel.deployUnits, function (err) {
     if (err) return callback(err);
 
     // merging models succeed
-    processNodes(model, parsedModel.nodes, callback);
-    processGroups(model, parsedModel.groups, callback);
-    processChans(model, parsedModel.chans, callback);
-    processBindings(model, parsedModel.bindings, callback);
+    processNodes(model, astModel.nodes, callback);
+    processGroups(model, astModel.groups, callback);
+    processChans(model, astModel.chans, callback);
+    processBindings(model, astModel.bindings, callback);
 
     return callback(null, model);
   });

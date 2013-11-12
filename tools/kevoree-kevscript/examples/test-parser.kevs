@@ -17,7 +17,10 @@ move * node0
 move *@node0 node1
 move comp0, comp1 node1
 
-comp0.sendMsg => chan0
+bind comp0.sendMsg chan0
+bind comp0.sendMsg chan1, chan2
+unbind comp0.sendMsg *
+unbind comp0.sendMsg chan0, chan1
 
 set comp0 {foo="bar", baz='potato'}
 set sync {forcePush="false"}, {port='8000'}@node0, {port='8001'}@node1
