@@ -63,12 +63,12 @@ var generator = function generator(ast, ctxModel, callback) {
   function processMerge(mergeStmt) {
     var type     = mergeStmt.children[0].children.join('');
     var mergeDef = mergeStmt.children[1].children.join('');
-    console.log(type, mergeDef);
+    console.log('MERGE', type, mergeDef);
   }
 
   function processAdd(addStmt) {
     var names = [];
-    var type = addStmt.children[1].children.join('');;
+    var type = addStmt.children[1].children.join('');
 
     if (addStmt.children[0].type == 'nameList') {
       for (var i in addStmt.children[0].children) {
@@ -77,19 +77,48 @@ var generator = function generator(ast, ctxModel, callback) {
     } else {
       names.push(addStmt.children[0].children.join(''));
     }
-    console.log(names, type);
+    console.log('ADD', names, type);
   }
 
   function processMove(moveStmt) {
-    console.log('MOVE =================');
-    for (var i in moveStmt.children) {
-      console.log(moveStmt.children[i]);
+    var names = [];
+    var target = null;
+    var from = null;
+
+    if (moveStmt.children[0].type == 'nameList') {
+      var nameList = moveStmt.children[0].children;
+      for (var i in nameList) {
+        names.push(nameList[i].children.join(''));
+      }
+      target = moveStmt.children[1].children.join('');
+      console.log('MOVE', names, target);
+
+    } else if (moveStmt.children[0] == '*') {
+      // TODO add all comp from 'from' to 'target'
+      if (typeof(moveStmt.children[2]) == 'undefined') {
+        // move * node1
+        names.push('all_nodes');
+        target = moveStmt.children[1].children.join('');
+        console.log('MOVE', names, target);
+      } else {
+        // move *@node0 node1
+        names.push('all_nodes');
+        from = moveStmt.children[1].children.join('');
+        target = moveStmt.children[2].children.join('');
+        console.log('MOVE', names, from, target);
+      }
+
+    } else {
+      names.push(moveStmt.children[0].children.join(''));
+      target = moveStmt.children[1].children.join('');
+      console.log('MOVE', names, target);
     }
+
   }
 
   function processAttach(attachStmt) {
     var nodes = [];
-    var target = attachStmt.children[1].children.join('');;
+    var target = attachStmt.children[1].children.join('');
 
     if (attachStmt.children[0].type == 'nameList') {
       var nodeList = attachStmt.children[0].children;
@@ -103,41 +132,55 @@ var generator = function generator(ast, ctxModel, callback) {
     } else {
       nodes.push(attachStmt.children[0].children.join(''));
     }
-    console.log(nodes, target);
+
+    console.log('ATTACH', nodes, target);
   }
 
   function processBinding(bindingStmt) {
-    console.log('BINDING =================');
-    for (var i in bindingStmt.children) {
-      console.log(bindingStmt.children[i]);
-    }
+    var comp = bindingStmt.children[0].children.join('');
+    var port = bindingStmt.children[1].children.join('');
+    var chan = bindingStmt.children[2].children.join('');
+
+    console.log('BINDING', comp+'.'+port, chan);
   }
 
   function processSet(setStmt) {
-    console.log('SET =================');
-    for (var i in setStmt.children) {
-      console.log(setStmt.children[i]);
+    var attrs = [];
+    var name = setStmt.children[0].children.join('');
+
+    var dictionary = setStmt.children[1];
+    for (var i in dictionary.children) {
+      var attrList = dictionary.children[i].children;
+      var dic = {};
+      for (var j in attrList) {
+        if (attrList[j].type == 'attribute') {
+          dic.name  = attrList[j].children[0].children.join('');
+          dic.value = attrList[j].children[1].children.join('');
+        } else {
+          dic.targetNode = attrList[j].children.join('');
+        }
+      }
+      attrs.push(dic);
     }
+
+    console.log('SET', name+'\n', attrs);
   }
 
   function processNetwork(netStmt) {
-    console.log('NETWORK =================');
     for (var i in netStmt.children) {
-      console.log(netStmt.children[i]);
+      console.log('NETWORK', netStmt.children[i]);
     }
   }
 
   function processRemove(removeStmt) {
-    console.log('REMOVE =================');
     for (var i in removeStmt.children) {
-      console.log(removeStmt.children[i]);
+      console.log('REMOVE', removeStmt.children[i]);
     }
   }
 
   function processDetach(detachStmt) {
-    console.log('DETACH =================');
     for (var i in detachStmt.children) {
-      console.log(detachStmt.children[i]);
+      console.log('DETACH', detachStmt.children[i]);
     }
   }
 }
