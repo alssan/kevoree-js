@@ -1,17 +1,23 @@
-var kevoree   = require('kevoree-library').org.kevoree,
-    generator = require('./generator'),
-    async     = require('async');
+var kevoree      = require('kevoree-library').org.kevoree,
+    generator    = require('./generator'),
+    getJSONModel = require('kevoree-model-sync').getJSONModel,
+    Kotlin       = require('kevoree-kotlin'),
+    async        = require('async');
 
 var factory = new kevoree.impl.DefaultKevoreeFactory();
 var cloner  = new kevoree.cloner.DefaultModelCloner();
 var compare = new kevoree.compare.DefaultModelCompare();
 
 var interpreter = function interpreter(ast, ctxModel, callback) {
+  // output model
   var model = null;
   // if we have a context model, clone it and use it has a base
   if (ctxModel) model = cloner.clone(ctxModel, false);
   // otherwise start from a brand new model
   else model = factory.createContainerRoot();
+
+  // components ref table
+  var components = {};
 
   // process statements
   var tasks = [];
@@ -114,12 +120,20 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
       } else {
         return cb(new Error('Unable to parse merge statement "'+mergeDef+'"'));
       }
+
+      getJSONModel(du.name, du.version, function (err, duModel) {
+        if (err) return cb(err);
+
+        var mergeSeq = compare.merge(model, duModel);
+        mergeSeq.applyOn(model);
+        return cb();
+      });
+
     } else {
       // TODO handle mvn type and others
       console.log('Unable to handle "'+du.type+'" merge type yet. Sorry :/');
+      cb();
     }
-
-    cb();
   }
 
   function processAdd(addStmt, cb) {
@@ -128,12 +142,45 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
 
     if (addStmt.children[0].type == 'nameList') {
       for (var i in addStmt.children[0].children) {
-        names.push(addStmt.children[0].children[i].children.join(''));
+        names.push(addStmt.children[0].children[i].children.join(''));    // each task execution ended well: merge every model
       }
     } else {
       names.push(addStmt.children[0].children.join(''));
     }
 
+    var tDef = model.findTypeDefinitionsByID(type);
+    if (Kotlin.isType(tDef, kevoree.impl.NodeTypeImpl)) {
+      for (var i in names) {
+        var node = factory.createContainerNode();
+        node.name = names[i];
+        node.typeDefinition = tDef;
+        model.addNodes(node);
+      }
+    } else if (Kotlin.isType(tDef, kevoree.impl.GroupTypeImpl)) {
+      for (var i in names) {
+        var group = factory.createGroup();
+        group.name = names[i];
+        group.typeDefinition = tDef;
+        model.addGroups(group);
+      }
+    } else if (Kotlin.isType(tDef, kevoree.impl.ChannelTypeImpl)) {
+      for (var i in names) {
+        var chan = factory.createChannel();
+        chan.name = names[i];
+        chan.typeDefinition = tDef;
+        model.addHubs(chan);
+      }
+    } else if (Kotlin.isType(tDef, kevoree.impl.ComponentTypeImpl)) {
+      for (var i in names) {
+        var comp = factory.createComponentInstance();
+        comp.name = names[i];
+        comp.typeDefinition = tDef;
+        // add component instance to a ref table, this will be added to proper node while processing "move"
+        components[names[i]] = comp;
+      }
+    } else {
+      return cb(new Error('TypeDefinition "'+type+'" doesn\'t exist in current model. (Maybe you should add a "merge" for it?)'));
+    }
     cb();
   }
 
@@ -148,57 +195,126 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
         names.push(nameList[i].children.join(''));
       }
       target = moveStmt.children[1].children.join('');
-      console.log('MOVE', names, target);
 
     } else if (moveStmt.children[0] == '*') {
-      // TODO add all comp from 'from' to 'target'
       if (typeof(moveStmt.children[2]) == 'undefined') {
         // move * node1
-        names.push('all_nodes');
+        // add all previously added component instances (with "add comp0 : MyCompType")
+        for (var compName in components) names.push(compName);
+        // and add all components previously added in model too
+        var nodes = (model.nodes) ? model.nodes.iterator() : null;
+        if (nodes != null) {
+          while (nodes.hasNext()) {
+            var node = nodes.next();
+            var comps = node.components.iterator();
+            while (comps.hasNext()) names.push(comps.next().name);
+          }
+        }
         target = moveStmt.children[1].children.join('');
-        console.log('MOVE', names, target);
       } else {
         // move *@node0 node1
-        names.push('all_nodes');
         from = moveStmt.children[1].children.join('');
         target = moveStmt.children[2].children.join('');
-        console.log('MOVE', names, from, target);
+        var node = model.findNodesByID(from);
+        if (typeof(node) == 'undefined') {
+          return cb(new Error('Unable to find node "'+from+'" in current model (move *@'+from+' '+target+'). Failure.'));
+        } else {
+          // "from" node found in model, proceed
+          var comps = node.components.iterator();
+          while (comps.hasNext()) names.push(comps.next().name);
+        }
       }
 
     } else {
       names.push(moveStmt.children[0].children.join(''));
       target = moveStmt.children[1].children.join('');
-      console.log('MOVE', names, target);
+    }
+
+    for (var i in names) {
+      var comp = components[names[i]];
+      if (typeof(comp) == 'undefined') {
+        // comp definition has not been made in kevscript
+        // we should check if it has already been added to current model
+        var comp = (function (compName) {
+          var nodes = (model.nodes) ? model.nodes.iterator() : null;
+          if (nodes != null) {
+            while (nodes.hasNext()) {
+              var node = nodes.next();
+              var comps = node.components.iterator();
+              while (comps.hasNext()) {
+                var modelComp = comps.next();
+                if (modelComp.name == compName) return modelComp;
+              }
+            }
+            return null;
+          }
+        })(names[i])
+        if (comp == null) {
+          // component instance not found in kevscript AND in model => error
+          return cb(new Error('Unable to "move" component "'+names[i]+'" to node "'+target+'". Component does not exist.'));
+
+        } else {
+          // component instance found in current model, proceed
+          addCompToNode(comp, target)
+        }
+
+      } else {
+        addCompToNode(comp, target);
+      }
+    }
+
+    function addCompToNode(comp, nodeName) {
+      var node = model.findNodesByID(nodeName);
+      if (typeof(node) == 'undefined') {
+        // the node specified to move component to has not yet been created
+        return cb(new Error('Unable to "move" component "'+comp.name+'" to node "'+nodeName+'". Node does not exist.'));
+      } else {
+        // the node specified to move component to has been created, proceed move
+        node.addComponents(comp);
+      }
     }
 
     cb();
   }
 
   function processAttach(attachStmt, cb) {
-    var nodes = [];
+    var names = [];
     var target = attachStmt.children[1].children.join('');
 
     if (attachStmt.children[0].type == 'nameList') {
       var nodeList = attachStmt.children[0].children;
       for (var i in nodeList) {
-        nodes.push(nodeList[i].children.join(''));
+        names.push(nodeList[i].children.join(''));
       }
 
     } else if (attachStmt.children[0] == '*') {
-      // TODO add currently created node instance to the given target
-      nodes.push('all_nodes');
+      var nodes = (model.nodes) ? model.nodes.iterator() : null;
+      if (nodes != null) while (nodes.hasNext()) nodes.next().name;
+
     } else {
-      nodes.push(attachStmt.children[0].children.join(''));
+      names.push(attachStmt.children[0].children.join(''));
     }
 
-    console.log('ATTACH', nodes, target);
+    for (var i in names) {
+      var group = model.findGroupsByID(target);
+      if (typeof(group) != 'undefined') {
+        var node = model.findNodesByID(names[i]);
+        if (typeof(node) != 'undefined') {
+          group.addSubNodes(node);
+        } else {
+          return cb(new Error('Unable to find node instance "'+names[i]+'" in current model (attach '+names+' '+target+')'));
+        }
+      } else {
+        return cb(new Error('Unable to find group instance "'+target+'" in current model (attach '+names+' '+target+')'));
+      }
+    }
 
     cb();
   }
 
   function processBinding(bindingStmt, cb) {
-    var comp = bindingStmt.children[0].children.join('');
-    var port = bindingStmt.children[1].children.join('');
+    var compName = bindingStmt.children[0].children.join('');
+    var portName = bindingStmt.children[1].children.join('');
     var chans = [];
 
     var chanList = bindingStmt.children[2].children;
@@ -206,28 +322,99 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
       chans.push(chanList[i].children.join(''));
     }
 
-    console.log('BIND', comp+'.'+port, chans);
+    for (var i in chans) {
+      var binding = factory.createMBinding();
+      // process port
+      var port = factory.createPort();
+      port.name = portName;
+      // lets try to find the component in the model
+      var nodes = model.nodes.iterator();
+      while (nodes.hasNext()) {
+        var node = nodes.next();
+        var comps = node.components.iterator();
+        while (comps.hasNext()) {
+          var comp = comps.next();
+          if (comp.name == compName) {
+            // this is the component we are looking for
+            // now determine if the port we want to add is a "required" or a "provided"
+            var provided = comp.typeDefinition.provided.iterator();
+            while (provided.hasNext()) {
+              var providedPort = provided.next();
+              if (providedPort.name == port.name) {
+                // this is the port ref we are looking for
+                port.portTypeRef = providedPort;
+                comp.addProvided(port);
+                break;
+              }
+            }
+
+            if (!port.portTypeRef) {
+              // not a provided apparently, check if it is a required
+              var required = comp.typeDefinition.required.iterator();
+              while (required.hasNext()) {
+                var requiredPort = required.next();
+                if (requiredPort.name == port.name) {
+                  // this is the port ref we are looking for
+                  port.portTypeRef = requiredPort;
+                  comp.addRequired(port);
+                  break;
+                }
+              }
+            }
+
+            if (!port.portTypeRef) {
+              return cb(new Error('Unable to find "'+port.name+'" in "'+comp.typeDefinition.name+'" typeDef ports'));
+            }
+
+            // if we reach this point, it means that we have found the port and set it properly
+            port.addBindings(binding);
+          }
+        }
+      }
+
+      var chan = model.findHubsByID(chans[i]);
+      if (typeof(chan) != 'undefined') {
+        binding.hub = chan;
+        model.addMBindings(binding);
+      } else {
+        return cb(new Error('Unable to find chan instance "'+chans[i]+'" in current model. (bind '+compName+'.'+portName+' '+chans+')'));
+      }
+    }
 
     cb();
   }
 
   function processUnbinding(unbindingStmt, cb) {
-    var comp = unbindingStmt.children[0].children.join('');
-    var port = unbindingStmt.children[1].children.join('');
+    var compName = unbindingStmt.children[0].children.join('');
+    var portName = unbindingStmt.children[1].children.join('');
     var chans = [];
 
     if (unbindingStmt.children[2] == '*') {
-      // TODO remove all bindings
-      chans.push('all_bound_chans');
+      var bindings = (model.mBindings) ? model.mBindings.iterator() : null;
+      if (bindings != null) {
+        while (bindings.hasNext()) {
+          var binding = bindings.next();
+          if (binding.port.name == portName && binding.port.eContainer().name == compName) {
+            model.removeMBindings(binding);
+          }
+        }
+      }
 
     } else {
       var chanList = unbindingStmt.children[2].children;
       for (var i in chanList) {
-        chans.push(chanList[i].children.join(''));
+        var chanName = chanList[i].children.join('');
+        var bindings = (model.mBindings) ? model.mBindings.iterator() : null;
+        if (bindings != null) {
+          while (bindings.hasNext()) {
+            var binding = bindings.next();
+            if (binding.port.name == portName && binding.port.eContainer().name == compName && binding.hub.name == chanName) {
+              model.removeMBindings(binding);
+            }
+          }
+        }
       }
     }
-
-    console.log('UNBIND', comp+'.'+port, chans);
 
     cb();
   }
@@ -251,9 +438,35 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
       attrs.push(dic);
     }
 
-    console.log('SET', name+'\n', attrs);
+    var entity = findEntityByName(name);
 
-    cb();
+    if (entity != null) {
+      for (var i in attrs) {
+        var dic = entity.dictionary || factory.createDictionary();
+        var dicAttrs = entity.typeDefinition.dictionaryType.attributes;
+
+        function getDictionaryAttributeFromName(attrName) {
+          for (var i=0; i < dicAttrs.size(); i++) {
+            if (dicAttrs.get(i).name == attrName) return dicAttrs.get(i);
+          }
+          return callback(new Error('Unable to find "'+attrName+'" in "'+entity.typeDefinition.name+'" typeDef dictionary.'));
+        }
+
+        var val = factory.createDictionaryValue();
+        val.attribute = getDictionaryAttributeFromName(attrs[i].name);
+        val.value = attrs[i].value;
+        if (typeof(attrs[i].targetNode) != 'undefined') {
+          val.targetNode = model.findNodesByID(attrs[i].targetNode);
+        }
+        dic.addValues(val);
+
+        entity.dictionary = dic;
+      }
+
+      cb();
+    } else {
+      return cb(new Error('Unable to find instance "'+name+'" in current model. Can\'t set it\'s dictionary.'));
+    }
   }
 
   function processNetwork(netStmt, cb) {
@@ -273,7 +486,24 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
     } else {
       names.push(removeStmt.children[0].children.join(''));
     }
-    console.log('REMOVE', names);
+
+    for (var i in names) {
+      var entity = findEntityByName(names[i]);
+      if (entity != null) {
+        if (Kotlin.isType(entity.typeDefinition, kevoree.impl.NodeTypeImpl)) {
+          model.removeNodes(entity);
+        } else if (Kotlin.isType(entity.typeDefinition, kevoree.impl.GroupTypeImpl)) {
+          model.removeGroups(entity);
+        } else if (Kotlin.isType(entity.typeDefinition, kevoree.impl.ChannelTypeImpl)) {
+          model.removeHubs(entity);
+        } else if (Kotlin.isType(entity.typeDefinition, kevoree.impl.ComponentTypeImpl)) {
+          entity.eContainer().removeComponents(entity);
+        } else {
+          return cb(new Error('Unable to remove instance "'+names[i]+'" from current model. (Are you sure it is a node, group, chan, component?)'));
+        }
+      }
+    }
+
     cb();
   }
 
@@ -296,6 +526,35 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
 
     console.log('DETACH', nodes, target);
     cb();
+  }
+
+  function findEntityByName(name) {
+    function findByName(elem) {
+      var elems = (model[elem]) ? model[elem].iterator() : null;
+      if (elems != null) {
+        while (elems.hasNext()) {
+          var entity = elems.next();
+          if (entity.name == name) return entity;
+        }
+      }
+      return null;
+    }
+
+    function findComponent() {
+      var nodes = (model.nodes) ? model.nodes.iterator() : null;
+      if (nodes != null) {
+        while (nodes.hasNext()) {
+          var comps = nodes.next().components.iterator();
+          while (comps.hasNext()) {
+            var comp = comps.next();
+            if (comp.name == name) return comp;
+          }
+        }
+      }
+      return null;
+    }
+
+    return findByName('nodes') || findByName('groups') || findByName('hubs') || findComponent() || null;
   }
 }
 
