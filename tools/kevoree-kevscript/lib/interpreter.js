@@ -1,6 +1,4 @@
 var kevoree      = require('kevoree-library').org.kevoree,
-    generator    = require('./generator'),
-    getJSONModel = require('kevoree-model-sync').getJSONModel,
     Kotlin       = require('kevoree-kotlin'),
     async        = require('async');
 
@@ -8,7 +6,7 @@ var factory = new kevoree.impl.DefaultKevoreeFactory();
 var cloner  = new kevoree.cloner.DefaultModelCloner();
 var compare = new kevoree.compare.DefaultModelCompare();
 
-var interpreter = function interpreter(ast, ctxModel, callback) {
+var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
   // output model
   var model = null;
   // if we have a context model, clone it and use it has a base
@@ -106,9 +104,12 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
   }
 
   function processMerge(mergeStmt, cb) {
-    var du = { type: mergeStmt.children[0].children.join('') };
+    if (!resolvers) return cb(new Error('Unable to process merge. No resolver given'));
 
-    if (du.type == 'npm') {
+    var du = factory.createDeployUnit();
+    var type = mergeStmt.children[0].children.join('');
+
+    if (type == 'npm' && resolvers.npm) {
       var mergeDef = mergeStmt.children[1].children.join('');
 
       var colon = mergeDef.split(':');
@@ -125,17 +126,20 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
         return cb(new Error('Unable to parse merge statement "'+mergeDef+'"'));
       }
 
-      getJSONModel(du.name, du.version, function (err, duModel) {
+      resolvers.npm.resolve(du, function (err, duModel) {
         if (err) return cb(err);
 
-        var mergeSeq = compare.merge(model, duModel);
+        var loader = new kevoree.loader.JSONModelLoader();
+        var serializer = new kevoree.serializer.JSONModelSerializer();
+        var tmp = loader.loadModelFromString(serializer.serialize(duModel)).get(0);
+        var mergeSeq = compare.merge(model, tmp);
         mergeSeq.applyOn(model);
         return cb();
       });
 
     } else {
       // TODO handle mvn type and others
-      console.log('Unable to handle "'+du.type+'" merge type yet. Sorry :/');
+      console.log('Unable to handle "'+type+'" merge type yet. Sorry :/');
       cb();
     }
   }

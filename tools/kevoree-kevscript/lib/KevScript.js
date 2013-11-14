@@ -5,6 +5,10 @@ var Class       = require('pseudoclass'),
 var KevScript = Class({
   toString: 'KevScript',
 
+  construct: function (options) {
+    this.options = options || {};
+  },
+
   /**
    * Parses given KevScript source-code in parameter 'data' and returns a ContainerRoot.
    * @param data string
@@ -23,7 +27,7 @@ var KevScript = Class({
     if (ast.type != 'kevScript') {
       return callback(new Error(ast.toString()));
     } else {
-      interpreter(ast, ctxModel, function (err, model) {
+      interpreter(ast, ctxModel, this.options.resolvers, function (err, model) {
         if (err) return callback(err);
 
         return callback(null, model);

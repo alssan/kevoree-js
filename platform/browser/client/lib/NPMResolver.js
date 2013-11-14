@@ -22,7 +22,7 @@ var NPMResolver = Resolver.extend({
     // forward resolving request to server
     $.ajax({
       type: 'GET',
-      url: '/resolve',
+      url: 'resolve',
       data: {
         type: deployUnit.type,
         name: deployUnit.name,

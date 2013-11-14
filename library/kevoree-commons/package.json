@@ -16,7 +16,12 @@
     "type": "git",
     "url": "https://github.com/dukeboard/kevoree-js"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "~0.2.7",
+    "browserify": "~2.35.2",
+    "grunt-browserify": "~1.2.11"
+  },
   "optionalDependencies": {},
   "dependencies": {
     "pseudoclass": "0.2.6",

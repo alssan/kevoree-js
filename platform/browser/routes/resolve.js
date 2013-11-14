@@ -1,12 +1,12 @@
 var http       = require('http'),
-  fs         = require('fs'),
-  path       = require('path'),
-  zlib       = require('zlib'),
-  tar        = require('tar'),
-  AdmZip     = require('adm-zip'),
-  rimraf     = require('rimraf'),
-  browserify = require('browserify'),
-  npm        = require('npm');
+    fs         = require('fs'),
+    path       = require('path'),
+    zlib       = require('zlib'),
+    tar        = require('tar'),
+    AdmZip     = require('adm-zip'),
+    rimraf     = require('rimraf'),
+    browserify = require('browserify'),
+    npm        = require('npm');
 
 
 var BROWSER_MODULES = 'browser_modules',

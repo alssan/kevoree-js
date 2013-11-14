@@ -1,4 +1,4 @@
-var Resolver    = require('kevoree-commons').Resolver,
+var Resolver  = require('kevoree-commons').Resolver,
   npm         = require('npm'),
   path        = require('path');
 

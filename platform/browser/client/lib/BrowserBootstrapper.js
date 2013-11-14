@@ -4,8 +4,8 @@ var Bootstrapper    = require('kevoree-commons').Bootstrapper,
   NPMResolver     = require('./NPMResolver');
 
 var GIT     = 'git',
-  FILE    = 'file',
-  NPM     = 'npm';
+    FILE    = 'file',
+    NPM     = 'npm';
 
 var BrowserBootstrapper = Bootstrapper.extend({
   toString: 'BrowserBootstrapper',
