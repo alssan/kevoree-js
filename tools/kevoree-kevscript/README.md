@@ -1,8 +1,10 @@
 ## kevoree-kevscript
 
-To generate ```parser/kevoree-parser.js``` from ```grammar/kevscript.pegjs``` just run:
+Convert a KevScript file to a Kevoree model (ContainerRoot)
+
 ```sh
-grunt gen-parser
+node kevs2model.js -k examples/test-parser.kevs
+# will output `model.json` in current directory
 ```
 
 To be sure that the parser works correctly, run:
