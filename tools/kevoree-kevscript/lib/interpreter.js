@@ -34,6 +34,10 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
     for (var i in stmt.children) {
       (function (childStmt) {
         switch (childStmt.type) {
+          case 'addRepo':
+            console.log('"addRepo" statement is not handle in JS version.');
+            break;
+
           case 'merge':
             tasks.push(function (cb) {
               processMerge(childStmt, cb);
@@ -508,23 +512,37 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
   }
 
   function processDetach(detachStmt, cb) {
-    var nodes = [];
+    var names = [];
     var target = detachStmt.children[1].children.join('');
 
     if (detachStmt.children[0].type == 'nameList') {
       var nodeList = detachStmt.children[0].children;
       for (var i in nodeList) {
-        nodes.push(nodeList[i].children.join(''));
+        names.push(nodeList[i].children.join(''));
       }
 
     } else if (detachStmt.children[0] == '*') {
-      // TODO add currently created node instance to the given target
-      nodes.push('all_nodes');
+      var group = model.findGroupsByID(target);
+      if (typeof(group) != 'undefined') {
+        var nodes = group.subNodes.iterator();
+        while (nodes.hasNext()) names.push(nodes.next().name);
+      } else {
+        return cb(new Error('Unable to find group instance "'+target+'" in current model. (detach * '+target+')'));
+      }
     } else {
-      nodes.push(detachStmt.children[0].children.join(''));
+      names.push(detachStmt.children[0].children.join(''));
     }
 
-    console.log('DETACH', nodes, target);
+    for (var i in names) {
+      var group = model.findGroupsByID(target);
+      if (typeof(group) != 'undefined') {
+        var node = model.findNodesByID(names[i]);
+        if (typeof(node) != 'undefined') {
+          group.removeSubNodes(node);
+        }
+      }
+    }
+
     cb();
   }
 

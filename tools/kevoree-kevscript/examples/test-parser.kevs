@@ -27,6 +27,4 @@ network node0 192.168.0.1
 
 remove node0
 
-detach node0 sync
-detach node0, node1 sync
 detach * sync
