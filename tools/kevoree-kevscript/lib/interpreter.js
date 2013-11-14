@@ -391,7 +391,6 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
   function processUnbinding(unbindingStmt, cb) {
     var compName = unbindingStmt.children[0].children.join('');
     var portName = unbindingStmt.children[1].children.join('');
-    var chans = [];
 
     if (unbindingStmt.children[2] == '*') {
       var bindings = (model.mBindings) ? model.mBindings.iterator() : null;
@@ -476,7 +475,29 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
   function processNetwork(netStmt, cb) {
     var name  = netStmt.children[0].children.join('');
     var value = netStmt.children[1].children.join('');
-    console.log('NETWORK', name, value);
+
+    var net = factory.createNodeNetwork();
+    var node = model.findNodesByID(name);
+    if (typeof(node) != 'undefined') {
+      net.target = node;
+      net.initBy = node;
+
+      var link = factory.createNodeLink();
+      link.networkType = 'ip';
+      link.estimatedRate = 99;
+      net.addLink(link);
+
+      var prop = factory.createNetworkProperty();
+      prop.name = 'ip';
+      prop.value = value;
+      link.addNetworkProperties(prop);
+
+      model.addNodeNetworks(net);
+
+    } else {
+      return cb(new Error('Unable to find node instance "'+name+'" in current model. (network '+name+' '+value+')'));
+    }
+
     cb();
   }
 
