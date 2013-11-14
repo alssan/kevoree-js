@@ -15,6 +15,7 @@ var KevScript = Class({
     if (typeof(callback) == 'undefined') {
       callback = ctxModel;
       ctxModel = null;
+
     }
 
     var parser = new kevs.Parser();

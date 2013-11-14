@@ -1,1 +1,1 @@
-module.export = require('./lib/KevScript');
+module.exports = require('./lib/KevScript');
