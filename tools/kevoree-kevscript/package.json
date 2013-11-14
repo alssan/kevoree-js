@@ -32,5 +32,9 @@
     "async": "~0.2.9",
     "kevoree-library": "0.0.3",
     "kevoree-kotlin": "0.0.1"
+  },
+  "devDependencies": {
+    "browserify": "~2.35.1",
+    "grunt-browserify": "~1.2.11"
   }
 }

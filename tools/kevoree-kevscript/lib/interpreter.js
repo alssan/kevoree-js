@@ -516,7 +516,23 @@ var interpreter = function interpreter(ast, ctxModel, callback) {
       var entity = findEntityByName(names[i]);
       if (entity != null) {
         if (Kotlin.isType(entity.typeDefinition, kevoree.impl.NodeTypeImpl)) {
+          var groups = (model.groups) ? model.groups.iterator() : null;
+          if (groups != null) {
+            while (groups.hasNext()) {
+              var group = groups.next();
+              var subNodes = group.subNodes.iterator()
+              while (subNodes.hasNext()) {
+                if (subNodes.next().name == entity.name) group.removeSubNodes(entity);
+              }
+              var values = group.dictionary.values.iterator();
+              while (values.hasNext()) {
+                var val = values.next();
+                if (val.targetNode.name == entity.name) group.dictionary.removeValues(val);
+              }
+            }
+          }
           model.removeNodes(entity);
+
         } else if (Kotlin.isType(entity.typeDefinition, kevoree.impl.GroupTypeImpl)) {
           model.removeGroups(entity);
         } else if (Kotlin.isType(entity.typeDefinition, kevoree.impl.ChannelTypeImpl)) {

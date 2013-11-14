@@ -15,6 +15,8 @@ model.addNodes(node);
 model.addGroups(group);
 
 group.addSubNodes(node);
+
+group.removeSubNodes(node);
 model.removeNodes(node);
 
 console.log(JSON.stringify(JSON.parse(serializer.serialize(model)), null, 4));

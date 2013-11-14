@@ -21,10 +21,8 @@ bind comp0.inMsg chan0
 bind comp1.sendMsg chan0
 unbind comp1.sendMsg *
 
-set sync {port='8000'}@node0
+set sync {port='8000'}@node0, {port='8001'}@node1
 
 network node1 192.168.0.1
 
 remove node0
-
-detach node0 sync
