@@ -24,3 +24,7 @@ unbind comp1.sendMsg *
 set sync {port='8000'}@node0
 
 network node1 192.168.0.1
+
+remove node0
+
+detach node0 sync
