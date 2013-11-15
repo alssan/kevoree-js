@@ -11,8 +11,7 @@ To be sure that the parser works correctly, run:
 ```sh
 node test/test-parser.js
 ```
-This will try to parse the KevScript file from ```examples/test-parser.kevs```  
-If you can see a JSON object representing a Kevoree model-like, you won.
+This will try to parse the KevScript file from ```examples/test-parser.kevs``` showing the resulting AST on stdo
 
 If you want to generate ```kevoree-kevscript.js``` for the browser, just run:
 ```sh
