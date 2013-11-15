@@ -14,4 +14,11 @@ node test/test-parser.js
 This will try to parse the KevScript file from ```examples/test-parser.kevs``` with ```parser/kevoree-parser.js```
 If you can see a JSON object representing a Kevoree model-like, you won.
 
-Checker & Kevoree model generator TODO
+If you want to generate ```kevoree-kevscript.js``` for the browser, just run:
+```sh
+npm install
+grunt browser
+```
+This will create a new folder named ```browser/``` in the project root containing a raw browserified version of
+```kevoree-kevscript``` and a uglified one.
+> ie. Default ```grunt browser``` task will generate an AMD bundle.
