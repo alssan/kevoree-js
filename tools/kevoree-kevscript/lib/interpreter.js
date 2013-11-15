@@ -6,6 +6,13 @@ var factory = new kevoree.impl.DefaultKevoreeFactory();
 var cloner  = new kevoree.cloner.DefaultModelCloner();
 var compare = new kevoree.compare.DefaultModelCompare();
 
+/**
+ *
+ * @param ast
+ * @param ctxModel
+ * @param resolvers
+ * @param callback
+ */
 var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
   // output model
   var model = null;
@@ -464,6 +471,14 @@ var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
         val.value = attrs[i].value;
         if (typeof(attrs[i].targetNode) != 'undefined') {
           val.targetNode = model.findNodesByID(attrs[i].targetNode);
+        }
+
+        var values = (dic.values) ? dic.values.iterator() : null;
+        if (values != null) {
+          while (values.hasNext()) {
+            var dicVal = values.next();
+            if (dicVal.attribute == val.attribute) dic.removeValues(dicVal);
+          }
         }
         dic.addValues(val);
 

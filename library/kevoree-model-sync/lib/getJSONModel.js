@@ -19,7 +19,7 @@ module.exports = function (unitName, version, callback) {
     // try to require.resolve model directly (this will work if the module has already been installed)
     require.resolve(unitName);
     var packageJson = require(path.resolve('node_modules', unitName, 'package.json'));
-    if (typeof(version) != 'undefined' && version != null) {
+    if (typeof(version) != 'undefined' && version != null && version.length > 0) {
       if (packageJson.version == version) return model();
       else throw new Error('Version mismatch (wanted: '+version+', found: '+packageJson.version+')');
     } else {
