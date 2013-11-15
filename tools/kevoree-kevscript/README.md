@@ -19,5 +19,5 @@ npm install
 grunt browser
 ```
 This will create a new folder named ```browser/``` in the project root containing a raw browserified version of
-```kevoree-kevscript``` and a uglified one.
-> ie. Default ```grunt browser``` task will generate an AMD bundle.
+```kevoree-kevscript``` and an uglified one.
+> ie. Default ```grunt browser``` task will generate an AMD bundle using ```browserify```
