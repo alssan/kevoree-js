@@ -55,10 +55,10 @@ var WebSocketChannel = AbstractChannel.extend({
       for (var i in this.connectedClients) {
         this.connectedClients[i].send(msg);
       }
-
-      // and to myself
-      this.localDispatch(msg);
     }
+
+    // and to myself just in case
+    this.localDispatch(msg);
   },
 
   startWSServer: function (port) {
