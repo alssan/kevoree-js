@@ -21,13 +21,17 @@ module.exports = function (unitName, version, callback) {
     var packageJson = require(path.resolve('node_modules', unitName, 'package.json'));
     if (typeof(version) != 'undefined' && version != null && version.length > 0) {
       if (packageJson.version == version) return model();
-      else throw new Error('Version mismatch (wanted: '+version+', found: '+packageJson.version+')');
+      else {
+        var error = new Error('Version mismatch (wanted: '+version+', found: '+packageJson.version+')');
+        error.code = 'VERSION_MISMATCH';
+        throw error;
+      }
     } else {
       return model();
     }
 
   } catch (err) {
-    if (err.code == 'MODULE_NOT_FOUND') {
+    if (err.code == 'MODULE_NOT_FOUND' || err.code == 'VERSION_MISMATCH') {
       // module wasn't installed locally : let's do it
       console.log("getJSONModel: Reinstalling library (reason: %s)", err.message);
       npm.load({}, function (err) {
