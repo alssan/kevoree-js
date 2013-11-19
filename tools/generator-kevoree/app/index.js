@@ -62,6 +62,7 @@ KevoreeGenerator.prototype.askFor = function askFor() {
 KevoreeGenerator.prototype.app = function app() {
   this.mkdir('lib');
   this.template('_package.json', 'package.json');
+  this.template('_README.md', 'README.md');
   this.template('entities/_'+this.entityType+'.js', 'lib/'+this.entityName+'.js');
   this.template('_kevoree-letype-lename.js', 'kevoree-'+this.rawEntityType+'-'+ _.slugify(this.entityName)+'.js');
 };

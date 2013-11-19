@@ -1,10 +1,13 @@
-var Class = require('pseudoclass'),
-    KevoreeLogger = require('kevoree-commons').KevoreeLogger;
+var Class         = require('pseudoclass'),
+    KevoreeLogger = require('kevoree-commons').KevoreeLogger,
+    fs            = require('fs'),
+    path          = require('path');
 
 var KevoreeUI = Class({
   toString: 'KevoreeUI',
 
-  construct: function () {
+  construct: function (comp) {
+    this.comp = comp;
     this.root = null;
     this.log = new KevoreeLogger(this.toString());
     this.name = '';

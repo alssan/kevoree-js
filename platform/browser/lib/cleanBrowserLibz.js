@@ -1,5 +1,6 @@
 var path = require('path'),
-    fs   = require('fs');
+    fs   = require('fs'),
+    rimraf = require('rimraf');
 
 module.exports = function cleanStuff() {
     var browseredLibzPath = path.resolve('site', 'public', 'libraries', 'browser_modules');
@@ -10,7 +11,11 @@ module.exports = function cleanStuff() {
         files.forEach(function (file) {
             if (file != '.gitignore') {
                 fs.unlink(path.resolve(browseredLibzPath, file), function (err) {
-                    if (err) return console.error('Unlink error: '+err.message)
+                    if (err) {
+                      rimraf(path.resolve(browseredLibzPath, file), function (err) {
+                        if (err) return console.error('Error cleaning "%s" directory: %s', browseredLibzPath, err.message);
+                      });
+                    }
                 });
             }
         });

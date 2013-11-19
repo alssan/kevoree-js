@@ -12,7 +12,11 @@ var AbstractComponent = KevoreeEntity.extend({
 
   construct: function () {
     this.inputs = {};
-    this.ui = new KevoreeUI();
+    this.ui = new KevoreeUI(this);
+  },
+
+  start: function (_super) {
+    _super.call(this);
   },
 
   stop: function () {
@@ -56,14 +60,14 @@ var AbstractComponent = KevoreeEntity.extend({
 
     if (this.ui.isReady()) {
       this.ui.setContent(content);
-      return callback();
+      return callback(null, this.ui.getRoot());
 
     } else {
       this.ui.initialize(this, this.kCore.getUICommand(), function (err) {
         if (err) return callback(err);
 
         self.ui.setContent(content);
-        return callback();
+        return callback(null, self.ui.getRoot());
       });
     }
   },

@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "main": "./kevoree-<%= rawEntityType %>-<%= _.slugify(entityName) %>.js",
   "scripts": {
-    "prepublish": "node node_modules/kevoree-gen-model"
+    "prepublish": "node node_modules/kevoree-gen-model -q"
   },
   "dependencies": {
-    "kevoree-entities": "~0.0.1"
+    "kevoree-entities": "~0.0.3"
   },
   "devDependencies": {
-    "kevoree-gen-model": "~0.0.1"
+    "kevoree-gen-model": "~0.0.2"
   }
 }

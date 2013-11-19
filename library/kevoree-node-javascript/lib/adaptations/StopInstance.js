@@ -13,11 +13,8 @@ module.exports = AdaptationPrimitive.extend({
     if (instance != undefined && instance != null) {
       instance.stop();
       this.log.debug(this.toString(), 'job done on '+instance.getName());
-      return callback();
-
-    } else {
-      return callback(new Error(this.toString()+" error: unable to stop instance "+kInstance.path()));
     }
+    return callback();
   },
 
   undo: function (_super, callback) {

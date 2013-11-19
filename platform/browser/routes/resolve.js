@@ -60,6 +60,7 @@ module.exports = function(req, res) {
             b.external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-library'), {expose: 'kevoree-library'})
              .external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-kotlin'), {expose: 'kevoree-kotlin'})
              .require(modulePath, { expose: req.query.name })
+             .transform('brfs')// will try to get content from fs.readFileSync() into a function (to be available as a string later on)
              .bundle({detectGlobals: false})
              .pipe(bundleFile)
              .on('finish', function () {

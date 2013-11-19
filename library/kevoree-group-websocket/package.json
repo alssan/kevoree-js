@@ -22,13 +22,13 @@
   },
   "dependencies": {
     "kevoree-library": "0.0.3",
-    "kevoree-entities": "0.0.1",
-    "kevoree-commons":    "0.0.1",
-    "pseudoclass":      "0.2.6",
-    "ws":               "0.4.30"
+    "kevoree-entities": "~0.0.3",
+    "kevoree-commons": "0.0.1",
+    "pseudoclass": "0.2.6",
+    "ws": "0.4.30"
   },
   "devDependencies": {
-    "kevoree-gen-model": "0.0.1"
+    "kevoree-gen-model": "~0.0.2"
   },
   "optionalDependencies": {},
   "engines": {

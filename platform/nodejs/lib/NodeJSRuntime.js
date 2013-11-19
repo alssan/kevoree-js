@@ -51,17 +51,11 @@ var NodeJSRuntime = Class({
   },
 
   deploy: function (model) {
-    if (typeof(model) == 'undefined' || model == null) {
-      var self = this;
-      // deploy default bootstrap model
-      this.log.warn('No bootstrap model given: using a default bootstrap model');
-      bootstrapHelper(this.nodename, this.groupname, this.modulesPath, function (err, bootstrapModel) {
-        self.kCore.deploy(bootstrapModel);
-      }, this.log);
-    } else {
-      // if a model has been given: use it to bootstrap
-      this.kCore.deploy(model);
-    }
+    var self = this;
+    // deploy default bootstrap model
+    bootstrapHelper(model, this.nodename, this.groupname, this.modulesPath, function (err, bootstrapModel) {
+      self.kCore.deploy(bootstrapModel);
+    }, this.log);
   },
 
   on: function (event, callback) {

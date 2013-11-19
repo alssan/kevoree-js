@@ -104,7 +104,7 @@ module.exports = Class({
    * @param model
    */
   deploy: function (model) {
-    if (model.findNodesByID(this.nodeName) == null) {
+    if (model && model.findNodesByID(this.nodeName) == null) {
       this.emitter.emit('error', new Error('Deploy model failure: unable to find '+this.nodeName+' in given model'));
       return;
 

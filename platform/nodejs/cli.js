@@ -5,10 +5,16 @@ var config      = require('./config.json'),
   kevoree       = require('kevoree-library').org.kevoree,
   argv          = require('optimist')
     .usage('Usage: $0 [--nodeName node0 --groupName sync --model path/to/your/model.json]')
+    .alias('n', 'nodeName')
+    .alias('g', 'groupName')
+    .alias('m', 'model')
+    .describe('nodeName', 'The name of the node platform you want to bootstrap on')
+    .describe('groupName', 'The group name to which your node is gonna be connected to')
+    .describe('model', 'A model to bootstrap on')
     .argv;
 
 // TODO enable install dir path in command-line
-var kRuntime = new NodeJSRuntime();
+var kRuntime = new NodeJSRuntime(__dirname);
 var loader   = new kevoree.loader.JSONModelLoader();
 var log      = new KevoreeLogger('NodeJSRuntime');
 var compare  = new kevoree.compare.DefaultModelCompare();
