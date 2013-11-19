@@ -63,6 +63,10 @@ KevoreeGenerator.prototype.app = function app() {
   this.mkdir('lib');
   this.template('_package.json', 'package.json');
   this.template('_README.md', 'README.md');
+  if (this.rawEntityType == 'comp') {
+    this.template('_Gruntfile.js', 'Gruntfile.js');
+    this.mkdir('ui');
+  }
   this.template('entities/_'+this.entityType+'.js', 'lib/'+this.entityName+'.js');
   this.template('_kevoree-letype-lename.js', 'kevoree-'+this.rawEntityType+'-'+ _.slugify(this.entityName)+'.js');
 };
