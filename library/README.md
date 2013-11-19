@@ -402,11 +402,3 @@ Those two tabs are your components UIs.
 ![playing with consoles](http://i40.tinypic.com/21awkxu.png)
 
 You should now be ready to start messing with __kevoree-js__ :)
-
-
-## Folder content
-
- * __kevoree-commons__: KevoreeLogger, FileSystem API, Bootstrapper, Resolver, KevoreeUI, etc.
- * __kevoree-library__: Kevoree library generated from .ecore (with KMF) and compiled to Javascript with Kotlin
- * __kevoree-entities__: Contains all abstract classes needed to create new kevoree entities (channel, component, group, etc..)
- * __kevoree-comp-__XXX, __kevoree-chan-__XXX, __kevoree-group-__XXX, etc are kevoree entity projects known as 'core libraries'
