@@ -2,15 +2,19 @@ var config      = require('./config.json'),
   NodeJSRuntime = require('./lib/NodeJSRuntime'),
   KevoreeLogger = require('kevoree-commons').KevoreeLogger,
   path          = require('path'),
+  fs            = require('fs'),
   kevoree       = require('kevoree-library').org.kevoree,
+  KevScript     = require('kevoree-kevscript'),
   argv          = require('optimist')
-    .usage('Usage: $0 [--nodeName node0 --groupName sync --model path/to/your/model.json]')
+    .usage('Usage: $0 [--nodeName node0 --groupName sync (--model path/to/your/model.json | --kevscript path/to/your/model.kevs)]')
     .alias('n', 'nodeName')
     .alias('g', 'groupName')
     .alias('m', 'model')
+    .alias('k', 'kevscript')
     .describe('nodeName', 'The name of the node platform you want to bootstrap on')
     .describe('groupName', 'The group name to which your node is gonna be connected to')
     .describe('model', 'A model to bootstrap on')
+    .describe('kevscript', 'A KevScript file to bootstrap on')
     .argv;
 
 // TODO enable install dir path in command-line
@@ -22,8 +26,25 @@ var compare  = new kevoree.compare.DefaultModelCompare();
 // Kevoree Runtime started event listener
 kRuntime.on('started', function () {
   // Kevoree Core is started, deploy model
-  var model = loadModelFromCmdLineArg();
-  kRuntime.deploy(model);
+  if (argv.kevscript && argv.kevscript.length > 0) {
+    // try with --kevscript param
+    var kevsPath = path.resolve(argv.kevscript);
+    fs.readFile(kevsPath, 'utf8', function (err, text) {
+      if (err) throw err;
+
+      var kevs = new KevScript();
+      kevs.parse(text, function (err, model) {
+        if (err) throw err;
+
+        kRuntime.deploy(model);
+      });
+    });
+
+  } else {
+    // try with --model param
+    var model = loadModelFromCmdLineArg();
+    kRuntime.deploy(model);
+  }
 });
 
 // Kevore Runtime error event listener

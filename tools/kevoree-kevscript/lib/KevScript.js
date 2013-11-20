@@ -1,12 +1,18 @@
 var Class       = require('pseudoclass'),
     kevs        = require('./parser'),
-    interpreter = require('./interpreter');
+    interpreter = require('./interpreter'),
+    NPMResolver = require('./NPMResolver');
 
 var KevScript = Class({
   toString: 'KevScript',
 
   construct: function (options) {
     this.options = options || {};
+
+    // if no resolver given during construction, give a default NPMResolver
+    var resolversCount = 0;
+    for (var i in this.options.resolvers) { resolversCount++ };
+    if (resolversCount == 0) this.options.resolvers = {npm: new NPMResolver()};
   },
 
   /**

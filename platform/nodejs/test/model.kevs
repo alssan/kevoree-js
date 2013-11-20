@@ -1,0 +1,20 @@
+merge npm:kevoree-group-websocket
+merge npm:kevoree-comp-fakeconsole
+merge npm:kevoree-comp-helloworld
+merge npm:kevoree-chan-websocket
+
+add node0: JavascriptNode
+add sync: WebSocketGroup
+add chan0: WebSocketChannel
+add helloworldComp: HelloWorldComponent
+add fakeconsoleComp: FakeConsole
+
+attach node0 sync
+
+move helloworldComp, fakeconsoleComp node0
+
+bind fakeconsoleComp.inMsg chan0
+bind helloworldComp.sendText chan0
+
+set sync {port='8000'}@node0
+set chan0 {port='8088'}@node0
