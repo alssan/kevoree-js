@@ -1,6 +1,7 @@
-var Resolver  = require('kevoree-commons').Resolver,
-  npm         = require('npm'),
-  path        = require('path');
+var Resolver = require('kevoree-commons').Resolver,
+    kevoree  = require('kevoree-library').org.kevoree,
+    npm      = require('npm'),
+    path     = require('path');
 
 var NPMResolver = Resolver.extend({
   toString: 'NPMResolver',
@@ -16,9 +17,13 @@ var NPMResolver = Resolver.extend({
     var packageName    = deployUnit.name,
         packageVersion = deployUnit.version;
 
+    var loader = new kevoree.loader.JSONModelLoader();
+
     try {
       var KClass = require(path.resolve(resolver.modulesPath, 'node_modules', packageName));
-      return callback(null, KClass);
+      var jsonModel = require(path.resolve(resolver.modulesPath, 'node_modules', packageName, 'kevlib.json'));
+
+      return callback(null, KClass, loader.loadModelFromString(JSON.stringify(jsonModel)).get(0));
 
     } catch (err) {
       this.log.info(this.toString(), "DeployUnit ("+packageName+"@"+packageVersion+") is not installed yet: downloading & installing it...");
@@ -34,9 +39,10 @@ var NPMResolver = Resolver.extend({
             return callback(new Error("Bootstrap failure"));
           }
 
-          // install sucess
+          // install success
           var KClass = require(path.resolve(resolver.modulesPath, 'node_modules', packageName));
-          return callback(null, KClass);
+          var jsonModel = require(path.resolve(resolver.modulesPath, 'node_modules', packageName, 'kevlib.json'));
+          return callback(null, KClass, loader.loadModelFromString(JSON.stringify(jsonModel)).get(0));
         });
       });
     }

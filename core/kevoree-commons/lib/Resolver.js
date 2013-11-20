@@ -10,7 +10,7 @@ var Resolver = Class({
     /**
      *
      * @param deployUnit Kevoree DeployUnit
-     * @param callback(err, Class)
+     * @param callback(err, Class, model)
      */
     resolve: function (deployUnit, callback) {},
 

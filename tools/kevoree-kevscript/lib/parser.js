@@ -6,7 +6,7 @@
 var waxeye = waxeye;
 if (typeof module !== 'undefined') {
     // require from module system
-    waxeye = require('waxeye');
+    waxeye = require('./waxeye');
 }
 
 var Parser = (function() {

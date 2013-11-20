@@ -133,11 +133,12 @@ var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
         return cb(new Error('Unable to parse merge statement "'+mergeDef+'"'));
       }
 
-      resolvers.npm.resolve(du, function (err, duModel) {
+      resolvers.npm.resolve(du, function (err, Clazz, duModel) {
         if (err) return cb(err);
 
         var loader = new kevoree.loader.JSONModelLoader();
         var serializer = new kevoree.serializer.JSONModelSerializer();
+
         var tmp = loader.loadModelFromString(serializer.serialize(duModel)).get(0);
         var mergeSeq = compare.merge(model, tmp);
         mergeSeq.applyOn(model);
