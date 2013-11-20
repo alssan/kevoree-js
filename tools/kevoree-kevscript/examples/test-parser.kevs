@@ -3,6 +3,8 @@ merge npm:kevoree-chan-websocket
 merge mvn:org.kevoree.library.javase:org.kevoree.library.javase.websocketgrp:2.0.5-SNAPSHOT
 merge npm:kevoree-comp-fakeconsole
 
+// this is a comment
+
 add node0, node1 : JavascriptNode
 add sync : WebSocketGroup
 add comp0, comp1 : FakeConsole
