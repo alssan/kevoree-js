@@ -8,7 +8,7 @@ var FakeConsole = AbstractComponent.extend({
   start: function (_super) {
     _super.call(this);
 
-    this.setUIContent(view({foo: 'potato'}), function (err, root) {
+    this.setUIContent(view({foo: 'Send msg!'}), function (err, root) {
       if (err) {
         return this.log.warn(err.message);
       }
