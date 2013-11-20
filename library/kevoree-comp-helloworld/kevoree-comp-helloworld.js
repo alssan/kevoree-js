@@ -16,7 +16,6 @@ var HelloWorldComponent = AbstractComponent.extend({
    */
   start: function (_super) {
     _super.call(this);
-    this.log.info(this.toString(), 'Hello world!');
 
     this.id = setInterval(function () {
       // send a message through output port 'sendText' every 2 seconds
@@ -24,9 +23,7 @@ var HelloWorldComponent = AbstractComponent.extend({
     }.bind(this), 2000);
 
     this.setUIContent('<p>Hello world</p>', function (err) {
-      if (err) {
-        this.log.warn(this.toString(), "Something went wrong while setting view content (reason: "+err.message+")");
-      }
+      if (err) this.log.info(this.toString(), 'Hello world!');
     });
   },
 
