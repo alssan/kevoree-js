@@ -17,6 +17,7 @@ var AbstractComponent = KevoreeEntity.extend({
 
   start: function (_super) {
     _super.call(this);
+    this.ui.name = this.name; // default ui name is component name
   },
 
   stop: function () {

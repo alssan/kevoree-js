@@ -21,7 +21,7 @@ var NPMResolver = Resolver.extend({
 
     // forward resolving request to server
     $.ajax({
-      type: 'GET',
+      type: 'POST',
       url: 'resolve',
       data: {
         type: deployUnit.type,
@@ -126,7 +126,7 @@ var processEntries = function processEntries(entries, zipDir, callback) {
             return;
           }
 
-          taskCallback(null);
+          taskCallback();
         });
       });
     }
@@ -140,7 +140,7 @@ var processEntries = function processEntries(entries, zipDir, callback) {
     }
 
     // all tasks run without error : cool =)
-    callback(null);
+    callback();
   });
 }
 

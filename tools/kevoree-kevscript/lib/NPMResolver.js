@@ -12,7 +12,8 @@ module.exports = Resolver.extend({
     getJSONModel(deployUnit.name, deployUnit.version, callback);
   },
 
-  uninstall: function () {
+  uninstall: function (deployUnit, callback) {
     // TODO
+    callback();
   }
 });

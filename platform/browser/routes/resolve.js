@@ -25,12 +25,12 @@ var BROWSER_MODULES = 'browser_modules',
  * @param res
  */
 module.exports = function(req, res) {
-  if (req.query.type == 'npm') {
+  if (req.body.type == 'npm') {
 
     var installDir        = path.resolve('site', 'public', 'libraries'),
-        modulePath        = path.resolve(installDir, 'node_modules', req.query.name),
-        browserModulePath = path.resolve(installDir, BROWSER_MODULES, req.query.name+BROWSER_TAG),
-        downloadLink      = '/libraries/'+BROWSER_MODULES+'/'+req.query.name+BROWSER_TAG+'.zip';
+        modulePath        = path.resolve(installDir, 'node_modules', req.body.name),
+        browserModulePath = path.resolve(installDir, BROWSER_MODULES, req.body.name+BROWSER_TAG),
+        downloadLink      = '/libraries/'+BROWSER_MODULES+'/'+req.body.name+BROWSER_TAG+'.zip';
 
     // check if bundle as already been downloaded
     if (!fs.existsSync(browserModulePath+'.zip')) {
@@ -42,28 +42,27 @@ module.exports = function(req, res) {
         }
 
         // load success
-        npm.commands.install(installDir, [req.query.name+'@'+req.query.version], function installCallback(err) {
+        npm.commands.install(installDir, [req.body.name+'@'+req.body.version], function installCallback(err) {
           if (err) {
-            res.send(500, 'npm failed to install package %s:%s', req.query.name, req.query.version);
+            res.send(500, 'npm failed to install package %s:%s', req.body.name, req.body.version);
             return;
           }
-
           // installation succeeded
           fs.mkdir(browserModulePath, function () {
             // browserify module
             var b = browserify();
-            var bundleFile = fs.createWriteStream(path.resolve(browserModulePath, req.query.name+'-bundle.js'));
+            var bundleFile = fs.createWriteStream(path.resolve(browserModulePath, req.body.name+'-bundle.js'));
 
             // set kevoree-library et kevoree-kotlin as 'provided externally' because there are bundled with
             // kevoree-browser-runtime-client, if you don't do that, they will be loaded multiple times
             // and the whole thing will blew up like crazy, trust me (just lost 2 hours)
             b.external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-library'), {expose: 'kevoree-library'})
-             .external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-kotlin'), {expose: 'kevoree-kotlin'})
-             .require(modulePath, { expose: req.query.name })
-             .transform('brfs')// will try to get content from fs.readFileSync() into a function (to be available as a string later on)
-             .bundle({detectGlobals: false})
-             .pipe(bundleFile)
-             .on('finish', function () {
+              .external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-kotlin'), {expose: 'kevoree-kotlin'})
+              .require(modulePath, { expose: req.body.name })
+              .transform('brfs')// will try to get content from fs.readFileSync() into a function (to be available as a string later on)
+              .bundle({detectGlobals: false})
+              .pipe(bundleFile)
+              .on('finish', function () {
                 // zip browser-bundled folder
                 var zip = new AdmZip();
                 zip.addLocalFolder(browserModulePath);
@@ -73,12 +72,11 @@ module.exports = function(req, res) {
                   if (err) console.error("Unable to delete %s folder :/", browserModulePath);
                 });
                 // send response
-                res.json({
+                return res.json({
                   zipPath: downloadLink,
-                  zipName: req.query.name+'@'+req.query.version,
+                  zipName: req.body.name+'@'+req.body.version,
                   requireName: modulePath
                 });
-                return;
               });
           });
         });
@@ -88,7 +86,7 @@ module.exports = function(req, res) {
       // send response
       res.json({
         zipPath: downloadLink,
-        zipName: req.query.name+'@'+req.query.version,
+        zipName: req.body.name+'@'+req.body.version,
         requireName: modulePath
       });
       return;

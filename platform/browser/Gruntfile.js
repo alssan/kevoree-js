@@ -47,8 +47,7 @@ module.exports = function (grunt) {
                 options: {
                     hostname: 'localhost',
                     port: 42042,
-                    server: path.resolve('./server'),
-                    watchChanges: true
+                    server: path.resolve('./server')
                 }
             }
         }

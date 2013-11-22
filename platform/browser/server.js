@@ -2,12 +2,15 @@ var express        = require('express'),
     path           = require('path'),
     routes         = require('./routes'),
     clean          = require('./lib/cleanBrowserLibz'),
-    kevNodeJSPlat  = require('./lib/nodeJSPlatform');
+    kevNodeJSPlat  = require('./lib/nodeJSPlatform'),
+    connect        = require('connect');
 
 var app = express();
 
 app.use(express.static('site/public'));
 app.set('views', __dirname + '/site/views');
+
+app.use(express.bodyParser());
 
 // rendering engine (basic html renderer)
 app.engine('html', require('ejs').renderFile);
@@ -20,7 +23,7 @@ kevNodeJSPlat(path.resolve(__dirname));
 
 // server routes
 app.get('/', routes.index);
-app.get('/bootstrap', routes.bootstrap);
-app.get('/resolve', routes.resolve);
+app.post('/bootstrap', routes.bootstrap);
+app.post('/resolve', routes.resolve);
 
 module.exports = app;

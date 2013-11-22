@@ -1,22 +1,22 @@
-var KevoreeCore             = require('kevoree-core'),
-  JSONModelLoader         = require('kevoree-library').org.kevoree.loader.JSONModelLoader,
-  KevoreeBrowserLogger    = require('./lib/KevoreeBrowserLogger'),
-  HTTPBootstrapper        = require('./lib/BrowserBootstrapper');
+var KevoreeCore        = require('kevoree-core'),
+  JSONModelLoader      = require('kevoree-library').org.kevoree.loader.JSONModelLoader,
+  KevoreeBrowserLogger = require('./lib/KevoreeBrowserLogger'),
+  HTTPBootstrapper     = require('./lib/BrowserBootstrapper');
 
 var log = new KevoreeBrowserLogger('Runtime');
 
 // init core objects
-var kevoreeCore     = new KevoreeCore(__dirname, log),
-  jsonLoader      = new JSONModelLoader(),
-  bootstrapper    = new HTTPBootstrapper(__dirname);
+var kevoreeCore = new KevoreeCore(__dirname, log),
+  jsonLoader    = new JSONModelLoader(),
+  bootstrapper  = new HTTPBootstrapper(__dirname);
 
 // init DOM objects
-var startBtn    = $('#start-btn'),
-  deployBtn   = $('#deploy-btn'),
-  nodeName    = $('#node-name'),
-  started     = false,
-  deployed    = false,
-  deploying   = false;
+var startBtn = $('#start-btn'),
+  deployBtn  = $('#deploy-btn'),
+  nodeName   = $('#node-name'),
+  started    = false,
+  deployed   = false,
+  deploying  = false;
 
 kevoreeCore.on('started', function () {
   log.info("KevoreeCore started");
@@ -54,16 +54,20 @@ kevoreeCore.on('error', function (err) {
 
 // set Kevoree bootstrapper
 kevoreeCore.setBootstrapper(bootstrapper);
+
 // set KevoreeUI bootstrap command
-kevoreeCore.setUICommand(function (compUIManager, callback) {
+kevoreeCore.setUICommand(function (ui, callback) {
   try {
     var tabName = 'tab'+(parseInt(Math.random()*1000));
-    $('#tabs-li').append('<li id="'+tabName+'_li"><a href="#'+tabName+'" data-toggle="tab">'+compUIManager.getName()+'</a></li>');
+    $('#tabs-li').append('<li id="'+tabName+'_li"><a href="#'+tabName+'" data-toggle="tab">'+ui.getName()+'</a></li>');
     $('#tabs-content').append('<div class="tab-pane" id="'+tabName+'"><div id="'+tabName+'_root" class="well"></div></div>');
     var rootDiv = document.querySelector('#'+tabName+'_root');
     rootDiv.createShadowRoot = rootDiv.createShadowRoot || rootDiv.webkitCreateShadowRoot;
-    compUIManager.setRoot(rootDiv.createShadowRoot());
-    compUIManager.setDestroyCmd(function () {
+    ui.on('nameChanged', function (name) {
+      $('#'+tabName+' a').html(name);
+    });
+    ui.setRoot(rootDiv.createShadowRoot());
+    ui.setDestroyCmd(function () {
       var tabLi = document.querySelector('#'+tabName+'_li');
       tabLi.parentNode.removeChild(tabLi);
       rootDiv.parentNode.removeChild(rootDiv);
@@ -86,8 +90,7 @@ startBtn.on('click', function () {
     } catch (err) {
       log.error(err.message);
     }
-
-  } else log.warn();
+  }
 });
 
 // deploy button clicked
@@ -107,8 +110,8 @@ deployBtn.on('click', function () {
           deployBtn.popover('show');
 
           $.ajax({
-            type: 'GET',
-            url: '/bootstrap',
+            type: 'POST',
+            url: 'bootstrap',
             data: {nodename: kevoreeCore.getNodeName()},
             success: function (data) {
               kevoreeCore.deploy(jsonLoader.loadModelFromString(data.model).get(0));

@@ -24,7 +24,7 @@ module.exports = function (req, res) {
     if (err) return res.send(500, 'Unable to pull model from server-side platform.');
 
     // let's be really cautious about
-    var nodename = req.query.nodename || 'node'+parseInt(Math.random()*1e10); // name from request or random generated
+    var nodename = req.body.nodename || 'node'+parseInt(Math.random()*1e10); // name from request or random generated
     var nodeInst = serverModel.findNodesByID(nodename);
     if (nodeInst) nodename = 'node'+parseInt(Math.random()*1e10); // this name was already taken server-side: roll the dices again to find a new name
 

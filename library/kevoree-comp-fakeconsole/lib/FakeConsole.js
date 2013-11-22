@@ -8,7 +8,7 @@ var FakeConsole = AbstractComponent.extend({
   start: function (_super) {
     _super.call(this);
 
-    this.setUIContent(view({foo: 'Send msg!'}), function (err, root) {
+    this.setUIContent(view({btn: 'Send msg!'}), function (err, root) {
       if (err) {
         return this.log.warn(err.message);
       }
@@ -37,6 +37,7 @@ var FakeConsole = AbstractComponent.extend({
       };
     });
   },
+
   stop: function (_super) {
     _super.call(this);
   },
@@ -54,7 +55,7 @@ var FakeConsole = AbstractComponent.extend({
       this.log.debug(this.toString(), tag+' '+msg);
     } else {
       var msgList = root.querySelector('#msg-list');
-      msgList.innerHTML += '<li>'+tag+' '+msg+'</li>';
+      msgList.innerHTML += '<dt>'+(new Date().toTimeString().split(' ')[0])+' '+tag+'</dt><dd>'+msg+'</dd>';
     }
   }
 });

@@ -15,7 +15,8 @@ module.exports = function (modulesPath) {
   });
 
   knjs.on('deployed', function (model) {
-    fs.writeFile(serverSideModelPath, JSON.stringify(JSON.parse(serializer.serialize(model)), null, 4), function (err) {
+    var serialized = serializer.serialize(model);
+    fs.writeFile(serverSideModelPath, JSON.stringify(JSON.parse(serialized), null, 4), function (err) {
       if (err) {
         return console.error("Unable to write deployed model to server root :/ (tried path: %s)", serverSideModelPath);
       }
