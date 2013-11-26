@@ -1,6 +1,5 @@
 var Bootstrapper    = require('kevoree-commons').Bootstrapper,
   KevoreeLogger   = require('./KevoreeBrowserLogger'),
-  GITResolver     = require('./GITResolver'),
   NPMResolver     = require('./NPMResolver');
 
 var GIT     = 'git',
@@ -14,7 +13,6 @@ var BrowserBootstrapper = Bootstrapper.extend({
     this.modulesPath = modulesPath;
 
     this.resolvers = {};
-    this.resolvers[GIT] = new GITResolver(modulesPath);
     this.resolvers[NPM] = new NPMResolver(modulesPath);
 
     this.log = new KevoreeLogger(this.toString());
@@ -60,7 +58,7 @@ var BrowserBootstrapper = Bootstrapper.extend({
       return callback(new Error("File resolver not implemented yet"));
 
     } else if (url.startsWith(GIT)) {
-      this.resolvers[GIT][action](deployUnit, callback);
+      return callback(new Error("Git resolver not implemented yet"));
 
     } else {
       this.resolvers[NPM][action](deployUnit, callback);

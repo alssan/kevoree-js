@@ -1,5 +1,6 @@
 var Bootstrapper    = require('kevoree-commons').Bootstrapper,
-    NPMResolver     = require('./NPMResolver'),
+    NPMResolver     = require('kevoree-resolvers').NPMResolver,
+    FileResolver    = require('kevoree-resolvers').FileResolver,
     path            = require('path');
 
 var FILE    = 'file',
@@ -20,7 +21,8 @@ module.exports = Bootstrapper.extend({
         this.log = logger;
 
         this.resolvers = {};
-        this.resolvers[NPM] = new NPMResolver(modulesPath, logger);
+        this.resolvers[NPM]  = new NPMResolver(modulesPath, logger);
+        this.resolvers[FILE] = new FileResolver(modulesPath, logger);
     },
 
     /**
@@ -63,8 +65,7 @@ module.exports = Bootstrapper.extend({
         var url = deployUnit ? (deployUnit.url || '') : '';
 
         if (url.startsWith(FILE)) {
-//            this.resolvers[FILE][action](deployUnit, callback);
-            this.log.warn("File resolver not implemented yet");
+            this.resolvers[FILE][action](deployUnit, callback);
 
         } else if (url.startsWith(GIT)) {
 //            this.resolvers[GIT][action](deployUnit, callback);

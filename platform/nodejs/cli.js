@@ -4,7 +4,8 @@ var config      = require('./config.json'),
   path          = require('path'),
   fs            = require('fs'),
   kevoree       = require('kevoree-library').org.kevoree,
-  NPMResolver   = require('./lib/NPMResolver'),
+  NPMResolver   = require('kevoree-resolvers').NPMResolver,
+  FileResolver  = require('kevoree-resolvers').FileResolver,
   KevScript     = require('kevoree-kevscript'),
   argv          = require('optimist')
     .usage('Usage: $0 [--nodeName node0 --groupName sync (--model path/to/your/model.json | --kevscript path/to/your/model.kevs)]')
@@ -33,7 +34,13 @@ kRuntime.on('started', function () {
     fs.readFile(kevsPath, 'utf8', function (err, text) {
       if (err) throw err;
 
-      var kevs = new KevScript({resolvers: {npm: new NPMResolver(__dirname, log)}});
+      var options = {
+        resolvers: {
+          npm: new NPMResolver(__dirname, log),
+          file: new FileResolver(__dirname, log)
+        }
+      };
+      var kevs = new KevScript(options);
       kevs.parse(text, function (err, model) {
         if (err) throw err;
 

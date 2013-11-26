@@ -1,5 +1,5 @@
 merge npm:kevoree-group-websocket
-merge npm:kevoree-comp-fakeconsole
+merge file:/home/leiko/dev/kevoree-js/library/kevoree-comp-fakeconsole
 merge npm:kevoree-comp-helloworld
 merge npm:kevoree-chan-websocket
 
