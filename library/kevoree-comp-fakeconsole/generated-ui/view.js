@@ -6,7 +6,7 @@ attrs = attrs || jade.attrs; escape = escape || jade.escape; rethrow = rethrow |
 var buf = [];
 with (locals || {}) {
 var interp;
-buf.push('<!--<style>@import url(\'css/bootstrap.min.css\')\n</style>--><div class="row"><div class="col-md-11"><input id="msg" type="text" class="form-control"/></div><div class="col-md-1"><button id="send" class="btn btn-info">' + escape((interp = btn) == null ? '' : interp) + '</button></div></div><div class="row"><dl id="msg-list" class="dl-horizontal col-md-12"></dl></div>');
+buf.push('<div class="row"><div class="col-md-11"><input id="msg" type="text" class="form-control"/></div><div class="col-md-1"><button id="send" class="btn btn-info">' + escape((interp = btn) == null ? '' : interp) + '</button></div></div><div class="row"><dl id="msg-list" class="dl-horizontal col-md-12"></dl></div>');
 }
 return buf.join("");
 };
