@@ -9,14 +9,21 @@ var path = require('path'),
               .describe('o', 'Where to write the output Kevoree JSON model')
               .default('o', 'model.json')
               .argv,
-    KevScript   = require('./lib/KevScript'),
-    kevoree     = require('kevoree-library').org.kevoree,
-    NPMResolver = require('./lib/NPMResolver');
+    KevScript    = require('./lib/KevScript'),
+    kevoree      = require('kevoree-library').org.kevoree,
+    NPMResolver  = require('kevoree-resolvers').NPMResolver,
+    FileResolver = require('kevoree-resolvers').FileResolver;
 
 var input = path.resolve(argv.k);
 var output = path.resolve(argv.o);
 var serializer = new kevoree.serializer.JSONModelSerializer();
-var kevs = new KevScript({resolvers: {npm: new NPMResolver()}});
+var options = {
+  resolvers: {
+    npm: new NPMResolver(),
+    file: new FileResolver()
+  }
+};
+var kevs = new KevScript(options);
 
 fs.readFile(input, 'utf8', function (err, data) {
   if (err) throw err;

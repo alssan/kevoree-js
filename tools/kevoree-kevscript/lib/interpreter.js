@@ -1,6 +1,7 @@
-var kevoree      = require('kevoree-library').org.kevoree,
-    Kotlin       = require('kevoree-kotlin'),
-    async        = require('async');
+var kevoree = require('kevoree-library').org.kevoree,
+    Kotlin  = require('kevoree-kotlin'),
+    async   = require('async'),
+    path    = require('path');
 
 var factory = new kevoree.impl.DefaultKevoreeFactory();
 var cloner  = new kevoree.cloner.DefaultModelCloner();
@@ -115,10 +116,9 @@ var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
 
     var du = factory.createDeployUnit();
     var type = mergeStmt.children[0].children.join('');
+    var mergeDef = mergeStmt.children[1].children.join('');
 
     if (type == 'npm' && resolvers.npm) {
-      var mergeDef = mergeStmt.children[1].children.join('');
-
       var colon = mergeDef.split(':');
       var arobas = mergeDef.split('@');
       if (colon.length == 1 && arobas.length == 1) {
@@ -142,6 +142,30 @@ var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
         var tmp = loader.loadModelFromString(serializer.serialize(duModel)).get(0);
         var mergeSeq = compare.merge(model, tmp);
         mergeSeq.applyOn(model);
+        return cb();
+      });
+
+    } else if (type == 'file' && resolvers.file) {
+      var pkg = require(path.resolve(mergeDef, 'package.json'));
+      du.name = pkg.name;
+      du.version = pkg.version;
+      du.type = 'file';
+      du.url = mergeDef;
+      resolvers.file.resolve(du, function (err, Clazz, duModel) {
+        var loader = new kevoree.loader.JSONModelLoader();
+        var serializer = new kevoree.serializer.JSONModelSerializer();
+
+        var tmp = loader.loadModelFromString(serializer.serialize(duModel)).get(0);
+        var mergeSeq = compare.merge(model, tmp);
+        mergeSeq.applyOn(model);
+        var dus = model.deployUnits.iterator();
+        while (dus.hasNext()) {
+          var deployUnit = dus.next();
+          if (deployUnit.name == du.name) {
+            deployUnit.type = 'file';
+            deployUnit.url = mergeDef;
+          }
+        }
         return cb();
       });
 

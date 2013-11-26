@@ -1,7 +1,7 @@
 merge npm:kevoree-group-websocket@0.0.2
 merge npm:kevoree-chan-websocket
 merge mvn:org.kevoree.library.javase:org.kevoree.library.javase.websocketgrp:2.0.5-SNAPSHOT
-merge npm:kevoree-comp-fakeconsole
+merge file:/home/leiko/dev/kevoree-js/library/kevoree-comp-fakeconsole
 
 // this is a comment
 

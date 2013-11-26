@@ -155,7 +155,7 @@ var Parser = (function() {
             new waxeye.State([new waxeye.Edge(33, 2, false)], false),
             new waxeye.State([new waxeye.Edge(29, 3, false)], false),
             new waxeye.State([new waxeye.Edge(":", 4, true)], false),
-            new waxeye.State([new waxeye.Edge(30, 5, false)], false),
+            new waxeye.State([new waxeye.Edge(31, 5, false)], false),
             new waxeye.State([], true)], waxeye.FA.LEFT),
         new waxeye.FA("nameList", [new waxeye.State([new waxeye.Edge(29, 1, false)], false),
             new waxeye.State([new waxeye.Edge(33, 2, false)], false),
