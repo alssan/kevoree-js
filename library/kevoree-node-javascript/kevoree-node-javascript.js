@@ -21,6 +21,11 @@ var JavascriptNode = AbstractNode.extend({
    */
   processTraces: function (traces, model) {
     return this.adaptationEngine.processTraces(traces, model);
+  },
+
+  dic_forceInstall: {
+    optional: false,
+    defaultValue: false
   }
 });
 

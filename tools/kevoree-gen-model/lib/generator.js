@@ -1,11 +1,11 @@
-var fs                = require('fs'),
-  path              = require('path'),
-  npm               = require('npm'),
-  genComponent      = require('./genComponent'),
-  genChannel        = require('./genChannel'),
-  genGroup          = require('./genGroup'),
-  genNode           = require('./genNode'),
-  kevoree           = require('kevoree-library').org.kevoree;
+var fs         = require('fs'),
+  path         = require('path'),
+  npm          = require('npm'),
+  genComponent = require('./genComponent'),
+  genChannel   = require('./genChannel'),
+  genGroup     = require('./genGroup'),
+  genNode      = require('./genNode'),
+  kevoree      = require('kevoree-library').org.kevoree;
 
 // init Kevoree entities types
 var KevoreeEntity, AbstractComponent, AbstractGroup, AbstractChannel, AbstractNode;
@@ -109,11 +109,15 @@ var generator = function generator(dirPath, quiet_, callback) {
 
         // for each file, update model
         files.forEach(function (file) {
-          var td = processFile(file, deployUnit, model);
-          if (typeof td !== 'undefined' && td != null && typeof(td.name) !== 'undefined') {
-            if (td.name == 'JavascriptNode') {
-              deployUnit.targetNodeType = td;
+          try {
+            var td = processFile(file, deployUnit, model);
+            if (typeof td !== 'undefined' && td != null && typeof(td.name) !== 'undefined') {
+              if (td.name == 'JavascriptNode') {
+                deployUnit.targetNodeType = td;
+              }
             }
+          } catch (err) {
+            return callback(err);
           }
         });
 
@@ -205,6 +209,7 @@ var processFile = function (file, deployUnit, model) {
       }
     }
   } catch (e) {
+    if (e.code == 'PARSE_FAIL') throw e;
     if (!quiet) console.log("\nIgnored:\n\tFile: '%s'\n\tReason: Unable to create a new object\n\tError: %s", file, e.message);
   }
 }

@@ -12,6 +12,22 @@ var Class       = require('pseudoclass'),
  *     <li>AbstractComponent</li>
  * </ul>
  * All this sub-classes extend KevoreeEntity in order to have the same basic prototype
+ * Each KevoreeEntity can declare a KevoreeDictionary by adding new properties to their class:
+ * dic_myAttr: {
+ *   optional: true,
+ *   defaultValue: 'foo',
+ *   fragmentDependant: false,
+ *   datatype: ['foo', 'bar', baz']
+ * }
+ * KevoreeDictionary API follows those guidelines:
+ * <ul>
+ *   <li>"optional" attribute is <b>optional</b>, <b>boolean</b> (default: true)</li>
+ *   <li>"defaultValue" attribute is <b>optional</b>, <b>string|boolean</b></li>
+ *   <li>"fragmentDependant" attribute is <b>optional</b>, <b>boolean</b> (default: false)</li>
+ *   <li>"datatype" attribute is <b>optional</b>, <b>array</b></li>
+ * </ul>
+ *
+ * If you specify a "defaultValue" AND a "datatype", be sure that "datatype" array contains "defaultValue" string.
  *
  * @type {KevoreeEntity}
  */
