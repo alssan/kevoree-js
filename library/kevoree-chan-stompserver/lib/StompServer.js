@@ -91,16 +91,13 @@ var StompServer = AbstractChannel.extend({
   },
 
   dic_host: {
-    optional: false,
-    fragmentDependant: false
+    optional: false
   },
   dic_serverPort: {
-    optional: false,
-    fragmentDependant: false
+    optional: false
   },
   dic_topic: {
     optional: true,
-    fragmentDependant: false,
     defaultValue: '/'
   },
   dic_login: {
