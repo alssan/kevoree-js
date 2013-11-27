@@ -21,12 +21,19 @@ var BrowserBootstrapper = Bootstrapper.extend({
   /**
    *
    * @param deployUnit
+   * @param forceInstall [optional]
    * @param callback
    */
-  bootstrap: function (deployUnit, callback) {
+  bootstrap: function (deployUnit, forceInstall, callback) {
+    if (typeof(callback) == 'undefined') {
+      // "forceInstall" parameter is not specified (optional)
+      callback = forceInstall;
+      forceInstall = false;
+    }
+
     // --- Resolvers callback
     var bootstrapper = this;
-    this.resolver('resolve', deployUnit, function (err, EntityClass) {
+    this.resolver('resolve', deployUnit, forceInstall, function (err, EntityClass) {
       if (err) {
         bootstrapper.log.error(err.message);
         return callback(new Error("'"+deployUnit.name+"' bootstrap failed!"));
@@ -50,18 +57,18 @@ var BrowserBootstrapper = Bootstrapper.extend({
     });
   },
 
-  resolver: function (action, deployUnit, callback) {
+  resolver: function (action, deployUnit, forceInstall, callback) {
     var url = deployUnit ? (deployUnit.url || '') : '';
 
     if (url.startsWith(FILE)) {
-//            this.resolvers[FILE][action](deployUnit, callback);
+//            this.resolvers[FILE][action](deployUnit, forceInstall, callback);
       return callback(new Error("File resolver not implemented yet"));
 
     } else if (url.startsWith(GIT)) {
       return callback(new Error("Git resolver not implemented yet"));
 
     } else {
-      this.resolvers[NPM][action](deployUnit, callback);
+      this.resolvers[NPM][action](deployUnit, forceInstall, callback);
     }
   }
 });

@@ -13,7 +13,13 @@ var FileResolver = Resolver.extend({
     this.loader = new kevoree.loader.JSONModelLoader();
   },
 
-  resolve: function (deployUnit, callback) {
+  resolve: function (deployUnit, forceInstall, callback) {
+    if (typeof(callback) == 'undefined') {
+      // "forceInstall" parameter is not specified (optional)
+      callback = forceInstall;
+      forceInstall = false;
+    }
+
     var doResolve = function() {
       var Clazz = require(path.resolve(this.modulesPath, 'node_modules', deployUnit.name));
       var model = require(path.resolve(this.modulesPath, 'node_modules', deployUnit.name, 'kevlib.json'));
@@ -21,6 +27,7 @@ var FileResolver = Resolver.extend({
     }.bind(this);
 
     try {
+      if (forceInstall == true) throw new Error();
       // try to use library without installing it: maybe it has already been done
       doResolve();
 

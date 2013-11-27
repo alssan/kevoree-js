@@ -15,9 +15,14 @@ var NPMResolver = Resolver.extend({
     this.log = new KevoreeLogger(this.toString());
   },
 
-  resolve: function (deployUnit, callback) {
-    var resolver = this;
-    // TODO do not ask for server resolving if we already have the version locally
+  resolve: function (deployUnit, forceInstall, callback) {
+    if (typeof(callback) == 'undefined') {
+      // "forceInstall" parameter is not specified (optional)
+      callback = forceInstall;
+      forceInstall = false;
+    }
+
+    // TODO forceInstall is never used, module are always reinstalled
 
     // forward resolving request to server
     $.ajax({

@@ -36,9 +36,10 @@ var Bootstrapper = Class({
     /**
      *
      * @param deployUnit
+     * @param forceInstall [optional] boolean to indicate whether or not we should force re-installation
      * @param callback(Error, Clazz, ContainerRoot)
      */
-    bootstrap: function (deployUnit, callback) {},
+    bootstrap: function (deployUnit, forceInstall, callback) {},
 
     /**
      *

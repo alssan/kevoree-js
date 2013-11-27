@@ -12,19 +12,26 @@ var NPMResolver = Resolver.extend({
     this.log = logger || new KevoreeLogger(this.toString());
   },
 
-  resolve: function (deployUnit, callback) {
-    var resolver = this;
+  resolve: function (deployUnit, forceInstall, callback) {
+    if (typeof(callback) == 'undefined') {
+      // "forceInstall" parameter is not specified (optional)
+      callback = forceInstall;
+      forceInstall = false;
+    }
 
-    var packageName    = deployUnit.name,
-        module         = deployUnit.name + ((deployUnit.version.length > 0) ? '@'+deployUnit.version: '');
+    var packageName = deployUnit.name,
+        module      = deployUnit.name + ((deployUnit.version.length > 0) ? '@'+deployUnit.version: ''),
+        loader      = new kevoree.loader.JSONModelLoader();
 
-    var loader = new kevoree.loader.JSONModelLoader();
+    function doResolve() {
+      var KClass = require(path.resolve(this.modulesPath, 'node_modules', packageName));
+      var jsonModel = require(path.resolve(this.modulesPath, 'node_modules', packageName, 'kevlib.json'));
+      return callback(null, KClass, loader.loadModelFromString(JSON.stringify(jsonModel)).get(0));
+    }
 
     try {
-      var KClass = require(path.resolve(resolver.modulesPath, 'node_modules', packageName));
-      var jsonModel = require(path.resolve(resolver.modulesPath, 'node_modules', packageName, 'kevlib.json'));
-
-      return callback(null, KClass, loader.loadModelFromString(JSON.stringify(jsonModel)).get(0));
+      if (forceInstall == true) throw new Error(); // trigger catch so installation is forced
+      doResolve.bind(this)();
 
     } catch (err) {
       this.log.info(this.toString(), "DeployUnit ("+module+") is not installed yet: downloading & installing it...");
@@ -34,44 +41,38 @@ var NPMResolver = Resolver.extend({
         }
 
         // load success
-        npm.commands.install(resolver.modulesPath, [module], function installCallback(err) {
+        npm.commands.install(this.modulesPath, [module], function installCallback(err) {
           if (err) {
-            resolver.log.error(resolver.toString(), 'npm failed to install package \''+ module +'\'');
+            this.log.error(this.toString(), 'npm failed to install package \''+ module +'\'');
             return callback(new Error("Bootstrap failure"));
           }
 
-          // install success
-          var KClass = require(path.resolve(resolver.modulesPath, 'node_modules', packageName));
-          var jsonModel = require(path.resolve(resolver.modulesPath, 'node_modules', packageName, 'kevlib.json'));
-          return callback(null, KClass, loader.loadModelFromString(JSON.stringify(jsonModel)).get(0));
-        });
-      });
+          doResolve.bind(this)();
+        }.bind(this));
+      }.bind(this));
     }
   },
 
   uninstall: function (deployUnit, callback) {
-    var resolver = this;
-
     npm.load({}, function (err) {
       if (err) {
         // npm load error
         return callback(new Error('NPMResolver error: unable to load npm module'));
       }
 
-      var packageName    = deployUnit.name,
-          module         = deployUnit.name + ((deployUnit.version.length > 0) ? '@'+deployUnit.version: '');
+      var module = deployUnit.name + ((deployUnit.version.length > 0) ? '@'+deployUnit.version: '');
 
       // load success
-      npm.commands.uninstall(resolver.modulesPath, [module], function uninstallCallback(er) {
+      npm.commands.uninstall(this.modulesPath, [module], function uninstallCallback(er) {
         if (er) {
           // failed to load package:version
           return callback(new Error('NPMResolver failed to uninstall '+module));
         }
 
-        callback(null);
-        return;
-      });
-    });
+        callback();
+
+      }.bind(this));
+    }.bind(this));
   }
 });
 
