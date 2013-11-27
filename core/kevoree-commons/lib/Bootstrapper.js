@@ -24,12 +24,10 @@ var Bootstrapper = Class({
                 this.bootstrap(deployUnits.get(0), callback); // TODO get(0) on DU => dont do that oO
 
             } else {
-                callback.call(this, new Error("'"+nodeName+"' NodeType deploy units not found. Have you forgotten to merge nodetype library ?"));
-                return;
+                return callback(new Error("'"+nodeName+"' NodeType deploy units not found. Have you forgotten to merge nodetype library ?"));
             }
         } else {
-            callback.call(this, new Error("Unable to find '"+nodeName+"' in the given model."));
-            return;
+            return callback(new Error("Unable to find '"+nodeName+"' in the given model."));
         }
     },
 

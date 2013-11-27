@@ -56,7 +56,7 @@ module.exports = Class({
     // starting loop function
     this.intervalId = setInterval(function () {}, 1e8);
 
-    this.log.info("Platform started: "+nodeName);
+    this.log.info(this.toString(), "Platform started: "+nodeName);
 
     this.emitter.emit('started');
   },
@@ -85,7 +85,7 @@ module.exports = Class({
       this.intervalId = null;
       this.currentModel = null;
 
-      this.log.info("Platform stopped: "+this.nodeName);
+      this.log.info(this.toString(), "Platform stopped: "+this.nodeName);
       this.emitter.emit('stopped');
     }
   },
@@ -109,7 +109,7 @@ module.exports = Class({
       return;
 
     } else {
-      this.log.info('Deploy process started...');
+      this.log.info(this.toString(), 'Deploy process started...');
       if (model != undefined && model != null) {
         // check if there is an instance currently running
         // if not, it will try to run it
@@ -214,29 +214,38 @@ module.exports = Class({
     callback = callback || function () { console.warn('No callback defined for checkBootstrapNode(model, cb) in KevoreeCore'); };
 
     if (this.nodeInstance == undefined || this.nodeInstance == null) {
-      this.log.info("Start '"+this.nodeName+"' bootstrapping...");
-      var core = this;
+      this.log.info(this.toString(), "Start '"+this.nodeName+"' bootstrapping...");
       this.bootstrapper.bootstrapNodeType(this.nodeName, model, function (err, AbstractNode) {
         if (err) {
-          core.log.error(err.message);
-          callback(new Error("Unable to bootstrap '"+core.nodeName+"'! Start process aborted."));
+          this.log.error(err.message);
+          callback(new Error("Unable to bootstrap '"+this.nodeName+"'! Start process aborted."));
           return;
         }
 
-        core.nodeInstance = new AbstractNode();
-        core.nodeInstance.setKevoreeCore(core);
-        core.nodeInstance.setName(core.nodeName);
-        core.nodeInstance.start();
+        this.nodeInstance = new AbstractNode();
+        this.nodeInstance.setKevoreeCore(this);
+        this.nodeInstance.setName(this.nodeName);
 
-        core.log.info("'"+core.nodeName+"' instance started successfully");
+        // inflate dictionary with defaultValues
+        var kDictionary = model.findTypeDefinitionsByID(this.nodeInstance.toString()).dictionaryType;
 
-        callback();
-        return
-      });
+        var defaultValues = kDictionary.defaultValues.iterator();
+        var dictionary = this.nodeInstance.getDictionary();
+
+        while (defaultValues.hasNext()) {
+          var defaultVal = defaultValues.next();
+          dictionary.setEntry(defaultVal.attribute.name, defaultVal.value);
+        }
+
+        this.nodeInstance.start();
+
+        this.log.info(this.toString(), "'"+this.nodeName+"' instance started successfully");
+
+        return callback();
+      }.bind(this));
 
     } else {
-      callback();
-      return;
+      return callback();
     }
   },
 
