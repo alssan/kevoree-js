@@ -64,7 +64,7 @@ var generator = function generator(dirPath, quiet_, callback) {
 
         function doGeneration() {
           // installation succeeded
-          var kevlib       = require(path.resolve('node_modules', 'kevoree-node-javascript', 'kevlib.json')),
+          var kevlib     = require(path.resolve('node_modules', 'kevoree-node-javascript', 'kevlib.json')),
             jsonLoader   = new kevoree.loader.JSONModelLoader(),
             kevNodeModel = jsonLoader.loadModelFromString(JSON.stringify(kevlib)).get(0),
             jsNodeTD     = kevNodeModel.findTypeDefinitionsByID('JavascriptNode'),

@@ -75,11 +75,18 @@ module.exports = function (options, callback) {
       // bootstrapping failed which means (probably) that module wasn't installed yet
       // so let's do it :D
       var deployUnit = factory.createDeployUnit();
-      deployUnit.name = 'kevoree-group-websocket';
-      options.bootstrapper.bootstrap(deployUnit, function (err, Clazz, model) {
+      deployUnit.name = 'kevoree-node-javascript';
+      options.bootstrapper.bootstrap(deployUnit, false, function (err, Clazz, nodeModel) {
         if (err) return callback(err);
-        options.model = model;
-        bootstrapModel(options, callback);
+
+        deployUnit.name = 'kevoree-group-websocket';
+        options.bootstrapper.bootstrap(deployUnit, function (err, Clazz_, grpModel) {
+          if (err) return callback(err);
+
+          compare.merge(nodeModel, grpModel).applyOn(nodeModel);
+          options.model = nodeModel;
+          bootstrapModel(options, callback);
+        });
       });
     }
   }
