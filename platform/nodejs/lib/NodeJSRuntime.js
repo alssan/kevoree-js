@@ -51,11 +51,18 @@ var NodeJSRuntime = Class({
   },
 
   deploy: function (model) {
-    var self = this;
     // deploy default bootstrap model
-    bootstrapHelper(model, this.nodename, this.groupname, this.modulesPath, function (err, bootstrapModel) {
-      self.kCore.deploy(bootstrapModel);
-    }, this.log);
+    var options = {
+      model: model,
+      bootstrapper: this.bootstrapper,
+      nodeName: this.nodename,
+      groupName: this.groupname,
+      modulesPath: this.modulesPath,
+      logger: this.log
+    };
+    bootstrapHelper(options, function (err, bootstrapModel) {
+      this.kCore.deploy(bootstrapModel);
+    }.bind(this));
   },
 
   on: function (event, callback) {

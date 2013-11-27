@@ -28,12 +28,12 @@ module.exports = Bootstrapper.extend({
     /**
      *
      * @param deployUnit
-     * @param callback
+     * @param callback(Error, Clazz, ContainerRoot)
      */
     bootstrap: function (deployUnit, callback) {
         // --- Resolvers callback
         var bootstrapper = this;
-        this.resolver('resolve', deployUnit, function (err, EntityClass) {
+        this.resolver('resolve', deployUnit, function (err, EntityClass, model) {
             if (err) {
                 bootstrapper.log.error(err.message);
                 callback(new Error("'"+deployUnit.name+"' bootstrap failed!"));
@@ -41,7 +41,7 @@ module.exports = Bootstrapper.extend({
             }
 
             // install success
-            callback(null, EntityClass);
+            callback(null, EntityClass, model);
             return;
         });
     },
@@ -68,7 +68,6 @@ module.exports = Bootstrapper.extend({
             this.resolvers[FILE][action](deployUnit, callback);
 
         } else if (url.startsWith(GIT)) {
-//            this.resolvers[GIT][action](deployUnit, callback);
             this.log.warn("Git resolver not implemented yet");
 
         } else {

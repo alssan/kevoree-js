@@ -21,7 +21,7 @@ var Bootstrapper = Class({
             var deployUnits = nodeInstance.typeDefinition.deployUnits;
             if (deployUnits.size() > 0) {
                 // bootstrap node deploy unit
-                this.bootstrap(deployUnits.get(0), callback);
+                this.bootstrap(deployUnits.get(0), callback); // TODO get(0) on DU => dont do that oO
 
             } else {
                 callback.call(this, new Error("'"+nodeName+"' NodeType deploy units not found. Have you forgotten to merge nodetype library ?"));
@@ -36,7 +36,7 @@ var Bootstrapper = Class({
     /**
      *
      * @param deployUnit
-     * @param callback
+     * @param callback(Error, Clazz, ContainerRoot)
      */
     bootstrap: function (deployUnit, callback) {},
 

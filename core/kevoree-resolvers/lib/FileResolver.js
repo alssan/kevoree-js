@@ -14,6 +14,12 @@ var FileResolver = Resolver.extend({
   },
 
   resolve: function (deployUnit, callback) {
+    var doResolve = function() {
+      var Clazz = require(path.resolve(this.modulesPath, 'node_modules', deployUnit.name));
+      var model = require(path.resolve(this.modulesPath, 'node_modules', deployUnit.name, 'kevlib.json'));
+      return callback(null, Clazz, this.loader.loadModelFromString(JSON.stringify(model)).get(0));
+    }.bind(this);
+
     try {
       // try to use library without installing it: maybe it has already been done
       doResolve();
@@ -31,12 +37,6 @@ var FileResolver = Resolver.extend({
         }.bind(this));
       }.bind(this));
     }
-
-    var doResolve = function() {
-      var Clazz = require(path.resolve(this.modulesPath, 'node_modules', deployUnit.name));
-      var model = require(path.resolve(this.modulesPath, 'node_modules', deployUnit.name, 'kevlib.json'));
-      return callback(null, Clazz, this.loader.loadModelFromString(JSON.stringify(model)).get(0));
-    }.bind(this);
   },
 
   uninstall: function (deployUnit, callback) {

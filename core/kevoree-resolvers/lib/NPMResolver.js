@@ -16,7 +16,7 @@ var NPMResolver = Resolver.extend({
     var resolver = this;
 
     var packageName    = deployUnit.name,
-        packageVersion = deployUnit.version;
+        module         = deployUnit.name + ((deployUnit.version.length > 0) ? '@'+deployUnit.version: '');
 
     var loader = new kevoree.loader.JSONModelLoader();
 
@@ -27,16 +27,16 @@ var NPMResolver = Resolver.extend({
       return callback(null, KClass, loader.loadModelFromString(JSON.stringify(jsonModel)).get(0));
 
     } catch (err) {
-      this.log.info(this.toString(), "DeployUnit ("+packageName+"@"+packageVersion+") is not installed yet: downloading & installing it...");
+      this.log.info(this.toString(), "DeployUnit ("+module+") is not installed yet: downloading & installing it...");
       npm.load({}, function (err) {
         if (err) {
           return callback(new Error('Unable to load npm module'));
         }
 
         // load success
-        npm.commands.install(resolver.modulesPath, [packageName+'@'+packageVersion], function installCallback(err) {
+        npm.commands.install(resolver.modulesPath, [module], function installCallback(err) {
           if (err) {
-            resolver.log.error(resolver.toString(), 'npm failed to install package \''+ packageName+'@'+packageVersion+'\'');
+            resolver.log.error(resolver.toString(), 'npm failed to install package \''+ module +'\'');
             return callback(new Error("Bootstrap failure"));
           }
 
@@ -59,13 +59,13 @@ var NPMResolver = Resolver.extend({
       }
 
       var packageName    = deployUnit.name,
-          packageVersion = deployUnit.version;
+          module         = deployUnit.name + ((deployUnit.version.length > 0) ? '@'+deployUnit.version: '');
 
       // load success
-      npm.commands.uninstall(resolver.modulesPath, [packageName+'@'+packageVersion], function uninstallCallback(er) {
+      npm.commands.uninstall(resolver.modulesPath, [module], function uninstallCallback(er) {
         if (er) {
           // failed to load package:version
-          return callback(new Error('NPMResolver failed to uninstall '+packageName+':'+packageVersion));
+          return callback(new Error('NPMResolver failed to uninstall '+module));
         }
 
         callback(null);

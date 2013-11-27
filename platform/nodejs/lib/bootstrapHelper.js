@@ -6,33 +6,33 @@ var loader  = new kevoree.loader.JSONModelLoader();
 var factory = new kevoree.impl.DefaultKevoreeFactory();
 var compare = new kevoree.compare.DefaultModelCompare();
 
-var bootstrapModel = function bootstrapModel(model, modulesPath, nodename, groupname, callback, logger) {
-  if (!model) model = factory.createContainerRoot();
+var bootstrapModel = function bootstrapModel(options, callback) {
+  if (!options.model) options.model = factory.createContainerRoot();
 
-  var node = model.findNodesByID(nodename);
-  var group = model.findGroupsByID(groupname);
+  var node = options.model.findNodesByID(options.nodeName);
+  var group = options.model.findGroupsByID(options.groupName);
   if (typeof(node) == 'undefined' || typeof(group) == 'undefined') {
-    var wsGrpModelJson = require(path.resolve(modulesPath, 'node_modules', 'kevoree-group-websocket', 'kevlib.json'));
+    var wsGrpModelJson = require(path.resolve(options.modulesPath, 'node_modules', 'kevoree-group-websocket', 'kevlib.json'));
     var wsGrpModel = loader.loadModelFromString(JSON.stringify(wsGrpModelJson)).get(0);
-    var mergeSeq = compare.merge(model, wsGrpModel);
-    mergeSeq.applyOn(model);
+    var mergeSeq = compare.merge(options.model, wsGrpModel);
+    mergeSeq.applyOn(options.model);
 
-    logger.warn('No node "'+nodename+'" and/or group "'+groupname+'" found in model. Adding default instances..');
+    options.logger.warn('No node "'+options.nodeName+'" and/or group "'+options.groupName+'" found in model. Adding default instances..');
 
     // create a node instance
     var nodeInstance = factory.createContainerNode();
-    nodeInstance.name = nodename;
-    nodeInstance.typeDefinition = model.findTypeDefinitionsByID('JavascriptNode');
-    model.addNodes(nodeInstance);
+    nodeInstance.name = options.nodeName;
+    nodeInstance.typeDefinition = options.model.findTypeDefinitionsByID('JavascriptNode');
+    options.model.addNodes(nodeInstance);
 
     // create a group instance
     var grpInstance = factory.createGroup();
-    grpInstance.name = groupname;
-    grpInstance.typeDefinition = model.findTypeDefinitionsByID('WebSocketGroup');
+    grpInstance.name = options.groupName;
+    grpInstance.typeDefinition = options.model.findTypeDefinitionsByID('WebSocketGroup');
     grpInstance.dictionary = factory.createDictionary();
     var portVal = factory.createDictionaryValue();
     var portAttr = null;
-    var attrs = model.findTypeDefinitionsByID('WebSocketGroup').dictionaryType.attributes.iterator();
+    var attrs = options.model.findTypeDefinitionsByID('WebSocketGroup').dictionaryType.attributes.iterator();
     while (attrs.hasNext()) {
       var attr = attrs.next();
       if (attr.name == 'port') {
@@ -46,32 +46,41 @@ var bootstrapModel = function bootstrapModel(model, modulesPath, nodename, group
     portVal.targetNode = nodeInstance;
     grpInstance.dictionary.addValues(portVal);
     grpInstance.addSubNodes(nodeInstance);
-    model.addGroups(grpInstance);
+    options.model.addGroups(grpInstance);
   }
 
-  return callback(null, model);
+  return callback(null, options.model);
 }
 
-module.exports = function (model, nodename, groupname, modulesPath, callback, logger) {
-  try {
-    if (!model) logger.warn('No bootstrap model given: using a default bootstrap model');
-    // try to bootstrapModel without downloading and installing module from npm
-    bootstrapModel(model, modulesPath, nodename, groupname, callback, logger);
+module.exports = function (options, callback) {
+  if (!options.model) {
+    options.logger.warn('No bootstrap model given: using a default bootstrap model');
+    defaultBootstrap();
 
-  } catch (err) {
-    // bootstrapping failed which means (probably) that module wasn't installed yet
-    // so let's do it :D
-    logger.info("Unable to find DeployUnit (kevoree-group-websocket) locally: downloading & installing it...");
-    // load npm
-    npm.load({}, function (err) {
-      if (err) return callback(err);
+  } else {
+    if (options.model.findByID(options.nodeName) && options.model.findByID(options.groupName)) {
+      // we dont have to process this model anymore, everything is in it :)
+      return callback(null, options.model);
+    } else {
+      defaultBootstrap();
+    }
+  }
 
-      // installation success
-      npm.commands.install(modulesPath, ['kevoree-group-websocket'], function installKevWSGrpCb(err) {
+  function defaultBootstrap() {
+    try {
+      // try to bootstrapModel without downloading and installing module from npm
+      bootstrapModel(options, callback);
+
+    } catch (err) {
+      // bootstrapping failed which means (probably) that module wasn't installed yet
+      // so let's do it :D
+      var deployUnit = factory.createDeployUnit();
+      deployUnit.name = 'kevoree-group-websocket';
+      options.bootstrapper.bootstrap(deployUnit, function (err, Clazz, model) {
         if (err) return callback(err);
-
-        bootstrapModel(model, modulesPath, nodename, groupname, callback, logger);
+        options.model = model;
+        bootstrapModel(options, callback);
       });
-    });
+    }
   }
 };

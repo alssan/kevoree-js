@@ -1,7 +1,8 @@
-merge npm:kevoree-group-websocket
+merge file:/home/leiko/dev/kevoree-js/library/kevoree-node-javascript
+merge file:/home/leiko/dev/kevoree-js/library/kevoree-group-websocket
+merge file:/home/leiko/dev/kevoree-js/library/kevoree-chan-websocket
 merge file:/home/leiko/dev/kevoree-js/library/kevoree-comp-fakeconsole
-merge npm:kevoree-comp-helloworld
-merge npm:kevoree-chan-websocket
+merge file:/home/leiko/dev/kevoree-js/library/kevoree-comp-helloworld
 
 add node0: JavascriptNode
 add sync: WebSocketGroup
