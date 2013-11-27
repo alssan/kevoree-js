@@ -14,8 +14,6 @@ module.exports = AdaptationPrimitive.extend({
     var dicValue = this.adaptModel.findByPath(this.trace.srcPath),
       instance = this.findEntityInstance();
 
-    console.log('>>>', this.trace.srcPath, dicValue.value);
-
     if (instance != null) {
       var dictionary = instance.getDictionary();
       this.oldDictionary = dictionary.clone();
