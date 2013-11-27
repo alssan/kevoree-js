@@ -21,7 +21,9 @@ module.exports = AdaptationPrimitive.extend({
 
     if (!this.mapper.hasObject(deployUnit.path())) {
       var bootstrapper = this.node.getKevoreeCore().getBootstrapper();
-      bootstrapper.bootstrap(deployUnit, function (err) {
+
+      var forceInstall = this.node.dictionary.getValue('forceInstall');
+      bootstrapper.bootstrap(deployUnit, (forceInstall == 'true'), function (err) {
         if (err) return callback(err);
 
         // bootstrap success: add deployUnit path & packageName into mapper
