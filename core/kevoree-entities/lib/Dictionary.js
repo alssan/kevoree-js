@@ -98,6 +98,10 @@ var Dictionary = Class({
     }
   },
 
+  getMap: function () {
+    return this.map;
+  },
+
   clone: function () {
     var clonedMap = {};
     for (var name in this.map) {

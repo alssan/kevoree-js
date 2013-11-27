@@ -225,18 +225,6 @@ module.exports = Class({
         this.nodeInstance = new AbstractNode();
         this.nodeInstance.setKevoreeCore(this);
         this.nodeInstance.setName(this.nodeName);
-
-        // inflate dictionary with defaultValues
-        var kDictionary = model.findTypeDefinitionsByID(this.nodeInstance.toString()).dictionaryType;
-
-        var defaultValues = kDictionary.defaultValues.iterator();
-        var dictionary = this.nodeInstance.getDictionary();
-
-        while (defaultValues.hasNext()) {
-          var defaultVal = defaultValues.next();
-          dictionary.setEntry(defaultVal.attribute.name, defaultVal.value);
-        }
-
         this.nodeInstance.start();
 
         this.log.info(this.toString(), "'"+this.nodeName+"' instance started successfully");

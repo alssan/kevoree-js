@@ -71,6 +71,7 @@ module.exports = Class({
     } else if (Kotlin.isType(kInstance.typeDefinition, kevoree.impl.NodeTypeImpl)) {
       // TODO take subnodes in account
       return false;
+
     }
 
     return false;
