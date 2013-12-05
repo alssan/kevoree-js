@@ -30,26 +30,33 @@ var NPMResolver = Resolver.extend({
     }
 
     try {
-      if (forceInstall == true) throw new Error(); // trigger catch so installation is forced
+      if (forceInstall == true) {
+        // trigger FORCE_INSTALL error so installation is forced
+        var e = new Error();
+        e.code = 'FORCE_INSTALL';
+        throw e;
+      }
       doResolve.bind(this)();
 
     } catch (err) {
-      this.log.info(this.toString(), "DeployUnit ("+module+") is not installed yet: downloading & installing it...");
-      npm.load({}, function (err) {
-        if (err) {
-          return callback(new Error('Unable to load npm module'));
-        }
-
-        // load success
-        npm.commands.install(this.modulesPath, [module], function installCallback(err) {
+      if (err.code && err.code === "MODULE_NOT_FOUND" || err.code === "FORCE_INSTALL") {
+        this.log.info(this.toString(), "DeployUnit ("+module+") is not installed yet: downloading & installing it...");
+        npm.load({}, function (err) {
           if (err) {
-            this.log.error(this.toString(), 'npm failed to install package \''+ module +'\'');
-            return callback(new Error("Bootstrap failure"));
+            return callback(new Error('Unable to load npm module'));
           }
 
-          doResolve.bind(this)();
+          // load success
+          npm.commands.install(this.modulesPath, [module], function installCallback(err) {
+            if (err) {
+              this.log.error(this.toString(), 'npm failed to install package \''+ module +'\'');
+              return callback(new Error("Bootstrap failure"));
+            }
+
+            doResolve.bind(this)();
+          }.bind(this));
         }.bind(this));
-      }.bind(this));
+      } else throw err;
     }
   },
 

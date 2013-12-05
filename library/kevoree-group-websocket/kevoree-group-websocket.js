@@ -133,13 +133,11 @@ var WebSocketGroup = AbstractGroup.extend({
     var group = this.getModelEntity();
     if (group != null) {
       var portDefined = 0;
-      var dicVals = group.dictionary.values.iterator();
-      while (dicVals.hasNext()) {
-        var val = dicVals.next();
-        if (val.attribute.name == 'port') {
-          if (typeof(val.value) !== 'undefined' && val.value != null && val.value.length > 0) {
-            portDefined++;
-          }
+      var kFragDics = (group.fragmentDictionary) ? group.fragmentDictionary.iterator() : null;
+      if (kFragDics) {
+        while (kFragDics.hasNext()) {
+          var val = kFragDics.next().findValuesByID('port');
+          if (val && val.value && val.value.length > 0) portDefined++;
         }
       }
 

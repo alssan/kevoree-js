@@ -44,87 +44,29 @@ var generator = function generator(dirPath, quiet_, callback) {
       // walk succeed - create a new ContainerRoot
       var model = factory.createContainerRoot();
 
-      if (projectPackageJson.name != 'kevoree-node-javascript') {
-        // check if kevoree-node-javascript is already installed locally
-        try {
-          require.resolve('kevoree-node-javascript');
-          doGeneration();
-        } catch (err) {
-          // retrieve 'kevoree-node-javascript' from npm registry
-          npm.load({}, function (err) {
-            if (err) return callback(err);
+      // create a javascript library for the model
+      var library = factory.createTypeLibrary();
+      library.name = 'Javascript';
+      model.addLibraries(library);
 
-            // load success - install kevoree-node-javascript locally in order to retrieve kevlib.json
-            npm.commands.install(['kevoree-node-javascript'], function installCallback(err) {
-              if (err) return callback(err);
-              doGeneration();
-            });
-          });
+      // create the project deployUnit
+      var deployUnit = factory.createDeployUnit();
+      deployUnit.name = projectPackageJson.name;
+      deployUnit.version = projectPackageJson.version;
+      deployUnit.type = 'npm';
+      model.addDeployUnits(deployUnit);
+
+      // for each file, update model
+      files.forEach(function (file) {
+        var typeDef = processFile(file, deployUnit, model);
+        if (typeof(typeDef) !== 'undefined' && typeDef != null) {
+          // set every generated typedefinition to be in the Javascript library
+          typeDef.version = projectPackageJson.version;
+          library.addSubTypes(typeDef);
         }
+      });
 
-        function doGeneration() {
-          // installation succeeded
-          var kevlib     = require(path.resolve('node_modules', 'kevoree-node-javascript', 'kevlib.json')),
-            jsonLoader   = new kevoree.loader.JSONModelLoader(),
-            kevNodeModel = jsonLoader.loadModelFromString(JSON.stringify(kevlib)).get(0),
-            jsNodeTD     = kevNodeModel.findTypeDefinitionsByID('JavascriptNode'),
-            jsNodeDU     = kevNodeModel.deployUnits.get(0);
-
-          // add javascriptNode TypeDefinition & DeployUnit to the model
-          model.addTypeDefinitions(jsNodeTD);
-          model.addDeployUnits(jsNodeDU);
-
-          // create a javascript library for the model
-          var library = factory.createTypeLibrary();
-          library.name = 'Javascript';
-          library.addSubTypes(jsNodeTD);
-          model.addLibraries(library);
-
-          // create the project deployUnit
-          var deployUnit = factory.createDeployUnit();
-          deployUnit.name = projectPackageJson.name;
-          deployUnit.version = projectPackageJson.version;
-          deployUnit.type = 'npm';
-          deployUnit.targetNodeType = jsNodeTD;
-          model.addDeployUnits(deployUnit);
-
-          // for each file, update model
-          files.forEach(function (file) {
-            var typeDef = processFile(file, deployUnit, model);
-            if (typeof(typeDef) !== 'undefined' && typeDef != null) {
-              // set every generated typedefinition to be in the Javascript library
-              library.addSubTypes(typeDef);
-            }
-          });
-
-          return callback(null, model);
-        }
-
-      } else {
-        // create the project deployUnit
-        var deployUnit = factory.createDeployUnit();
-        deployUnit.name = projectPackageJson.name;
-        deployUnit.version = projectPackageJson.version;
-        deployUnit.type = 'npm';
-
-        // for each file, update model
-        files.forEach(function (file) {
-          try {
-            var td = processFile(file, deployUnit, model);
-            if (typeof td !== 'undefined' && td != null && typeof(td.name) !== 'undefined') {
-              if (td.name == 'JavascriptNode') {
-                deployUnit.targetNodeType = td;
-              }
-            }
-          } catch (err) {
-            return callback(err);
-          }
-        });
-
-        model.addDeployUnits(deployUnit);
-
-        return callback(null, model);
-      }
+      return callback(null, model);
     });
 
   } catch (err) {

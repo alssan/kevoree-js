@@ -23,8 +23,8 @@ module.exports = function (typeDef, obj) {
       attr.name = prop.replace(KevoreeEntity.DIC, '');
 
       // do some checks
-
-      if (typeof(objAttr.defaultValue) != 'string' && typeof(objAttr.defaultValue) != 'boolean') {
+      var validDefaultValueTypes = ['string', 'boolean', 'number'];
+      if (typeof(objAttr.defaultValue) != 'undefined' && validDefaultValueTypes.indexOf(typeof(objAttr.defaultValue)) == -1) {
         var error = new Error('Attribute "'+attr.name+'" defaultValue in "'+typeDef.name+'" must be a string or a boolean');
         error.code = 'PARSE_FAIL';
         throw error;
@@ -48,20 +48,14 @@ module.exports = function (typeDef, obj) {
       attr.state              = objAttr.state;
       attr.fragmentDependant  = (typeof(objAttr.fragmentDependant) == 'undefined') ? false : objAttr.fragmentDependant;
 
-      // add attribute to dictionary
-      dictionary.addAttributes(attr);
-
       // add a defaultValue to attribute only if defined by user
       // 'null' is a defaultValue, but "undefined" is not a defaultValue =)
       if (typeof(objAttr.defaultValue) !== 'undefined') {
-        // create a dictionary default value
-        var defaultVal = factory.createDictionaryValue();
-        defaultVal.value = objAttr.defaultValue;
-        defaultVal.attribute = attr;
-
-        // add defaultVal to dictionary
-        dictionary.addDefaultValues(defaultVal);
+        attr.defaultValue = objAttr.defaultValue;
       }
+
+      // add attribute to dictionary
+      dictionary.addAttributes(attr);
     }
   }
 

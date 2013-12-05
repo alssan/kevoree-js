@@ -27,22 +27,28 @@ var FileResolver = Resolver.extend({
     }.bind(this);
 
     try {
-      if (forceInstall == true) throw new Error();
+      if (forceInstall == true) {
+        var e = new Error();
+        e.code = "FORCE_INSTALL";
+        throw e;
+      }
       // try to use library without installing it: maybe it has already been done
       doResolve();
 
     } catch (err) {
-      // loading library without installing it failed: install it then !
-      npm.load({}, function (err) {
-        if (err) return callback(new Error('Unable to load npm module'));
+      if (err.code && err.code === "MODULE_NOT_FOUND" || err.code === "FORCE_INSTALL") {
+        // loading library without installing it failed: install it then !
+        npm.load({}, function (err) {
+          if (err) return callback(new Error('Unable to load npm module'));
 
-        npm.commands.install(this.modulesPath, [deployUnit.url], function (err) {
-          if (err) return callback(new Error('Unable to install "'+deployUnit.name+'" (deployUnit.url: "'+deployUnit.url+'")'));
+          npm.commands.install(this.modulesPath, [deployUnit.url], function (err) {
+            if (err) return callback(new Error('Unable to install "'+deployUnit.name+'" (deployUnit.url: "'+deployUnit.url+'")'));
 
-          doResolve();
+            doResolve();
 
+          }.bind(this));
         }.bind(this));
-      }.bind(this));
+      } else throw err;
     }
   },
 

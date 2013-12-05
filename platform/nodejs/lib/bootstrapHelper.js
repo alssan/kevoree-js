@@ -12,41 +12,47 @@ var bootstrapModel = function bootstrapModel(options, callback) {
   var node = options.model.findNodesByID(options.nodeName);
   var group = options.model.findGroupsByID(options.groupName);
   if (typeof(node) == 'undefined' || typeof(group) == 'undefined') {
-    var wsGrpModelJson = require(path.resolve(options.modulesPath, 'node_modules', 'kevoree-group-websocket', 'kevlib.json'));
-    var wsGrpModel = loader.loadModelFromString(JSON.stringify(wsGrpModelJson)).get(0);
-    var mergeSeq = compare.merge(options.model, wsGrpModel);
-    mergeSeq.applyOn(options.model);
+    try {
+      var jsNodePackage = require(path.resolve(options.modulesPath, 'node_modules', 'kevoree-node-javascript', 'package.json'));
+      var wsGrpPackage = require(path.resolve(options.modulesPath, 'node_modules', 'kevoree-group-websocket', 'package.json'));
+      var wsGrpModelJson = require(path.resolve(options.modulesPath, 'node_modules', 'kevoree-group-websocket', 'kevlib.json'));
+      var wsGrpModel = loader.loadModelFromString(JSON.stringify(wsGrpModelJson)).get(0);
+      var mergeSeq = compare.merge(options.model, wsGrpModel);
+      mergeSeq.applyOn(options.model);
 
-    options.logger.warn('No node "'+options.nodeName+'" and/or group "'+options.groupName+'" found in model. Adding default instances..');
+      options.logger.warn('No node "'+options.nodeName+'" and/or group "'+options.groupName+'" found in model. Adding default instances..');
 
-    // create a node instance
-    var nodeInstance = factory.createContainerNode();
-    nodeInstance.name = options.nodeName;
-    nodeInstance.typeDefinition = options.model.findTypeDefinitionsByID('JavascriptNode');
-    options.model.addNodes(nodeInstance);
+      // create a node instance
+      var nodeInstance = factory.createContainerNode();
+      nodeInstance.name = options.nodeName;
+      var nodeTDef = options.model.findTypeDefinitionsByID('JavascriptNode/'+jsNodePackage.version);
+      if (!nodeTDef) return callback(new Error('Unable to find JavascriptNode/'+jsNodePackage.version+' TypeDefinition :/'));
+      nodeInstance.typeDefinition = nodeTDef;
+      options.model.addNodes(nodeInstance);
 
-    // create a group instance
-    var grpInstance = factory.createGroup();
-    grpInstance.name = options.groupName;
-    grpInstance.typeDefinition = options.model.findTypeDefinitionsByID('WebSocketGroup');
-    grpInstance.dictionary = factory.createDictionary();
-    var portVal = factory.createDictionaryValue();
-    var portAttr = null;
-    var attrs = options.model.findTypeDefinitionsByID('WebSocketGroup').dictionaryType.attributes.iterator();
-    while (attrs.hasNext()) {
-      var attr = attrs.next();
-      if (attr.name == 'port') {
-        portAttr = attr;
-        break;
-      }
+      // create a group instance
+      var grpInstance = factory.createGroup();
+      grpInstance.name = options.groupName;
+      var grpTDef = options.model.findTypeDefinitionsByID('WebSocketGroup/'+wsGrpPackage.version);
+      if (!grpTDef) return callback(new Error('Unable to find WebSocketGroup/'+wsGrpPackage.version+' TypeDefinition :/'));
+      grpInstance.typeDefinition = grpTDef;
+
+      // TODO watch out here: those lines are REALLY implem-dependant and are here (as the filename says 'helper')
+      // just so you don't have to bother for default bootstrap. But if you change WebSocketGroup implem, this is going
+      // to explose like crazy. You have been warned.
+      var fragDic = factory.createDictionary();
+      fragDic.name = options.nodeName;
+      grpInstance.addFragmentDictionary(fragDic);
+      var portVal = factory.createDictionaryValue();
+      portVal.name = 'port';
+      portVal.value = '8000';
+      fragDic.addValues(portVal);
+      grpInstance.addSubNodes(nodeInstance);
+      options.model.addGroups(grpInstance);
+
+    } catch (err) {
+      return callback(err);
     }
-    portVal.attribute = portAttr;
-
-    portVal.value = '8000';
-    portVal.targetNode = nodeInstance;
-    grpInstance.dictionary.addValues(portVal);
-    grpInstance.addSubNodes(nodeInstance);
-    options.model.addGroups(grpInstance);
   }
 
   return callback(null, options.model);
@@ -67,11 +73,11 @@ module.exports = function (options, callback) {
   }
 
   function defaultBootstrap() {
-    try {
+//    try {
       // try to bootstrapModel without downloading and installing module from npm
-      bootstrapModel(options, callback);
+      //bootstrapModel(options, callback);
 
-    } catch (err) {
+//    } catch (err) {
       // bootstrapping failed which means (probably) that module wasn't installed yet
       // so let's do it :D
       var deployUnit = factory.createDeployUnit();
@@ -88,6 +94,6 @@ module.exports = function (options, callback) {
           bootstrapModel(options, callback);
         });
       });
-    }
+//    }
   }
 };

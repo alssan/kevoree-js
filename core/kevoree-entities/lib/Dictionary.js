@@ -102,7 +102,11 @@ var Dictionary = Class({
     return this.map;
   },
 
-  clone: function () {
+  /**
+   * Returns this dictionary current cloned map
+   * @returns {{}}
+   */
+  cloneMap: function () {
     var clonedMap = {};
     for (var name in this.map) {
       clonedMap[name] = this.map[name];

@@ -31,7 +31,7 @@ module.exports = function (req, res) {
     // create a node instance for the new client
     var nodeInstance = factory.createContainerNode();
     nodeInstance.name = nodename;
-    nodeInstance.typeDefinition = serverModel.findTypeDefinitionsByID('JavascriptNode');
+    nodeInstance.typeDefinition = serverModel.findTypeDefinitionsByID('JavascriptNode/');
 
     // add this instance to model
     serverModel.addNodes(nodeInstance);

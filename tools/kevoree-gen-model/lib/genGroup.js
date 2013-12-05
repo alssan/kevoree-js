@@ -22,7 +22,7 @@ module.exports = function (deployUnit, obj, model) {
     }
 
     // add deployUnit
-    groupType.addDeployUnits(deployUnit);
+    groupType.deployUnit = deployUnit;
 
     // add dictionary
     genDictionary(groupType, obj);

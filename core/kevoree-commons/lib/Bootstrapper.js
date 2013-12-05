@@ -18,10 +18,10 @@ var Bootstrapper = Class({
 
         var nodeInstance = model.findNodesByID(nodeName);
         if (nodeInstance != undefined && nodeInstance != null) {
-            var deployUnits = nodeInstance.typeDefinition.deployUnits;
-            if (deployUnits.size() > 0) {
+            var deployUnit = nodeInstance.typeDefinition.deployUnit;
+            if (deployUnit) {
                 // bootstrap node deploy unit
-                this.bootstrap(deployUnits.get(0), callback); // TODO get(0) on DU => dont do that oO
+                this.bootstrap(deployUnit, false, callback);
 
             } else {
                 return callback(new Error("'"+nodeName+"' NodeType deploy units not found. Have you forgotten to merge nodetype library ?"));

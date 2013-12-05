@@ -165,14 +165,14 @@ module.exports = Class({
             async.eachSeries(adaptations, executeCommand, function (err) {
               if (err) {
                 // something went wrong while processing adaptations
-                core.log.error(err.message);
+                core.log.error(core.toString(), err.message);
 
                 // rollback process
                 async.eachSeries(cmdStack, rollbackCommand, function (er) {
                   if (er) {
                     // something went wrong while rollbacking
-                    core.log.error(er.message);
-                    core.emitter.emit('error', new Error("Something went wrong while rollbacking..."));
+                    er.message = "Something went wrong while rollbacking...";
+                    core.emitter.emit('error', er);
                     return;
                   }
 
@@ -181,12 +181,14 @@ module.exports = Class({
                   return;
                 });
 
-                core.emitter.emit('error', new Error("Something went wrong while processing adaptations. Rollback"));
+                // using Javascript magic to just change error message and keep stack
+                err.message = "Something went wrong while processing adaptations. Rollback";
+                core.emitter.emit('error', err);
                 return;
               }
 
               // adaptations succeed : woot
-              core.log.debug("Model deployed successfully.");
+              core.log.debug(core.toString(), "Model deployed successfully.");
               // save old model
               pushInArray(core.models, core.currentModel);
               // set new model to be the current deployed one
@@ -204,7 +206,7 @@ module.exports = Class({
           }
         });
       } else {
-        this.emitter.emit('error', new Error("model is not defined or null. Deploy aborted."));
+        this.emitter.emit('error', new Error("Model is not defined or null. Deploy aborted."));
         return;
       }
     }
@@ -217,25 +219,24 @@ module.exports = Class({
       this.log.info(this.toString(), "Start '"+this.nodeName+"' bootstrapping...");
       this.bootstrapper.bootstrapNodeType(this.nodeName, model, function (err, AbstractNode) {
         if (err) {
-          this.log.error(err.message);
-          callback(new Error("Unable to bootstrap '"+this.nodeName+"'! Start process aborted."));
-          return;
+          err.message = "Unable to bootstrap '"+this.nodeName+"'! Start process aborted.";
+          return callback(err);
         }
 
         this.nodeInstance = new AbstractNode();
         this.nodeInstance.setKevoreeCore(this);
         this.nodeInstance.setName(this.nodeName);
 
-        // inflate dictionary with defaultValues
-        var kDictionary = model.findTypeDefinitionsByID(this.nodeInstance.toString()).dictionaryType;
-
-        var defaultValues = kDictionary.defaultValues.iterator();
-        var dictionary = this.nodeInstance.getDictionary();
-
-        while (defaultValues.hasNext()) {
-          var defaultVal = defaultValues.next();
-          dictionary.setEntry(defaultVal.attribute.name, defaultVal.value);
-        }
+//        // inflate dictionary with defaultValues
+//        var kDictionary = model.findTypeDefinitionsByID(this.nodeInstance.toString()+'/').dictionaryType;
+//
+//        var defaultValues = kDictionary.defaultValues.iterator();
+//        var dictionary = this.nodeInstance.getDictionary();
+//
+//        while (defaultValues.hasNext()) {
+//          var defaultVal = defaultValues.next();
+//          dictionary.setEntry(defaultVal.attribute.name, defaultVal.value);
+//        }
 
         this.nodeInstance.start();
 

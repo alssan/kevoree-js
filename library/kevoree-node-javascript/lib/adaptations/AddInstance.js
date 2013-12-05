@@ -67,7 +67,7 @@ module.exports = AdaptationPrimitive.extend({
   },
 
   findSuitableModuleName: function (kInstance) {
-    var du = kInstance.typeDefinition.deployUnits.get(0);
+    var du = kInstance.typeDefinition.deployUnit;
     return this.mapper.getObject(du.path());
   },
 

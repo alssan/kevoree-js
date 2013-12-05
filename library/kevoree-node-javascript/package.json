@@ -2,6 +2,9 @@
   "name": "kevoree-node-javascript",
   "version": "0.0.1",
   "main": "./kevoree-node-javascript.js",
+  "scripts": {
+    "prepublish": "node node_modules/kevoree-gen-model"
+  },
   "description": "A Kevoree platform to run Javascript code",
   "keywords": [
     "kevoree",

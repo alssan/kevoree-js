@@ -21,8 +21,8 @@ module.exports = function (deployUnit, obj, model) {
         // TODO
     }
 
-    // add deployUnit
-    chanType.addDeployUnits(deployUnit);
+    // set deployUnit
+    chanType.deployUnit = deployUnit;
 
     // add dictionary
     genDictionary(chanType, obj);
