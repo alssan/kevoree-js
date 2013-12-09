@@ -1,31 +1,31 @@
-merge npm:kevoree-group-websocket@0.0.2
-merge npm:kevoree-chan-websocket
-merge mvn:org.kevoree.library.javase:org.kevoree.library.javase.websocketgrp:2.0.5-SNAPSHOT
-merge file:/home/leiko/dev/kevoree-js/library/kevoree-comp-fakeconsole
+include npm:kevoree-node-javascript
+include npm:kevoree-group-websocket@0.0.2
+include npm:kevoree-chan-websocket
+//include mvn:org.kevoree.library.javase:org.kevoree.library.javase.websocketgrp:2.0.5-SNAPSHOT
+include file:/home/leiko/dev/kevoree-js/library/kevoree-comp-fakeconsole
 
 // this is a comment
-
-add node0, node1 : JavascriptNode
+add node0: JavascriptNode
 add sync : WebSocketGroup
-add comp0, comp1 : FakeConsole
+add node0.comp0, node1.comp0 : FakeConsole
 add chan0 : WebSocketChannel
 
-attach node0 sync
-attach node0, node1 sync
-attach * sync
+//attach node0 sync
+//attach node0, node1 sync
+//attach * sync
 
-move comp0 node0
-move * node0
-move *@node0 node1
-move comp0, comp1 node1
+//move node0.comp0 node0
+//move node0.* node0
+//move *.* node1
+//move node1.comp0, node1.comp1 node0
 
-bind comp0.inMsg chan0
-bind comp1.sendMsg chan0
-unbind comp1.sendMsg *
+//bind node0.comp0.inMsg chan0
+//bind node0.comp0.sendMsg chan0
+//unbind node0.comp1.sendMsg *
 
-set sync {port='8000'}@node0, {port='8001'}@node1 // endline comment !
-set sync {port="8888"}@node1
+//set node0.sync.port = '8000'
+//set node0.sync.port = '8088'
 
-network node1 192.168.0.1
+//network node1 192.168.0.1
 
-remove node0
+//remove node0

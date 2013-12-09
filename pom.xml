@@ -10,7 +10,7 @@
 
     <properties>
         <kmf.version>1.9.1</kmf.version>
-        <kevoree.version>3.0.0-BETA2</kevoree.version>
+        <kevoree.version>3.0.2</kevoree.version>
     </properties>
 
     <modules>

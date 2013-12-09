@@ -9,7 +9,7 @@ node kevs2model.js -k examples/test-parser.kevs
 
 To be sure that the parser works correctly, run:
 ```sh
-node test/test-parser.js
+npm test
 ```
 This will try to parse the KevScript file from ```examples/test-parser.kevs``` showing the resulting AST on stdo
 

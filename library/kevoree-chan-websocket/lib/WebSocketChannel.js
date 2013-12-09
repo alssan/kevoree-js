@@ -164,18 +164,30 @@ var WebSocketChannel = AbstractChannel.extend({
   },
 
   checkNoMultipleMasterServer: function () {
-    var portDefined = 0;
     var chan = this.getModelEntity();
-    var values = (chan.dictionary.values) ? chan.dictionary.values.iterator() : null;
-    if (values) {
-      while (values.hasNext()) {
-        var val = values.next();
-        if (val.value && val.value.length > 0) portDefined++;
+    if (chan != null) {
+      var portDefined = 0;
+      var kFragDics = (chan.fragmentDictionary) ? chan.fragmentDictionary.iterator() : null;
+      if (kFragDics) {
+        while (kFragDics.hasNext()) {
+          var val = kFragDics.next().findValuesByID('port');
+          if (val && val.value && val.value.length > 0) portDefined++;
+        }
+      }
+
+      if (portDefined > 1) {
+        throw new Error(this.toString()+" error: multiple master server defined. You are not supposed to specify more than ONE port attribute on this chan node fragments.");
+
+      } else if (portDefined == 0) {
+        throw new Error(this.toString()+" error: no master server defined. You should specify a node to be the master server (in order to do that, give to a node a value to its 'port' attribute)");
+
+      } else {
+        // all good
+        return;
       }
     }
 
-    if (portDefined == 0 || portDefined > 1)
-      throw new Error(this.toString()+' error: You must specify one and only one port attribute per fragment.');
+    throw new Error(this.toString()+" error: Unable to find chan instance in model (??)");
   },
 
   dic_port: {

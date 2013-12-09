@@ -40,13 +40,13 @@ var bootstrapModel = function bootstrapModel(options, callback) {
       // TODO watch out here: those lines are REALLY implem-dependant and are here (as the filename says 'helper')
       // just so you don't have to bother for default bootstrap. But if you change WebSocketGroup implem, this is going
       // to explose like crazy. You have been warned.
-      var fragDic = factory.createDictionary();
+      var fragDic = factory.createFragmentDictionary();
       fragDic.name = options.nodeName;
-      grpInstance.addFragmentDictionary(fragDic);
       var portVal = factory.createDictionaryValue();
       portVal.name = 'port';
       portVal.value = '8000';
       fragDic.addValues(portVal);
+      grpInstance.addFragmentDictionary(fragDic);
       grpInstance.addSubNodes(nodeInstance);
       options.model.addGroups(grpInstance);
 
