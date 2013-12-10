@@ -4,7 +4,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
 
   function addNodeToGroup(group) {
     for (var i=0; i < nameList.length; i++) {
-      nameList[i].checkNode(function (err, nodeName, namespace) {
+      nameList[i].twoMax(function (err, nodeName, namespace) {
         if (err) {
           err.message += ' (attach '+nameList.toString()+' '+target.toString()+')';
           return cb(err);
@@ -33,7 +33,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
     }
   }
 
-  target.checkGroup(function (err, name, namespace) {
+  target.twoMax(function (err, name, namespace) {
     if (err) {
       err.message += ' (attach '+nameList.toString()+' '+target.toString()+')';
       return cb(err);

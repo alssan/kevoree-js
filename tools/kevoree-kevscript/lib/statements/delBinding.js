@@ -51,7 +51,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
   }
 
   function preUnbindProcess(chanInst) {
-    port.checkPort(function (err, portName, compName, nodeName, namespace) {
+    port.fourMax(function (err, portName, compName, nodeName, namespace) {
       if (err) {
         err.message += ' (unbind '+port.toString()+' '+chan.toString()+')';
         return cb(err);
@@ -80,7 +80,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
     });
   }
 
-  chan.checkChan(function (err, name, namespace) {
+  chan.twoMax(function (err, name, namespace) {
     if (err) {
       err.message += ' (unbind '+port.toString()+' '+chan.toString()+')';
       return cb(err);

@@ -23,8 +23,9 @@ bind node0.*.* chan0
 unbind node0.comp1.sendMsg *
 unbind *.*.inMsg chan0
 
-set node0.sync.port = '8000'
-//set node0.sync.port = '8088'
+set sync.port/node0 = '8000'
+set sync.port/node0 = '8088'
+set *.foo = 'bar'
 
 //network node1 192.168.0.1
 

@@ -12,7 +12,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
   // create proper entity according to the type
   if (Kotlin.isType(tDef, kevoree.impl.NodeTypeImpl)) {
     for (var i in nameList) {
-      nameList[i].checkNode(function (err, instanceName, namespace) {
+      nameList[i].twoMax(function (err, instanceName, namespace) {
         if (err) {
           err.message += ' (add '+nameList[i].toString()+' : '+typeDef.toString()+')';
           return cb(err);
@@ -39,7 +39,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
 
   } else if (Kotlin.isType(tDef, kevoree.impl.GroupTypeImpl)) {
     for (var i in nameList) {
-      nameList[i].checkGroup(function (err, instanceName, namespace) {
+      nameList[i].twoMax(function (err, instanceName, namespace) {
         if (err) {
           err.message += ' (add '+nameList[i].toString()+' : '+typeDef.toString()+')';
           return cb(err);
@@ -66,7 +66,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
 
   } else if (Kotlin.isType(tDef, kevoree.impl.ChannelTypeImpl)) {
     for (var i in nameList) {
-      nameList[i].checkChan(function (err, instanceName, namespace) {
+      nameList[i].twoMax(function (err, instanceName, namespace) {
         if (err) {
           err.message += ' (add '+nameList[i].toString()+' : '+typeDef.toString()+')';
           return cb(err);
@@ -93,7 +93,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
 
   } else if (Kotlin.isType(tDef, kevoree.impl.ComponentTypeImpl)) {
     for (var i in nameList) {
-      nameList[i].checkComp(function (err, compName, nodeName, namespace) {
+      nameList[i].threeMax(function (err, compName, nodeName, namespace) {
         if (err) {
           err.message += ' (add '+nameList[i].toString()+' : '+typeDef.toString()+')';
           return cb(err);

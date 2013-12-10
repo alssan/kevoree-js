@@ -3,64 +3,129 @@ var factory = new kevoree.impl.DefaultKevoreeFactory();
 var helper  = require('../model-helper');
 
 module.exports = function (model, statements, stmt, opts, cb) {
-  if (!cb) {
-    cb = opts;
-    opts = {};
+  var attr, node, value;
+  if (stmt.children.length === 2) {
+    attr  = statements[stmt.children[0].type](model, statements, stmt.children[0], opts, cb);
+    value = statements[stmt.children[1].type](model, statements, stmt.children[1], opts, cb);
+
+  } else if (stmt.children.length === 3) {
+    attr  = statements[stmt.children[0].type](model, statements, stmt.children[0], opts, cb);
+    node  = statements[stmt.children[1].type](model, statements, stmt.children[1], opts, cb);
+    value = statements[stmt.children[2].type](model, statements, stmt.children[2], opts, cb);
   }
 
-  var attrs = [];
-  var name = stmt.children[0].children.join('');
+  function setAttribute2(attrName, dictionary) {
+    var dicValue = dictionary.findValuesByID(attrName);
+    if (dicValue) {
+      // dictionary value for attribute named attrName already exists: overwrite it
+      dicValue.value = value;
 
-  var dictionary = stmt.children[1];
-  for (var i in dictionary.children) {
-    var attrList = dictionary.children[i].children;
-    var dic = {};
-    for (var j in attrList) {
-      if (attrList[j].type == 'attribute') {
-        dic.name  = attrList[j].children[0].children.join('');
-        dic.value = attrList[j].children[1].children.join('');
+    } else {
+      // dictionary value for attribute named attrName does not exist yet: create it and add it if possible
+      var attrs = dictionary.eContainer().typeDefinition.dictionaryType.attributes.iterator();
+      while (attrs.hasNext()) {
+        // by doing this, we will kinda fail silently if you are trying to set an inexisting
+        // attribute value in one of the instances
+        if (attrs.next().name === attrName) {
+          dicValue = factory.createDictionaryValue();
+          dicValue.name = attrName;
+          dicValue.value = value;
+          dictionary.addValues(dicValue);
+          break;
+        }
+      }
+    }
+  }
+
+  function setAttribute1(attrName, instance) {
+    if (node) {
+      // fragDep attribute
+      node.twoMax(function (err, nodeName, namespace) {
+        if (err) {
+          err.message += ' (set '+attr.toString()+'/'+node.toString()+' = '+value+')';
+          return cb(err);
+        }
+
+        if (namespace) {
+          // TODO
+          return cb(new Error('Namespaces are not handled yet :/ Sorry (set '+attr.toString()+'/'+node.toString()+' = '+value+')'));
+
+        } else {
+          if (nodeName === '*') {
+            var dics = instance.fragmentDictionary.iterator();
+            while (dics.hasNext()) setAttribute2(attrName, dics.next());
+
+          } else {
+            var fragDic = instance.findFragmentDictionaryByID(nodeName);
+            if (fragDic) {
+              setAttribute2(attrName, fragDic);
+            } else {
+              // fragment dictionary needs to be created and added
+              fragDic = factory.createFragmentDictionary();
+              fragDic.name = nodeName;
+              instance.addFragmentDictionary(fragDic);
+              setAttribute2(attrName, fragDic);
+            }
+          }
+        }
+      });
+
+    } else {
+      // non fragDep attribute
+      if (!instance.dictionary) instance.dictionary = factory.createDictionary();
+      setAttribute2(attrName, instance.dictionary);
+    }
+  }
+
+  function setAttribute0(attrName, instance) {
+    if (attrName === '*') {
+      var attrs = instance.typeDefinition.dictionaryType.attributes.iterator();
+      while (attrs.hasNext()) {
+        setAttribute1(attrs.next().name, instance);
+      }
+
+    } else {
+      setAttribute1(attrName, instance);
+    }
+  }
+
+  attr.threeMax(function (err, attrName, instanceName, namespace) {
+    if (err) {
+      err.message += ' (set '+attr.toString()+((node) ? '/'+node.toString() : '')+' = '+value+')';
+      return cb(err);
+    }
+
+    if (namespace) {
+      // TODO
+      return cb(new Error('Namespaces are not handled yet :/ Sorry (set '+attr.toString()+((node) ? '/'+node.toString() : '')+' = '+value+')'));
+
+    } else {
+      if (instanceName === '*') {
+        var groups = model.groups.iterator();
+        while (groups.hasNext()) setAttribute0(attrName, groups.next());
+
+        var chans = model.hubs.iterator();
+        while (chans.hasNext()) setAttribute0(attrName, chans.next());
+
+        var nodes = model.nodes.iterator();
+        while (nodes.hasNext()) {
+          var node = nodes.next();
+          setAttribute0(attrName, node);
+
+          var comps = node.components.iterator();
+          while (comps.hasNext()) setAttribute0(attrName, comps.next());
+        }
+
       } else {
-        dic.targetNode = attrList[j].children.join('');
-      }
-    }
-    attrs.push(dic);
-  }
-
-  var entity = helper.findEntityByName(model, name);
-
-  if (entity != null) {
-    for (var i in attrs) {
-      var dic = entity.dictionary || factory.createDictionary();
-      var dicAttrs = entity.typeDefinition.dictionaryType.attributes;
-
-      function getDictionaryAttributeFromName(attrName) {
-        for (var i=0; i < dicAttrs.size(); i++) {
-          if (dicAttrs.get(i).name == attrName) return dicAttrs.get(i);
-        }
-        return callback(new Error('Unable to find "'+attrName+'" in "'+entity.typeDefinition.name+'" typeDef dictionary.'));
-      }
-
-      var val = factory.createDictionaryValue();
-      val.attribute = getDictionaryAttributeFromName(attrs[i].name);
-      val.value = attrs[i].value;
-      if (typeof(attrs[i].targetNode) != 'undefined') {
-        val.targetNode = model.findNodesByID(attrs[i].targetNode);
-      }
-
-      var values = (dic.values) ? dic.values.iterator() : null;
-      if (values != null) {
-        while (values.hasNext()) {
-          var dicVal = values.next();
-          if (dicVal.attribute == val.attribute) dic.removeValues(dicVal);
+        var instance = helper.findEntityByName(model, instanceName);
+        if (instance) {
+          setAttribute0(attrName, instance);
+        } else {
+          return cb(new Error('Unable to find instance "'+instanceName+'" in model (set '+attr.toString()+((node) ? '/'+node.toString() : '')+' = '+value+')'));
         }
       }
-      dic.addValues(val);
-
-      entity.dictionary = dic;
     }
+  });
 
-    cb();
-  } else {
-    return cb(new Error('Unable to find instance "'+name+'" in current model. Can\'t set it\'s dictionary.'));
-  }
+  cb();
 }
