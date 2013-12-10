@@ -7,11 +7,11 @@ include npm:kevoree-comp-fakeconsole
 // this is a comment
 add node0, node1: JavascriptNode/0.0.1
 add sync : WebSocketGroup/0.0.2
-add node0.comp0, node1.comp0 : FakeConsole/0.0.2
+add node0.comp0, node1.comp0, node1.comp1 : FakeConsole/0.0.2
 add chan0 : WebSocketChannel/0.0.1
 
-//attach node0 *
-//attach node0, node1 sync
+attach node0 *
+attach node0, node1 sync
 attach * sync
 
 move node0.comp0 node1
@@ -20,9 +20,10 @@ move node1.comp0, node1.comp1 node0
 
 bind node0.comp0.inMsg chan0
 bind node0.*.* chan0
-//unbind node0.comp1.sendMsg *
+unbind node0.comp1.sendMsg *
+unbind *.*.inMsg chan0
 
-//set node0.sync.port = '8000'
+set node0.sync.port = '8000'
 //set node0.sync.port = '8088'
 
 //network node1 192.168.0.1
