@@ -1,92 +1,130 @@
+var Kotlin = require('kevoree-kotlin');
+var kevoree = require('kevoree-library').org.kevoree;
+
 module.exports = function (model, statements, stmt, opts, cb) {
-  var names = [];
-  var target = null;
-  var from = null;
+  // instances to move
+  var nameList = statements[stmt.children[0].type](model, statements, stmt.children[0], opts, cb);
+  // target node to move instances to
+  var target   = statements[stmt.children[1].type](model, statements, stmt.children[1], opts, cb);
 
-  if (stmt.children[0].type == 'nameList') {
-    var nameList = stmt.children[0].children;
+  function processNameList(targetNode) {
     for (var i in nameList) {
-      names.push(nameList[i].children.join(''));
-    }
-    target = stmt.children[1].children.join('');
-
-  } else if (stmt.children[0] == '*') {
-    if (typeof(stmt.children[2]) == 'undefined') {
-      // move * node1
-      // add all previously added component instances (with "add comp0 : MyCompType")
-      for (var compName in components) names.push(compName);
-      // and add all components previously added in model too
-      var nodes = (model.nodes) ? model.nodes.iterator() : null;
-      if (nodes != null) {
-        while (nodes.hasNext()) {
-          var node = nodes.next();
-          var comps = node.components.iterator();
-          while (comps.hasNext()) names.push(comps.next().name);
+      nameList[i].checkComp(function (err, compName, nodeName, namespace) {
+        if (err) {
+          err.message += ' (move '+nameList.toString()+' '+target.toString()+')';
+          return cb(err);
         }
-      }
-      target = stmt.children[1].children.join('');
-    } else {
-      // move *@node0 node1
-      from = stmt.children[1].children.join('');
-      target = stmt.children[2].children.join('');
-      var node = model.findNodesByID(from);
-      if (typeof(node) == 'undefined') {
-        return cb(new Error('Unable to find node "'+from+'" in current model (move *@'+from+' '+target+'). Failure.'));
-      } else {
-        // "from" node found in model, proceed
-        var comps = node.components.iterator();
-        while (comps.hasNext()) names.push(comps.next().name);
-      }
-    }
 
-  } else {
-    names.push(stmt.children[0].children.join(''));
-    target = stmt.children[1].children.join('');
-  }
+        if (namespace) {
+          // TODO
+          return cb(new Error('Namespaces are not handled yet :/ Sorry (move '+nameList.toString()+' '+target.toString()+')'));
 
-  for (var i in names) {
-    var comp = components[names[i]];
-    if (typeof(comp) == 'undefined') {
-      // comp definition has not been made in kevscript
-      // we should check if it has already been added to current model
-      var comp = (function (compName) {
-        var nodes = (model.nodes) ? model.nodes.iterator() : null;
-        if (nodes != null) {
-          while (nodes.hasNext()) {
-            var node = nodes.next();
-            var comps = node.components.iterator();
-            while (comps.hasNext()) {
-              var modelComp = comps.next();
-              if (modelComp.name == compName) return modelComp;
+        } else {
+          if (nodeName === '*') {
+            if (compName === '*') {
+              // move *.* fooNode
+              var nodes = model.nodes.iterator();
+              while (nodes.hasNext()) {
+                var fromNode = nodes.next();
+                var comps = fromNode.components.iterator();
+                while (comps.hasNext()) {
+                  var comp = comps.next();
+                  fromNode.removeComponents(comp);
+                  targetNode.addComponents(comp);
+                }
+              }
+
+            } else {
+              // move *.fooComp fooNode
+              var nodes = model.nodes.iterator();
+              while (nodes.hasNext()) {
+                var fromNode = nodes.next();
+                var comp = fromNode.findComponentsByID(compName);
+                if (comp) {
+                  fromNode.removeComponents(comp);
+                  targetNode.addComponents(comp);
+                }
+              }
+            }
+
+          } else {
+            if (compName === '*') {
+              // move fooNode.* barNode
+              var fromNode = model.findNodesByID(nodeName);
+              if (fromNode) {
+                var comps = fromNode.components.iterator();
+                while (comps.hasNext()) {
+                  var comp = comps.next();
+                  fromNode.removeComponents(comp);
+                  targetNode.addComponents(comp);
+                }
+
+              } else {
+                return cb(new Error('Unable to find node "'+nodeName+'" in model (move '+nameList.toString()+' '+target.toString()+')'));
+              }
+
+            } else {
+              // move fooNode.fooComp barNode
+              var node = model.findNodesByID(nodeName);
+              if (node) {
+                var comp = node.findComponentsByID(compName);
+                if (comp) {
+                  node.removeComponents(comp);
+                  targetNode.addComponents(comp);
+                }
+
+              } else {
+                return cb(new Error('Unable to find node "'+nodeName+'" in model (move '+nameList.toString()+' '+target.toString()+')'));
+              }
             }
           }
-          return null;
         }
-      })(names[i])
-      if (comp == null) {
-        // component instance not found in kevscript AND in model => error
-        return cb(new Error('Unable to "move" component "'+names[i]+'" to node "'+target+'". Component does not exist.'));
+      });
+    }
+  }
+
+  // process target instancePath
+  target.checkNode(function (err, name, namespace) {
+    if (err) {
+      err.message += ' (move '+nameList.toString()+' '+target.toString()+')';
+      return cb(err);
+    }
+
+    if (namespace) {
+      // TODO
+      return cb(new Error('Namespaces are not handled yet :/ Sorry (move '+nameList.toString()+' '+target.toString()+')'));
+//      if (opts.namespaces[namespace]) {
+//        var instance = opts.namespaces[namespace][name];
+//        if (Kotlin.isType(instance.typeDefinition, kevoree.impl.NodeTypeImpl)) {
+//          // target node exists
+//          processNameList(instance);
+//
+//        } else {
+//          return cb(new Error('Matched entity in namespace "'+[namespace, name].join('.')+'" must be a NodeType.'));
+//        }
+//
+//      } else {
+//        return cb(new Error('Unable to find namespace "'+namespace+'"'));
+//      }
+
+    } else {
+      if (name === '*') {
+        return cb(new Error('You must specify one and only node target (move '+nameList.toString()+' '+target.toString()+')'));
 
       } else {
-        // component instance found in current model, proceed
-        addCompToNode(comp, target)
+        // check if the target exists
+        var targetNode = model.findNodesByID(name);
+        if (targetNode) {
+          // target node exists
+          processNameList(targetNode);
+
+        } else {
+          // node does not exist in current model
+          return cb(new Error('Unable to find target node "'+target.toString()+'" in current model (move '+nameList.toString()+' '+target.toString()+')'));
+        }
       }
-
-    } else {
-      addCompToNode(comp, target);
     }
-  }
-
-  function addCompToNode(comp, nodeName) {
-    var node = model.findNodesByID(nodeName);
-    if (typeof(node) == 'undefined') {
-      // the node specified to move component to has not yet been created
-      return cb(new Error('Unable to "move" component "'+comp.name+'" to node "'+nodeName+'". Node does not exist.'));
-    } else {
-      // the node specified to move component to has been created, proceed move
-      node.addComponents(comp);
-    }
-  }
+  });
 
   cb();
 }

@@ -10,17 +10,16 @@ add sync : WebSocketGroup/0.0.2
 add node0.comp0, node1.comp0 : FakeConsole/0.0.2
 add chan0 : WebSocketChannel/0.0.1
 
-attach node0 sync
-attach node0, node1 sync
+//attach node0 *
+//attach node0, node1 sync
 attach * sync
 
-//move node0.comp0 node0
-//move node0.* node0
-//move *.* node1
-//move node1.comp0, node1.comp1 node0
+move node0.comp0 node1
+move node1.* node0
+move node1.comp0, node1.comp1 node0
 
-//bind node0.comp0.inMsg chan0
-//bind node0.comp0.sendMsg chan0
+bind node0.comp0.inMsg chan0
+bind node0.*.* chan0
 //unbind node0.comp1.sendMsg *
 
 //set node0.sync.port = '8000'

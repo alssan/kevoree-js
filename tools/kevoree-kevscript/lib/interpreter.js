@@ -45,7 +45,10 @@ var interpreter = function interpreter(ast, ctxModel, resolvers, callback) {
   // otherwise start from a brand new model
   else model = factory.createContainerRoot();
 
-  var options = {resolvers: resolvers};
+  var options = {
+    resolvers: resolvers,
+    namespaces: {}
+  };
 
   // process statements
   var tasks = [];
