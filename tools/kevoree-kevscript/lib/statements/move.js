@@ -9,7 +9,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
 
   function processNameList(targetNode) {
     for (var i in nameList) {
-      nameList[i].threeMax(function (err, compName, nodeName, namespace) {
+      nameList[i].expect(2, 3, function (err, namespace, nodeName, compName) {
         if (err) {
           err.message += ' (move '+nameList.toString()+' '+target.toString()+')';
           return cb(err);
@@ -84,7 +84,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
   }
 
   // process target instancePath
-  target.twoMax(function (err, name, namespace) {
+  target.expect(1, 2, function (err, namespace, name) {
     if (err) {
       err.message += ' (move '+nameList.toString()+' '+target.toString()+')';
       return cb(err);

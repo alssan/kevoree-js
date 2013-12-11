@@ -40,7 +40,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
   function setAttribute1(attrName, instance) {
     if (node) {
       // fragDep attribute
-      node.twoMax(function (err, nodeName, namespace) {
+      node.expect(1, 2, function (err, namespace, nodeName) {
         if (err) {
           err.message += ' (set '+attr.toString()+'/'+node.toString()+' = '+value+')';
           return cb(err);
@@ -89,7 +89,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
     }
   }
 
-  attr.threeMax(function (err, attrName, instanceName, namespace) {
+  attr.expect(2, 3, function (err, namespace, instanceName, attrName) {
     if (err) {
       err.message += ' (set '+attr.toString()+((node) ? '/'+node.toString() : '')+' = '+value+')';
       return cb(err);

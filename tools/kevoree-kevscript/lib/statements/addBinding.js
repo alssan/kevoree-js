@@ -5,7 +5,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
   var port = statements[stmt.children[0].type](model, statements, stmt.children[0], opts, cb);
   var chan = statements[stmt.children[1].type](model, statements, stmt.children[1], opts, cb);
 
-  function addBinding2(portName, comp, chanInst) {
+  function addBinding2(portName, comp, node, chanInst) {
     // start with a undefined portInst
     var portInst;
 
@@ -60,11 +60,14 @@ module.exports = function (model, statements, stmt, opts, cb) {
     }
 
     if (portInst && portInst.portTypeRef && portInst.portTypeRef.name == portName) {
-      var bindings = portInst.bindings.iterator();
+      var bindings = model.mBindings.iterator();
       var alreadyBound = false;
       while (bindings.hasNext()) {
         var binding = bindings.next();
-        if (binding.hub.name === chanInst.name) {
+        if (binding.hub.name === chanInst.name &&
+          binding.port.portTypeRef.name === portName &&
+          binding.port.eContainer().name === comp.name &&
+          binding.port.eContainer().eContainer().name === node.name) {
           alreadyBound = true;
           break;
         }
@@ -88,15 +91,15 @@ module.exports = function (model, statements, stmt, opts, cb) {
       if (portName === '*') {
         var inputRefs = comp.typeDefinition.provided.iterator();
         while (inputRefs.hasNext()) {
-          addBinding2(inputRefs.next().name, comp, chanInst);
+          addBinding2(inputRefs.next().name, comp, node, chanInst);
         }
         var outputRefs = comp.typeDefinition.required.iterator();
         while (outputRefs.hasNext()) {
-          addBinding2(outputRefs.next().name, comp, chanInst);
+          addBinding2(outputRefs.next().name, comp, node, chanInst);
         }
 
       } else {
-        addBinding2(portName, comp, chanInst);
+        addBinding2(portName, comp, node, chanInst);
       }
     } else {
       return cb(new Error('Unable to find component instance "'+compName+'" in node "'+node.name+'" (bind '+port.toString()+' '+chan.toString()+')'));
@@ -121,7 +124,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
   }
 
   function bindPortToChan(chanInst) {
-    port.fourMax(function (err, portName, compName, nodeName, namespace) {
+    port.expect(3, 4, function (err, namespace, nodeName, compName, portName) {
       if (err) {
         err.message += ' (bind '+port.toString()+' '+chan.toString()+')';
         return cb(err);
@@ -145,7 +148,7 @@ module.exports = function (model, statements, stmt, opts, cb) {
     });
   }
 
-  chan.twoMax(function (err, name, namespace) {
+  chan.expect(1, 2, function (err, namespace, name) {
     if (err) {
       err.message += ' (bind '+port.toString()+' '+chan.toString()+')';
       return cb(err);

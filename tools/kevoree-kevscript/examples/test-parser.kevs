@@ -25,8 +25,10 @@ unbind *.*.inMsg chan0
 
 set sync.port/node0 = '8000'
 set sync.port/node0 = '8088'
-set *.foo = 'bar'
+set chan0.port/node0 = '8047'
 
-//network node1 192.168.0.1
+network node1 192.168.0.1
 
-//remove node0
+remove node1
+
+bind node0.comp1.inMsg chan0
