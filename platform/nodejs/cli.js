@@ -30,8 +30,7 @@ kRuntime.on('started', function () {
   // Kevoree Core is started, deploy model
   if (argv.kevscript && argv.kevscript.length > 0) {
     // try with --kevscript param
-    var kevsPath = path.resolve(argv.kevscript);
-    fs.readFile(kevsPath, 'utf8', function (err, text) {
+    fs.readFile(argv.kevscript, 'utf8', function (err, text) {
       if (err) throw err;
 
       var options = {
@@ -43,7 +42,6 @@ kRuntime.on('started', function () {
       var kevs = new KevScript(options);
       kevs.parse(text, function (err, model) {
         if (err) throw err;
-
         kRuntime.deploy(model);
       });
     });

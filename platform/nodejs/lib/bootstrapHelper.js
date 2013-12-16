@@ -64,7 +64,7 @@ module.exports = function (options, callback) {
     defaultBootstrap();
 
   } else {
-    if (options.model.findByID(options.nodeName) && options.model.findByID(options.groupName)) {
+    if (options.model.findNodesByID(options.nodeName) && options.model.findGroupsByID(options.groupName)) {
       // we dont have to process this model anymore, everything is in it :)
       return callback(null, options.model);
     } else {

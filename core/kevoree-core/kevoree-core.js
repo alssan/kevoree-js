@@ -121,84 +121,92 @@ module.exports = Class({
           }
 
           if (core.nodeInstance != undefined && core.nodeInstance != null) {
-            // given model is defined and not null
-            core.deployModel = core.cloner.clone(model, true);
-            core.deployModel.setRecursiveReadOnly();
-            var diffSeq = core.compare.diff(core.currentModel, core.deployModel);
-            var adaptations = core.nodeInstance.processTraces(diffSeq.traces, core.deployModel);
-            // list of adaptation commands retrieved
-            var cmdStack = [];
+            try {
+              // given model is defined and not null
+              core.deployModel = core.cloner.clone(model, true);
+              core.deployModel.setRecursiveReadOnly();
+              var diffSeq = core.compare.diff(core.currentModel, core.deployModel);
+              var adaptations = core.nodeInstance.processTraces(diffSeq.traces, core.deployModel);
 
-            // executeCommand: function that save cmd to stack and executes it
-            var executeCommand = function executeCommand(cmd, iteratorCallback) {
-              // save the cmd to be processed in a stack using unshift
-              // in order to add the last processed cmd at the beginning of the array
-              // => cmdStack[0] = more recently executed cmd
-              cmdStack.unshift(cmd);
+              // list of adaptation commands retrieved
+              var cmdStack = [];
 
-              // execute cmd
-              cmd.execute(function (err) {
-                if (err) {
-                  iteratorCallback(err);
-                  return;
-                }
+              // executeCommand: function that save cmd to stack and executes it
+              var executeCommand = function executeCommand(cmd, iteratorCallback) {
+                // save the cmd to be processed in a stack using unshift
+                // in order to add the last processed cmd at the beginning of the array
+                // => cmdStack[0] = more recently executed cmd
+                cmdStack.unshift(cmd);
 
-                // adaptation succeed
-                iteratorCallback();
-              });
-            };
-
-            // rollbackCommand: function that calls undo() on cmds in the stack
-            var rollbackCommand = function rollbackCommand(cmd, iteratorCallback) {
-              cmd.undo(function (err) {
-                if (err) {
-                  iteratorCallback(err);
-                  return;
-                }
-
-                // undo succeed
-                iteratorCallback();
-              });
-            };
-
-            // execute each command synchronously
-            async.eachSeries(adaptations, executeCommand, function (err) {
-              if (err) {
-                // something went wrong while processing adaptations
-                core.log.error(core.toString(), err.message);
-
-                // rollback process
-                async.eachSeries(cmdStack, rollbackCommand, function (er) {
-                  if (er) {
-                    // something went wrong while rollbacking
-                    er.message = "Something went wrong while rollbacking...";
-                    core.emitter.emit('error', er);
+                // execute cmd
+                cmd.execute(function (err) {
+                  if (err) {
+                    iteratorCallback(err);
                     return;
                   }
 
-                  // rollback succeed
-                  core.emitter.emit('rollback');
-                  return;
+                  // adaptation succeed
+                  iteratorCallback();
                 });
+              };
 
-                // using Javascript magic to just change error message and keep stack
-                err.message = "Something went wrong while processing adaptations. Rollback";
-                core.emitter.emit('error', err);
+              // rollbackCommand: function that calls undo() on cmds in the stack
+              var rollbackCommand = function rollbackCommand(cmd, iteratorCallback) {
+                cmd.undo(function (err) {
+                  if (err) {
+                    iteratorCallback(err);
+                    return;
+                  }
+
+                  // undo succeed
+                  iteratorCallback();
+                });
+              };
+
+              // execute each command synchronously
+              async.eachSeries(adaptations, executeCommand, function (err) {
+                if (err) {
+                  // something went wrong while processing adaptations
+                  core.log.error(core.toString(), err.message);
+
+                  // rollback process
+                  async.eachSeries(cmdStack, rollbackCommand, function (er) {
+                    if (er) {
+                      // something went wrong while rollbacking
+                      er.message = "Something went wrong while rollbacking...";
+                      core.emitter.emit('error', er);
+                      return;
+                    }
+
+                    // rollback succeed
+                    core.emitter.emit('rollback');
+                    return;
+                  });
+
+                  // using Javascript magic to just change error message and keep stack
+                  err.message = "Something went wrong while processing adaptations. Rollback";
+                  core.emitter.emit('error', err);
+                  return;
+                }
+
+                // adaptations succeed : woot
+                core.log.debug(core.toString(), "Model deployed successfully.");
+                // save old model
+                pushInArray(core.models, core.currentModel);
+                // set new model to be the current deployed one
+                core.currentModel = model; // do not give core.deployModel here because it is a readOnly model
+                // reset deployModel
+                core.deployModel = null;
+                // all good :)
+                core.emitter.emit('deployed', core.currentModel);
                 return;
-              }
-
-              // adaptations succeed : woot
-              core.log.debug(core.toString(), "Model deployed successfully.");
-              // save old model
-              pushInArray(core.models, core.currentModel);
-              // set new model to be the current deployed one
-              core.currentModel = model; // do not give core.deployModel here because it is a readOnly model
-              // reset deployModel
-              core.deployModel = null;
-              // all good :)
-              core.emitter.emit('deployed', core.currentModel);
+              });
+            } catch (err) {
+              console.log(err);
+              err = new Error('Something went wrong while deploying model');
+              core.emitter.emit('error', err);
               return;
-            });
+            }
 
           } else {
             core.emitter.emit('error', new Error("There is no instance to bootstrap on"));
