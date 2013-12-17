@@ -25,7 +25,7 @@ kevoreeCore.on('started', function () {
   deployBtn.removeClass("disabled");
 });
 
-kevoreeCore.on('deployed', function (err, model) {
+kevoreeCore.on('deployed', function (err) {
   deploying = false;
   deployed = true;
   deployBtn.popover('hide');
@@ -33,7 +33,7 @@ kevoreeCore.on('deployed', function (err, model) {
   log.info("KevoreeCore deployed");
 });
 
-kevoreeCore.on('stopped', function (err, model) {
+kevoreeCore.on('stopped', function (err) {
   log.info("KevoreeCore stopped");
   started = deployed = deploying = false;
   startBtn.removeClass("disabled");
@@ -51,6 +51,10 @@ kevoreeCore.on('error', function (err) {
     started = deployed = deploying = false;
   }
 });
+
+kevoreeCore.on('rollback', function () {
+  log.info('Rollback succeed');
+})
 
 // set Kevoree bootstrapper
 kevoreeCore.setBootstrapper(bootstrapper);
@@ -117,8 +121,8 @@ deployBtn.on('click', function () {
               kevoreeCore.deploy(jsonLoader.loadModelFromString(data.model).get(0));
             },
             error: function (err) {
-              console.error(err);
-              log.error('Unable to retrieve bootstrap model from server. Aborting deploy.');
+              console.log(err);
+              log.error('Unable to retrieve bootstrap model from server. Deploy aborted.<br/>Reason: '+err.responseText);
               deploying = false;
               deployBtn.removeClass('disabled');
               deployBtn.popover('hide');

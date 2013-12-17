@@ -16,13 +16,12 @@ var NPMResolver = Resolver.extend({
   },
 
   resolve: function (deployUnit, forceInstall, callback) {
+    var self = this;
     if (typeof(callback) == 'undefined') {
       // "forceInstall" parameter is not specified (optional)
       callback = forceInstall;
       forceInstall = false;
     }
-
-    // TODO forceInstall is never used, module are always reinstalled
 
     // forward resolving request to server
     $.ajax({
@@ -31,7 +30,8 @@ var NPMResolver = Resolver.extend({
       data: {
         type: deployUnit.type,
         name: deployUnit.name,
-        version: deployUnit.version
+        version: deployUnit.version,
+        forceInstall: forceInstall
       },
       success: function (resp) {
         // server response contains a zipPath & name of the requested module package
@@ -46,7 +46,7 @@ var NPMResolver = Resolver.extend({
 
           // zip installed successfully
           $.getScript('filesystem:'+window.location.origin+'/persistent/kev_libraries/'+deployUnit.name+'@'+deployUnit.version+'/'+deployUnit.name+'-bundle.js', function () {
-            resolver.log.info("Zip '"+deployUnit.name+"' installed and module loaded successfully");
+            self.log.info("Zip '"+deployUnit.name+"' installed and module loaded successfully");
 
             var ModuleEntry = require(deployUnit.name);
 

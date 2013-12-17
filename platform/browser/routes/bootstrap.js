@@ -1,6 +1,5 @@
 var kevoree   = require('kevoree-library').org.kevoree,
-    pullModel = require('kevoree-model-sync').pullModel,
-    pushModel = require('kevoree-model-sync').pushModel,
+    modelSync = require('kevoree-model-sync'),
     config    = require('./../config'),
     path      = require('path');
 
@@ -20,35 +19,36 @@ module.exports = function (req, res) {
   // everytime a new model is deployed on it (take a look at 'lib/nodeJSPlatform.js')
   var model = loader.loadModelFromString(JSON.stringify(require('./../model.json'))).get(0);
 
-  pullModel(model, config.nodeJSPlatform.nodeName, function (err, serverModel) {
-    if (err) return res.send(500, 'Unable to pull model from server-side platform.');
-
-    // let's be really cautious about
+  var serverNode = model.findNodesByID(config.nodeJSPlatform.nodeName);
+  if (serverNode) {
+    // let's be really cautious about given name
     var nodename = req.body.nodename || 'node'+parseInt(Math.random()*1e10); // name from request or random generated
-    var nodeInst = serverModel.findNodesByID(nodename);
+    var nodeInst = model.findNodesByID(nodename);
     if (nodeInst) nodename = 'node'+parseInt(Math.random()*1e10); // this name was already taken server-side: roll the dices again to find a new name
 
     // create a node instance for the new client
     var nodeInstance = factory.createContainerNode();
     nodeInstance.name = nodename;
-    nodeInstance.typeDefinition = serverModel.findTypeDefinitionsByID('JavascriptNode/');
+    nodeInstance.typeDefinition = serverNode.typeDefinition;
 
     // add this instance to model
-    serverModel.addNodes(nodeInstance);
+    model.addNodes(nodeInstance);
 
     // connect this node to server-side group
-    var groupInstance = serverModel.findGroupsByID(config.nodeJSPlatform.groupName); // TODO if people mess up with server-side group name, we are doomed
+    var groupInstance = model.findGroupsByID(config.nodeJSPlatform.groupName); // FIXME if people mess up with server-side group name, we are doomed
     groupInstance.addSubNodes(nodeInstance);
-
+    
     // push new created model to server-side platform
-    pushModel(serverModel, config.nodeJSPlatform.nodeName, function (err) {
-      if (err) return res.send(500, 'Unable to push model to server-side platform.');
-
-      // serialize updated model
-      var modelStr = serializer.serialize(serverModel);
-
-      // send serialized model back
+    var dic = groupInstance.findFragmentDictionaryByID(config.nodeJSPlatform.nodeName);
+    var val = dic.findValuesByID('port');
+    
+    modelSync.push({model: model, host: '127.0.0.1', port: val.value}, function (err) {
+      if (err) return res.send(500, 'Unable to push model to "server-node" :/');
+      
+      var modelStr = serializer.serialize(model);
       return res.json({model: modelStr});
     });
-  });
+  } else {
+    return res.send(5000, '"server-node" is not reachable. Something crashed server-side obviously :/');
+  }
 }
