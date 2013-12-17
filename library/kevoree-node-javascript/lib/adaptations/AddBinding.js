@@ -40,7 +40,7 @@ module.exports = AdaptationPrimitive.extend({
             }
           }
 
-          this.log.debug(this.toString(), 'job done between '+compInstance.getName()+' and '+chanInstance.getName());
+          this.log.debug(this.toString(), 'job done between '+compInstance.getName()+'@'+this.node.getName()+' and '+chanInstance.getName()+'@'+this.node.getName());
           return callback();
 
         } catch (err) {

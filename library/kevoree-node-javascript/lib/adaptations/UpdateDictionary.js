@@ -30,7 +30,7 @@ module.exports = AdaptationPrimitive.extend({
         dictionary.setEntry(dicValue.name, dicValue.value);
       }
 
-      this.log.debug(this.toString(), 'job done for attribute '+dicValue.name);
+      this.log.debug(this.toString(), 'job done for attribute '+dicValue.name+'@'+this.node.getName());
       return callback();
 
     } else {

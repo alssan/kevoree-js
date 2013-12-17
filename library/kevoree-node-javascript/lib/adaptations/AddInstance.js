@@ -41,7 +41,7 @@ module.exports = AdaptationPrimitive.extend({
 
             this.mapper.addEntry(kInstance.path(), instance);
 
-            this.log.debug(this.toString(), 'job done for '+instance.getName());
+            this.log.debug(this.toString(), 'job done for '+instance.getName()+'@'+this.node.getName());
             return callback();
 
           } catch (e) {
