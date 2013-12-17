@@ -7,7 +7,7 @@
     "prepublish": "node node_modules/kevoree-gen-model"
   },
   "devDependencies": {
-    "kevoree-gen-model": "~0.0.2"
+    "kevoree-gen-model": "0.0.2"
   },
   "keywords": [
     "kevoree",
@@ -24,9 +24,9 @@
     "url": "https://github.com/dukeboard/kevoree-js"
   },
   "dependencies": {
-    "kevoree-entities": "~0.0.3",
-    "kevoree-commons": "~0.0.1",
-    "pseudoclass": "~0.2.6"
+    "kevoree-entities": ">= 0.0.3",
+    "kevoree-commons": ">= 0.0.1",
+    "pseudoclass": ">= 0.2.6"
   },
   "optionalDependencies": {}
 }

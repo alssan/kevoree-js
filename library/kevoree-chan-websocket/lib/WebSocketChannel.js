@@ -110,16 +110,15 @@ var WebSocketChannel = AbstractChannel.extend({
     var addresses = [];
 
     var chan = this.getModelEntity();
-    var values = (chan.dictionary.values) ? chan.dictionary.values.iterator() : null;
-    if (values) {
-      while (values.hasNext()) {
-        var val = values.next();
-        if (val.value && val.value.length > 0) {
-          var port = val.value;
-          var hosts = this.getNodeHosts(val.targetNode);
-          for (var host in hosts) addresses.push(host+':'+port);
-          return addresses;
-        }
+    var fragDics = chan.fragmentDictionary.iterator();
+    while (fragDics.hasNext()) {
+      var dic = fragDics.next();
+      var val = dic.findValuesByID('port');
+      if (val && val.value && val.value.length > 0) {
+        var port = val.value;
+        var hosts = this.getNodeHosts(dic.name);
+        for (var host in hosts) addresses.push(host+':'+port);
+        return addresses;
       }
     }
   },
@@ -202,7 +201,7 @@ var WebSocketChannel = AbstractChannel.extend({
  * @param data
  */
 var localDispatchHandler = function (data) {
-  if (data.type != 'binary' || typeof(data.data) == 'string') {
+  if (data.type !== 'binary' || typeof(data.data) === 'string') {
     // received data is a String
     this.localDispatch(data.data);
 
