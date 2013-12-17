@@ -141,8 +141,8 @@ module.exports = Class({
                 // execute cmd
                 cmd.execute(function (err) {
                   if (err) {
-                    iteratorCallback(err);
-                    return;
+                    //core.log.error(cmd.toString(), err.message);
+                    return iteratorCallback(err);
                   }
 
                   // adaptation succeed
@@ -153,10 +153,7 @@ module.exports = Class({
               // rollbackCommand: function that calls undo() on cmds in the stack
               var rollbackCommand = function rollbackCommand(cmd, iteratorCallback) {
                 cmd.undo(function (err) {
-                  if (err) {
-                    iteratorCallback(err);
-                    return;
-                  }
+                  if (err) return iteratorCallback(err);
 
                   // undo succeed
                   iteratorCallback();
@@ -166,27 +163,21 @@ module.exports = Class({
               // execute each command synchronously
               async.eachSeries(adaptations, executeCommand, function (err) {
                 if (err) {
-                  // something went wrong while processing adaptations
-                  core.log.error(core.toString(), err.message);
-
                   // rollback process
-                  async.eachSeries(cmdStack, rollbackCommand, function (er) {
+                  return async.eachSeries(cmdStack, rollbackCommand, function (er) {
                     if (er) {
                       // something went wrong while rollbacking
                       er.message = "Something went wrong while rollbacking...";
-                      core.emitter.emit('error', er);
-                      return;
+                      return core.emitter.emit('error', er);
                     }
 
+                    // something went wrong while processing adaptations
+                    // using Javascript magic to just change error message and keep stack
+                    err.message = "Something went wrong while processing adaptations. Rollbacking...";
+                    core.emitter.emit('error', err); // TODO create another error type (like adaptationError, in order to process rollback in runtimes instead of just shutting down kevoree core)
                     // rollback succeed
-                    core.emitter.emit('rollback');
-                    return;
+                    return core.emitter.emit('rollback');
                   });
-
-                  // using Javascript magic to just change error message and keep stack
-                  err.message = "Something went wrong while processing adaptations. Rollback";
-                  core.emitter.emit('error', err);
-                  return;
                 }
 
                 // adaptations succeed : woot
@@ -235,8 +226,8 @@ module.exports = Class({
         this.nodeInstance.setKevoreeCore(this);
         this.nodeInstance.setName(this.nodeName);
 
-//        // inflate dictionary with defaultValues
-//        var kDictionary = model.findTypeDefinitionsByID(this.nodeInstance.toString()+'/').dictionaryType;
+        // inflate dictionary with defaultValues
+//        var kDictionary = model.findTypeDefinitionsByID(this.nodeInstance.toString()+'/'+this.nodeInstance.getVersion()).dictionaryType;
 //
 //        var defaultValues = kDictionary.defaultValues.iterator();
 //        var dictionary = this.nodeInstance.getDictionary();
@@ -313,7 +304,7 @@ module.exports = Class({
 
 // utility function to ensure cached model list won't go over 10 items
 var pushInArray = function pushInArray(array, model) {
-  if (array.length == 10) this.shift();
+  if (array.length == 10) array.shift();
   array.push(model);
 }
 
