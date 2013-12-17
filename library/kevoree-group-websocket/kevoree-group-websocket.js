@@ -4,10 +4,10 @@ var AbstractGroup   = require('kevoree-entities').AbstractGroup,
   WSServer        = require('ws').Server,
 
 // protocol constants
-  PULL        = 0,
-  PUSH        = 1,
-  REGISTER    = 3,
-  PULL_JSON   = 42;
+  PULL        = 'pull',
+  PUSH        = 'push',
+  DIFF        = 'diff',
+  REGISTER    = 'register';
 
 /**
  * WebSocketGroup: Kevoree group that handles model transfers through WebSocket protocol
@@ -88,12 +88,7 @@ var WebSocketGroup = AbstractGroup.extend({
     ws.onopen = function onOpen() {
       var serializer = new kevoree.serializer.JSONModelSerializer();
       var modelStr = serializer.serialize(model);
-      var binMsg = new Uint8Array(1+modelStr.length);
-      binMsg[0] = PUSH;
-      for (var i=0; i<modelStr.length; i++) {
-        binMsg[i+1] = modelStr.charCodeAt(i);
-      }
-      ws.send(binMsg);
+      ws.send(PUSH+'/'+modelStr);
       ws.close();
     };
   },
@@ -106,9 +101,7 @@ var WebSocketGroup = AbstractGroup.extend({
     var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
     ws.onopen = function onOpen() {
-      var binMsg = new Uint8Array(1);
-      binMsg[0] = PULL_JSON;
-      ws.send(binMsg);
+      ws.send(PULL);
     };
     ws.onmessage = function onMessage(e) {
       var data = '';
@@ -163,17 +156,13 @@ var WebSocketGroup = AbstractGroup.extend({
     this.log.info(this.toString(), "WebSocket server started: "+ server.options.host+":"+port);
 
     server.on('connection', function(ws) {
-      ws.on('message', function(data, flag) {
-        if (flag.binary == undefined) {
-          // received data is a String
-          self.processMessage(ws, data);
-
-        } else {
-          // received data is binary
-          var bin = new Uint8Array(data);
-          self.processMessage(ws, bin[0], String.fromCharCode.apply(null, bin.slice(1, bin.length)));
+      ws.onmessage = function (data) {
+        if (data.type !== 'undefined') {
+          // data is a MessageEvent not a raw string
+          data = data.data;
         }
-      });
+        self.processMessage(ws, data);
+      }
     });
 
     return server;
@@ -189,12 +178,7 @@ var WebSocketGroup = AbstractGroup.extend({
         ws.onopen = function onOpen() {
           clearTimeout(group.timeoutID);
           group.timeoutID = null;
-          var binMsg = new Uint8Array(group.getNodeName().length+1);
-          binMsg[0] = REGISTER;
-          for (var i=0; i<group.getNodeName().length; i++) {
-            binMsg[i+1] = group.getNodeName().charCodeAt(i);
-          }
-          ws.send(binMsg);
+          ws.send(REGISTER+'/'+group.getNodeName());
         };
         ws.onmessage = function onMessage(e) {
           var data = '';
@@ -235,26 +219,24 @@ var WebSocketGroup = AbstractGroup.extend({
 
     var kGroup = this.getModelEntity();
     if (typeof(kGroup) !== 'undefined' && kGroup != null) {
-      var values = kGroup.dictionary.values.iterator();
-      while (values.hasNext()) {
-        var value = values.next();
-        if (value.attribute.name == 'port') {
-          port = value.value;
-          if (typeof(port) !== 'undefined' && port != null && port.length > 0) {
-            var nodeNetworks = this.kCore.getDeployModel().nodeNetworks.iterator();
-            while (nodeNetworks.hasNext()) {
-              var links = nodeNetworks.next().link.iterator();
-              while (links.hasNext()) {
-                if (typeof(links.next().networksProperties) !== 'undefined') {
-                  var netProps = links.next().networksProperties.iterator();
-                  while (netProps.hasNext()) {
-                    ret.push(netProps.next().value+':'+port);
-                  }
+      var fragDics = kGroup.fragmentDictionary.iterator();
+      while (fragDics.hasNext()) {
+        var val = fragDics.next().findValuesByID('port');
+        if (val) port = val.value;
+        if (typeof(port) !== 'undefined' && port != null && port.length > 0) {
+          var nodeNetworks = this.getKevoreeCore().getDeployModel().nodeNetworks.iterator();
+          while (nodeNetworks.hasNext()) {
+            var links = nodeNetworks.next().link.iterator();
+            while (links.hasNext()) {
+              if (typeof(links.next().networksProperties) !== 'undefined') {
+                var netProps = links.next().networksProperties.iterator();
+                while (netProps.hasNext()) {
+                  ret.push(netProps.next().value+':'+port);
                 }
               }
             }
-            break; // we don't need to process other attributes we were looking for a valid 'port' that's all
           }
+          break; // we don't need to process other attributes we were looking for a valid 'port' that's all
         }
       }
     } else {
@@ -287,27 +269,21 @@ var WebSocketGroup = AbstractGroup.extend({
     return ret;
   },
 
-  processMessage: function (clientSocket, controlByte, data) {
-    switch (controlByte) {
-      case PUSH:
-        this.onMasterServerPush(clientSocket, data);
-        break;
-
-      case PULL:
-        this.onMasterServerPull(clientSocket, data);
-        break;
-
-      case PULL_JSON:
-        this.onMasterServerPullJSON(clientSocket, data);
-        break;
-
-      case REGISTER:
-        this.onMasterServerRegister(clientSocket, data);
-        break;
-
-      default:
-        this.log.error(this.toString(), "Received control byte '"+controlByte+"': WebSocketGroup is unable to process this control byte");
-        break;
+  processMessage: function (clientSocket, data) {
+    if (data.startsWith(PUSH)) {
+      this.onMasterServerPush(clientSocket, data.substr(PUSH.length+1));
+      
+    } else if (data.startsWith(PULL)) {
+      this.onMasterServerPull(clientSocket, data.substr(PULL.length+1));
+      
+    } else if (data.startsWith(DIFF)) {
+      this.log.warn(this.toString(), 'Action "'+DIFF+'" is not implemented yet.');
+      
+    } else if (data.startsWith(REGISTER)) {
+      this.onMasterServerRegister(clientSocket, data.substr(REGISTER.length+1));
+      
+    } else {
+      this.log.error(this.toString(), 'Action "'+data.split('/')[0]+'" unknown.');
     }
   },
 
@@ -326,14 +302,6 @@ var WebSocketGroup = AbstractGroup.extend({
   },
 
   onMasterServerPull: function (clientSocket, strData) {
-    this.log.info(this.toString(), clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PULL (xmi)");
-
-    var serializer = new kevoree.serializer.XMIModelSerializer();
-    var strModel = serializer.serialize(this.kCore.getCurrentModel());
-    clientSocket.send(strModel);
-  },
-
-  onMasterServerPullJSON: function (clientSocket, strData) {
     this.log.info(this.toString(), clientSocket._socket.remoteAddress+":"+clientSocket._socket.remotePort+" asked for a PULL (json)");
 
     var serializer = new kevoree.serializer.JSONModelSerializer();
