@@ -1,3 +1,5 @@
-module.exports.pullModel = require('./lib/pullModel');
-module.exports.pushModel = require('./lib/pushModel');
-module.exports.getJSONModel = require('./lib/getJSONModel');
+module.exports = {
+  pull: require('./lib/pull'),
+  push: require('./lib/push'),
+  getJSONModel: require('./lib/getJSONModel')
+};
