@@ -4,8 +4,8 @@ var Bootstrapper    = require('kevoree-commons').Bootstrapper,
   path            = require('path');
 
 var FILE    = 'file',
-  GIT     = 'git',
-  NPM     = 'npm';
+    GIT     = 'git',
+    NPM     = 'npm';
 
 /**
  *
