@@ -68,7 +68,7 @@ var WebSocketChannel = AbstractChannel.extend({
   startWSServer: function (port) {
     try {
       this.server = new WebSocketServer({port: port});
-      this.log.debug(this.toString(), 'New server created for channel');
+      this.log.debug(this.toString(), 'Master server created at '+this.server.options.host+":"+port);
 
       this.server.on('connection', function(ws) {
         this.connectedClients.push(ws);
@@ -90,11 +90,9 @@ var WebSocketChannel = AbstractChannel.extend({
   },
 
   startWSClient: function () {
-    console.log('I think am a client');
     var addresses = this.getMasterServerAddresses();
     if (addresses && addresses.length > 0) {
       var connectToServer = function connectToServer() {
-        console.log("GONNA TRY "+addresses[0]);
         this.client = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
         this.client.onopen = function onOpen() {
@@ -106,7 +104,6 @@ var WebSocketChannel = AbstractChannel.extend({
         this.client.onmessage = localDispatchHandler.bind(this);
 
         this.client.onerror = function onError() {
-          console.log("ERROR "+addresses[0]);
           // if there is an error, retry to initiate connection in 5 seconds
           clearTimeout(this.timeoutID);
           this.timeoutID = null;
@@ -114,7 +111,6 @@ var WebSocketChannel = AbstractChannel.extend({
         }.bind(this);
 
         this.client.onclose = function onClose() {
-          console.log("CLOSE "+addresses[0]);
           this.log.info(this.toString(), "client connection closed with server ("+this.client._socket.remoteAddress+":"+this.client._socket.remotePort+")");
           // when websocket is closed, retry connection in 5 seconds
           clearTimeout(this.timeoutID);
