@@ -191,9 +191,6 @@ var WebSocketGroup = AbstractGroup.extend({
           var model = jsonLoader.loadModelFromString(data).get(0);
           group.kCore.deploy(model);
         };
-        ws.onclose = function onClose() {
-          group.log.info(this.toString(), "client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
-        };
 
         ws.onerror = function onError() {
           // if there is an error, retry to initiate connection in 5 seconds
@@ -203,6 +200,7 @@ var WebSocketGroup = AbstractGroup.extend({
         }
 
         ws.onclose = function onClose() {
+          group.log.info(this.toString(), "client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
           // when websocket is closed, retry connection in 5 seconds
           clearTimeout(group.timeoutID);
           group.timeoutID = null;

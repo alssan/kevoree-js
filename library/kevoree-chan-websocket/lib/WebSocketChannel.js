@@ -15,6 +15,7 @@ var WebSocketChannel = AbstractChannel.extend({
     this.server = null;
     this.client = null;
     this.connectedClients = [];
+    this.timeoutID = null;
   },
 
   /**
@@ -36,6 +37,9 @@ var WebSocketChannel = AbstractChannel.extend({
   stop: function () {
     this.log.warn(this.toString(), 'stop() method not implemented yet.');
     // TODO
+    if (this.client != null) {
+      clearTimeout(this.timeoutID);
+    }
   },
 
   /**
@@ -86,20 +90,39 @@ var WebSocketChannel = AbstractChannel.extend({
   },
 
   startWSClient: function () {
+    console.log('I think am a client');
     var addresses = this.getMasterServerAddresses();
-    if (typeof(addresses) !== 'undefined' && addresses != null && addresses.length > 0) {
-      this.client = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
+    if (addresses && addresses.length > 0) {
+      var connectToServer = function connectToServer() {
+        console.log("GONNA TRY "+addresses[0]);
+        this.client = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
 
-      this.client.onmessage = localDispatchHandler.bind(this);
+        this.client.onopen = function onOpen() {
+          clearTimeout(this.timeoutID);
+          this.timeoutID = null;
+          this.log.info(this.toString(), 'Now connected to master server '+addresses[0]);
+        }.bind(this);
 
-      this.client.onclose = function onClose() {
-        this.log.debug(this.toString(), "WebSocketChannel info: client connection closed with server ("+ws._socket.remoteAddress+":"+ws._socket.remotePort+")");
-        // TODO: auto reconnect
+        this.client.onmessage = localDispatchHandler.bind(this);
+
+        this.client.onerror = function onError() {
+          console.log("ERROR "+addresses[0]);
+          // if there is an error, retry to initiate connection in 5 seconds
+          clearTimeout(this.timeoutID);
+          this.timeoutID = null;
+          this.timeoutID = setTimeout(connectToServer, 5000);
+        }.bind(this);
+
+        this.client.onclose = function onClose() {
+          console.log("CLOSE "+addresses[0]);
+          this.log.info(this.toString(), "client connection closed with server ("+this.client._socket.remoteAddress+":"+this.client._socket.remotePort+")");
+          // when websocket is closed, retry connection in 5 seconds
+          clearTimeout(this.timeoutID);
+          this.timeoutID = null;
+          this.timeoutID = setTimeout(connectToServer, 5000);
+        }.bind(this);
       }.bind(this);
-
-      this.client.onerror = function onError() {
-        // TODO: auto reconnect
-      }.bind(this);
+      connectToServer();
 
     } else {
       throw new Error("There is no master server in your model. You must specify a master server by giving a value to one port attribute.");
@@ -117,7 +140,7 @@ var WebSocketChannel = AbstractChannel.extend({
       if (val && val.value && val.value.length > 0) {
         var port = val.value;
         var hosts = this.getNodeHosts(dic.name);
-        for (var host in hosts) addresses.push(host+':'+port);
+        for (var i in hosts) addresses.push(hosts[i]+':'+port);
         return addresses;
       }
     }
@@ -133,28 +156,18 @@ var WebSocketChannel = AbstractChannel.extend({
     var model = this.getKevoreeCore().getDeployModel();
     var hosts = [];
 
-    var networks = model.nodeNetworks ? model.nodeNetworks.iterator() : null;
-    if (networks) {
-      while (networks.hasNext()) {
-        var net = networks.next();
-        if (net.target.name == targetNode.name) {
-          var links = net.link ? net.link.iterator() : null;
-          if (links) {
-            while (links.hasNext()) {
-              var link = links.next();
-              var props = link.networkProperties ? link.networkProperties.iterator() : null;
-              if (props) {
-                while (props.hasNext()) {
-                  hosts.push(props.next().value);
-                }
-              }
-            }
-          }
+    var nets = model.nodeNetworks.iterator();
+    while (nets.hasNext()) {
+      var links = nets.next().link.iterator();
+      while (links.hasNext()) {
+        var props = links.next().networkProperties.iterator();
+        while (props.hasNext()) {
+          hosts.push(props.next().value);
         }
       }
     }
-
-    if (hosts.length == 0) {
+    
+    if (hosts.length === 0) {
       // no host found for this portPath in model, lets give it a try locally
       hosts.push('127.0.0.1');
     }
