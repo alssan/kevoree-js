@@ -1,5 +1,6 @@
 var npm     = require('npm'),
     path    = require('path'),
+    config  = require('../config.json'),
     kevoree = require('kevoree-library').org.kevoree;
 
 var loader  = new kevoree.loader.JSONModelLoader();
@@ -44,7 +45,7 @@ var bootstrapModel = function bootstrapModel(options, callback) {
       fragDic.name = options.nodeName;
       var portVal = factory.createDictionaryValue();
       portVal.name = 'port';
-      portVal.value = '8000';
+      portVal.value = config.groupPort || '9000';
       fragDic.addValues(portVal);
       grpInstance.addFragmentDictionary(fragDic);
       grpInstance.addSubNodes(nodeInstance);

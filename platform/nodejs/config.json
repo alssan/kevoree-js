@@ -1,4 +1,5 @@
 {
   "nodeName":  "node0",
-  "groupName": "sync"
+  "groupName": "sync",
+  "groupPort": "9000"
 }
