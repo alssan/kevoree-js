@@ -46,6 +46,7 @@ var WebSocketGroup = AbstractGroup.extend({
     if (this.dictionary.getValue('port') != undefined) {
       this.server = this.startWSServer(this.dictionary.getValue('port'));
     } else {
+      console.log("AM A CLIENT");
       this.client = this.startWSClient();
     }
   },
@@ -170,7 +171,8 @@ var WebSocketGroup = AbstractGroup.extend({
 
   startWSClient: function () {
     var addresses = this.getMasterServerAddresses();
-    if (typeof(addresses) !== 'undefined' && addresses != null && addresses.length > 0) {
+    if (addresses && addresses.length > 0) {
+      console.log('GOT ADDRESSES', addresses);
       var group = this;
       var connectToServer = function () {
         var ws = new WebSocket('ws://'+addresses[0]); // TODO change that => to try each different addresses not only the first one
@@ -179,6 +181,7 @@ var WebSocketGroup = AbstractGroup.extend({
           clearTimeout(group.timeoutID);
           group.timeoutID = null;
           ws.send(REGISTER+'/'+group.getNodeName());
+          group.log.info(group.toString(), 'Now connected & registered on master server '+addresses[0]);
         };
         ws.onmessage = function onMessage(e) {
           var data = '';
@@ -218,21 +221,19 @@ var WebSocketGroup = AbstractGroup.extend({
       port = null;
 
     var kGroup = this.getModelEntity();
-    if (typeof(kGroup) !== 'undefined' && kGroup != null) {
+    if (kGroup) {
       var fragDics = kGroup.fragmentDictionary.iterator();
       while (fragDics.hasNext()) {
         var val = fragDics.next().findValuesByID('port');
         if (val) port = val.value;
-        if (typeof(port) !== 'undefined' && port != null && port.length > 0) {
+        if (port && port.length > 0) {
           var nodeNetworks = this.getKevoreeCore().getDeployModel().nodeNetworks.iterator();
           while (nodeNetworks.hasNext()) {
             var links = nodeNetworks.next().link.iterator();
             while (links.hasNext()) {
-              if (typeof(links.next().networksProperties) !== 'undefined') {
-                var netProps = links.next().networksProperties.iterator();
-                while (netProps.hasNext()) {
-                  ret.push(netProps.next().value+':'+port);
-                }
+              var netProps = links.next().networkProperties.iterator();
+              while (netProps.hasNext()) {
+                ret.push(netProps.next().value+':'+port);
               }
             }
           }
