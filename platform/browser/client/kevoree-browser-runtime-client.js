@@ -1,5 +1,5 @@
 var KevoreeCore        = require('kevoree-core'),
-  JSONModelLoader      = require('kevoree-library').org.kevoree.loader.JSONModelLoader,
+  kevoree              = require('kevoree-library').org.kevoree,
   KevoreeBrowserLogger = require('./lib/KevoreeBrowserLogger'),
   HTTPBootstrapper     = require('./lib/BrowserBootstrapper');
 
@@ -7,7 +7,7 @@ var log = new KevoreeBrowserLogger('Runtime');
 
 // init core objects
 var kevoreeCore = new KevoreeCore(__dirname, log),
-  jsonLoader    = new JSONModelLoader(),
+  jsonLoader    = new kevoree.loader.JSONModelLoader(),
   bootstrapper  = new HTTPBootstrapper(__dirname);
 
 // init DOM objects
@@ -118,7 +118,16 @@ deployBtn.on('click', function () {
             url: 'bootstrap',
             data: {nodename: kevoreeCore.getNodeName()},
             success: function (data) {
-              kevoreeCore.deploy(jsonLoader.loadModelFromString(data.model).get(0));
+              try {
+                var loader = new kevoree.loader.JSONModelLoader();
+                console.log(loader);
+                kevoreeCore.deploy(loader.loadModelFromString(data.model).get(0));
+              } catch (err) {
+                log.error(err.message);
+                deploying = false;
+                deployBtn.removeClass('disabled');
+                deployBtn.popover('hide');
+              }
             },
             error: function (err) {
               console.log(err);

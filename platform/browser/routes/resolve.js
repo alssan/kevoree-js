@@ -49,8 +49,8 @@ module.exports = function(req, res) {
           // set kevoree-library et kevoree-kotlin as 'provided externally' because there are bundled with
           // kevoree-browser-runtime-client, if you don't do that, they will be loaded multiple times
           // and the whole thing will blew up like crazy, trust me (just lost 2 hours)
-          b.external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-library'), {expose: 'kevoree-library'})
-            .external(path.resolve(process.cwd(), 'client', 'node_modules', 'kevoree-kotlin'), {expose: 'kevoree-kotlin'})
+          b.external('kevoree-library', {expose: 'kevoree-library'})
+            .external('kevoree-kotlin', {expose: 'kevoree-kotlin'})
             .require(modulePath, { expose: req.body.name })
             .transform('brfs')// will try to get content from fs.readFileSync() into a function (to be available as a string later on)
             .bundle({detectGlobals: false})

@@ -1243,14 +1243,16 @@ var Kotlin = require('kevoree-kotlin');
         return result;
       },
       max: function ($receiver) {
-        var max = null;
+        if (_.kotlin.isEmpty_0($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_0($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -1275,14 +1277,16 @@ var Kotlin = require('kevoree-kotlin');
         return maxElem;
       },
       min: function ($receiver) {
-        var min = null;
+        if (_.kotlin.isEmpty_0($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_0($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -1689,14 +1693,16 @@ var Kotlin = require('kevoree-kotlin');
         return result;
       },
       max_0: function ($receiver) {
-        var max = null;
+        if (_.kotlin.isEmpty_1($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_1($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -1721,14 +1727,16 @@ var Kotlin = require('kevoree-kotlin');
         return maxElem;
       },
       min_0: function ($receiver) {
-        var min = null;
+        if (_.kotlin.isEmpty_1($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_1($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -2105,14 +2113,16 @@ var Kotlin = require('kevoree-kotlin');
         return result;
       },
       max_1: function ($receiver) {
-        var max = null;
+        if (_.kotlin.isEmpty_2($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_2($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -2137,14 +2147,16 @@ var Kotlin = require('kevoree-kotlin');
         return maxElem;
       },
       min_1: function ($receiver) {
-        var min = null;
+        if (_.kotlin.isEmpty_2($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_2($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -2667,6 +2679,21 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
+      max_2: function ($receiver) {
+        if (_.kotlin.isEmpty_3($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
+        {
+          tmp$0 = _.kotlin.get_lastIndex_3($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
+              max = e;
+          }
+        }
+        return max;
+      },
       maxBy_3: function ($receiver, f) {
         if (_.kotlin.isEmpty_3($receiver))
           return null;
@@ -2685,6 +2712,21 @@ var Kotlin = require('kevoree-kotlin');
           }
         }
         return maxElem;
+      },
+      min_2: function ($receiver) {
+        if (_.kotlin.isEmpty_3($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
+        {
+          tmp$0 = _.kotlin.get_lastIndex_3($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
+              min = e;
+          }
+        }
+        return min;
       },
       minBy_3: function ($receiver, f) {
         if ($receiver.length === 0)
@@ -3175,16 +3217,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
-      max_2: function ($receiver) {
-        var max = null;
-        var tmp$0, tmp$1, tmp$2;
+      max_3: function ($receiver) {
+        if (_.kotlin.isEmpty_4($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          tmp$0 = $receiver, tmp$1 = tmp$0.length;
-          for (var tmp$2 = 0; tmp$2 !== tmp$1; ++tmp$2) {
-            var e = tmp$0[tmp$2];
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_4($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -3208,16 +3251,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return maxElem;
       },
-      min_2: function ($receiver) {
-        var min = null;
-        var tmp$0, tmp$1, tmp$2;
+      min_3: function ($receiver) {
+        if (_.kotlin.isEmpty_4($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          tmp$0 = $receiver, tmp$1 = tmp$0.length;
-          for (var tmp$2 = 0; tmp$2 !== tmp$1; ++tmp$2) {
-            var e = tmp$0[tmp$2];
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_4($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -3596,15 +3640,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
-      max_3: function ($receiver) {
-        var max = null;
+      max_4: function ($receiver) {
+        if (_.kotlin.isEmpty_5($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_5($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -3628,15 +3674,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return maxElem;
       },
-      min_3: function ($receiver) {
-        var min = null;
+      min_4: function ($receiver) {
+        if (_.kotlin.isEmpty_5($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_5($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -4347,15 +4395,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
-      max_4: function ($receiver) {
-        var max = null;
+      max_5: function ($receiver) {
+        if (_.kotlin.isEmpty_6($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_6($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -4379,15 +4429,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return maxElem;
       },
-      min_4: function ($receiver) {
-        var min = null;
+      min_5: function ($receiver) {
+        if (_.kotlin.isEmpty_6($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          var tmp$0 = Kotlin.arrayIterator($receiver);
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_6($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -4763,16 +4815,15 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
-      max_5: function ($receiver) {
-        var max = null;
-        {
-          var tmp$0 = $receiver.iterator();
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
-              max = e;
-            }
-          }
+      max_6: function ($receiver) {
+        var iterator = $receiver.iterator();
+        if (!iterator.hasNext())
+          return null;
+        var max = iterator.next();
+        while (iterator.hasNext()) {
+          var e = iterator.next();
+          if (max < e)
+            max = e;
         }
         return max;
       },
@@ -4792,16 +4843,15 @@ var Kotlin = require('kevoree-kotlin');
         }
         return maxElem;
       },
-      min_5: function ($receiver) {
-        var min = null;
-        {
-          var tmp$0 = $receiver.iterator();
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
-              min = e;
-            }
-          }
+      min_6: function ($receiver) {
+        var iterator = $receiver.iterator();
+        if (!iterator.hasNext())
+          return null;
+        var min = iterator.next();
+        while (iterator.hasNext()) {
+          var e = iterator.next();
+          if (min > e)
+            min = e;
         }
         return min;
       },
@@ -5040,7 +5090,7 @@ var Kotlin = require('kevoree-kotlin');
         return _.kotlin.get_size($receiver) - 1;
       }},
       get_head: {value: function ($receiver) {
-        return $receiver.get(0);
+        return _.kotlin.isNotEmpty_9($receiver) ? $receiver.get(0) : null;
       }},
       get_tail: {value: function ($receiver) {
         return _.kotlin.drop_7($receiver, 1);
@@ -5323,16 +5373,14 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
-      max_6: function ($receiver) {
-        var max = null;
-        {
-          var tmp$0 = $receiver;
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
-              max = e;
-            }
-          }
+      max_7: function ($receiver) {
+        if (!$receiver.hasNext())
+          return null;
+        var max = $receiver.next();
+        while ($receiver.hasNext()) {
+          var e = $receiver.next();
+          if (max < e)
+            max = e;
         }
         return max;
       },
@@ -5351,16 +5399,14 @@ var Kotlin = require('kevoree-kotlin');
         }
         return maxElem;
       },
-      min_6: function ($receiver) {
-        var min = null;
-        {
-          var tmp$0 = $receiver;
-          while (tmp$0.hasNext()) {
-            var e = tmp$0.next();
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
-              min = e;
-            }
-          }
+      min_7: function ($receiver) {
+        if (!$receiver.hasNext())
+          return null;
+        var min = $receiver.next();
+        while ($receiver.hasNext()) {
+          var e = $receiver.next();
+          if (min > e)
+            min = e;
         }
         return min;
       },
@@ -5737,16 +5783,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return result;
       },
-      max_7: function ($receiver) {
-        var max = null;
-        var tmp$0, tmp$1, tmp$2;
+      max_8: function ($receiver) {
+        if (_.kotlin.isEmpty_7($receiver))
+          return null;
+        var max = $receiver[0];
+        var tmp$0;
         {
-          tmp$0 = $receiver, tmp$1 = tmp$0.length;
-          for (var tmp$2 = 0; tmp$2 !== tmp$1; ++tmp$2) {
-            var e = tmp$0[tmp$2];
-            if (max == null || (max != null ? max : Kotlin.throwNPE()) < e) {
+          tmp$0 = _.kotlin.get_lastIndex_7($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (max < e)
               max = e;
-            }
           }
         }
         return max;
@@ -5770,16 +5817,17 @@ var Kotlin = require('kevoree-kotlin');
         }
         return maxElem;
       },
-      min_7: function ($receiver) {
-        var min = null;
-        var tmp$0, tmp$1, tmp$2;
+      min_8: function ($receiver) {
+        if (_.kotlin.isEmpty_7($receiver))
+          return null;
+        var min = $receiver[0];
+        var tmp$0;
         {
-          tmp$0 = $receiver, tmp$1 = tmp$0.length;
-          for (var tmp$2 = 0; tmp$2 !== tmp$1; ++tmp$2) {
-            var e = tmp$0[tmp$2];
-            if (min == null || (min != null ? min : Kotlin.throwNPE()) > e) {
+          tmp$0 = _.kotlin.get_lastIndex_7($receiver) + 1;
+          for (var i = 1; i !== tmp$0; i++) {
+            var e = $receiver[i];
+            if (min > e)
               min = e;
-            }
           }
         }
         return min;
@@ -24383,7 +24431,7 @@ var Kotlin = require('kevoree-kotlin');
             return [_.org.kevoree.KevoreeFactory];
           }, null, /** @lends _.org.kevoree.impl.DefaultKevoreeFactory.prototype */ {
             getVersion: function () {
-              return '1.9.5';
+              return '1.9.6';
             },
             createComponentInstance: function () {
               return new _.org.kevoree.impl.ComponentInstanceImpl();

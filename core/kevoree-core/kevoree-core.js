@@ -1,8 +1,8 @@
-var Class           = require('pseudoclass'),
-  kLib            = require('kevoree-library'),
-  KevoreeLogger   = require('kevoree-commons').KevoreeLogger,
-  async           = require('async'),
-  EventEmitter    = require('events').EventEmitter;
+var Class       = require('pseudoclass'),
+  kLib          = require('kevoree-library'),
+  KevoreeLogger = require('kevoree-commons').KevoreeLogger,
+  async         = require('async'),
+  EventEmitter  = require('events').EventEmitter;
 
 /**
  * Kevoree Core
