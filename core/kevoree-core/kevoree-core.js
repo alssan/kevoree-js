@@ -167,13 +167,13 @@ module.exports = Class({
                   return async.eachSeries(cmdStack, rollbackCommand, function (er) {
                     if (er) {
                       // something went wrong while rollbacking
-                      er.message = "Something went wrong while rollbacking...";
+                      er.message = "Something went wrong while rollbacking...\n"+er.message;
                       return core.emitter.emit('error', er);
                     }
 
                     // something went wrong while processing adaptations
                     // using Javascript magic to just change error message and keep stack
-                    err.message = "Something went wrong while processing adaptations. Rollbacking...";
+                    err.message = "Something went wrong while processing adaptations.\n"+err.message+'\nRollbacking...';
                     core.emitter.emit('error', err); // TODO create another error type (like adaptationError, in order to process rollback in runtimes instead of just shutting down kevoree core)
                     // rollback succeed
                     return core.emitter.emit('rollback');
