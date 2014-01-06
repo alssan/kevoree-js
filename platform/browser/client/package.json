@@ -4,7 +4,7 @@
   "author": "Maxime Tricoire <max.tricoire@gmail.com>",
   "main": "./kevoree-browser-runtime-client.js",
   "dependencies": {
-    "kevoree-core": "0.0.3",
+    "kevoree-core": "0.0.4",
     "kevoree-library": "0.0.3",
     "kevoree-kotlin": "0.0.1",
     "kevoree-commons": "0.0.1",

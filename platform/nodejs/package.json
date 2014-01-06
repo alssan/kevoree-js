@@ -7,7 +7,7 @@
     "start": "node cli.js"
   },
   "dependencies": {
-    "kevoree-core": "0.0.3",
+    "kevoree-core": "0.0.4",
     "kevoree-library": "0.0.3",
     "kevoree-commons": "0.0.1",
     "pseudoclass": "0.2.6",
